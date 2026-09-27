@@ -223,6 +223,16 @@ final class SnapshotRunner {
         write(window, "settings-general-setup-\(appearance)")
         delegate.model.shortcutRegistered = registered
         try? await Task.sleep(for: .milliseconds(500))
+        // Closed the way a user closes it from the keyboard.
+        if let commandW = NSEvent.keyEvent(
+            with: .keyDown, location: .zero, modifierFlags: .command,
+            timestamp: ProcessInfo.processInfo.systemUptime, windowNumber: window.windowNumber,
+            context: nil, characters: "w", charactersIgnoringModifiers: "w", isARepeat: false, keyCode: 13
+        ) {
+            let handled = window.performKeyEquivalent(with: commandW)
+            try? await Task.sleep(for: .milliseconds(300))
+            NSLog("PROBE settings-close-command-w \(handled && !window.isVisible ? "PASS" : "FAIL") handled=\(handled) visible=\(window.isVisible)")
+        }
         window.close()
         try? await Task.sleep(for: .milliseconds(300))
     }
