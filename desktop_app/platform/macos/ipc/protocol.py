@@ -47,6 +47,7 @@ class Method(StrEnum):
     ANKI_STATUS = "anki.status"
     ANKI_DECKS = "anki.decks"
     ANKI_MODEL_FIELDS = "anki.model_fields"
+    ANKI_MODEL_NAMES = "anki.model_names"
     ANKI_SELECT_DECK = "anki.select_deck"
     ANKI_CREATE_MODEL = "anki.create_model"
     ANKI_PREPARE_UPSERT = "anki.prepare_upsert"
@@ -320,6 +321,15 @@ def field_list_to_json(result: AnkiListResult) -> JsonObject:
     both cases: with no names in hand, mark nothing as missing.
     """
     return {"fields": list(result.items), "error": result.error}
+
+
+def model_list_to_json(result: AnkiListResult) -> JsonObject:
+    """The collection's note types, for a client to offer as a choice.
+
+    Same rule as the other lists: `error` set means Anki could not be asked,
+    and an empty list then says nothing about the collection.
+    """
+    return {"models": list(result.items), "error": result.error}
 
 
 def anki_preview_to_json(preview: AnkiUpsertPreview) -> JsonObject:

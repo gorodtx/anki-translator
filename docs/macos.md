@@ -93,8 +93,8 @@ JSON object per line, UTF-8.
 Methods: `ping`, `translate`, `cancel`, `close`, `history.list`,
 `history.select`, `examples.refresh`, `copy_all`, `anki.status`, `anki.decks`,
 `anki.select_deck`, `anki.create_model`, `anki.prepare_upsert`,
-`anki.apply_upsert`, `anki.model_fields`, `engines.refresh`, `db.download`,
-`db.cancel`, `settings.get`, `settings.save`, `shutdown`.
+`anki.apply_upsert`, `anki.model_fields`, `anki.model_names`, `engines.refresh`,
+`db.download`, `db.cancel`, `settings.get`, `settings.save`, `shutdown`.
 
 Events: `translation.state` (phases `begin`/`partial`/`final`/`error`/`examples`),
 `notification`, `anki.availability`, `db.progress`.
@@ -188,6 +188,16 @@ available_fields: ['Woord', 'translation', 'example_en', 'definitions_en', 'imag
 ```
 
 For what Anki actually has, ask `anki.model_fields`.
+
+### Anki note types
+
+`anki.model_names` answers `{"models": [...], "error": null|"..."}`: the note
+types of the collection, for Settings to offer as a pop-up. `error` set means
+Anki could not be asked (closed, AnkiConnect missing), and the empty list then
+says nothing about the collection. Choosing one is an ordinary `settings.save`
+of `anki.model`; the app's own note type is adopted automatically only while no
+note type the collection has is configured, so a choice survives the next
+`anki.status`.
 
 ### Downloading the offline bases
 

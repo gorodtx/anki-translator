@@ -8,6 +8,7 @@ than only against hand-written fakes of our own ports.
 from __future__ import annotations
 
 import asyncio
+from collections.abc import Callable
 from concurrent.futures import Future
 import json
 from pathlib import Path
@@ -38,7 +39,10 @@ from desktop_app.infrastructure.anki.templates import (
     DEFAULT_MODEL_NAME,
 )
 from desktop_app.infrastructure.services.runtime import AsyncRuntime
-from desktop_app.platform.macos.ipc.protocol import field_list_to_json
+from desktop_app.platform.macos.ipc.protocol import (
+    field_list_to_json,
+    model_list_to_json,
+)
 from tests.fakes.anki_connect import FakeAnkiConnect, FakeAnkiState, Note
 from translate_logic.models import Example, FieldValue, TranslationResult
 
@@ -440,6 +444,105 @@ def test_model_fields_tells_a_closed_anki_from_an_unknown_note_type(
     assert unreachable.items == []
     assert unreachable.error is not None
     assert unreachable.error.startswith("AnkiConnect error:"), unreachable.error
+
+
+def _settings_flow(
+    flow: AnkiFlow, model: str, saved: list[AppConfig] | None = None
+) -> SettingsFlow:
+    return SettingsFlow(
+        config=AppConfig(
+            languages=LanguageConfig(source="en", target="ru"),
+            anki=AnkiConfig(deck="English", model=model, fields=FIELDS),
+        ),
+        runtime=flow.service.runtime,
+        anki_flow=flow,
+        on_save=(saved.append if saved is not None else lambda _: None),
+    )
+
+
+def _collect[T](
+    start: Callable[[Callable[[T], None]], None], count: int = 1
+) -> list[T]:
+    received: list[T] = []
+    start(received.append)
+    deadline = time.monotonic() + DEFAULT_TIMEOUT_SECONDS + 5
+    while len(received) < count and time.monotonic() < deadline:
+        time.sleep(0.02)
+    assert len(received) >= count, "never answered"
+    return received
+
+
+def test_model_names_list_the_collections_note_types(
+    anki: tuple[FakeAnkiConnect, AnkiFlow],
+) -> None:
+    """The note types a settings pane offers are the ones Anki really has.
+
+    Two callers at once (the Anki pane and the Add to Anki window) share one
+    question instead of the second being told to wait.
+    """
+    server, flow = anki
+    server.state.models["Basic"] = ["Front", "Back"]
+    server.state.models["Translator"] = list(DEFAULT_MODEL_FIELDS)
+    settings = _settings_flow(flow, "Translator")
+
+    def ask_twice(reply: Callable[[AnkiListResult], None]) -> None:
+        settings.list_model_names(reply)
+        settings.list_model_names(reply)
+
+    first, second = _collect(ask_twice, count=2)
+    assert sorted(first.items) == ["Basic", "Translator"]
+    assert first.error is None
+    assert second == first
+
+    down = AnkiService(
+        flow.service.runtime, timeout_seconds=1.0, base_url="http://127.0.0.1:1"
+    )
+    try:
+        closed = _collect(_settings_flow(AnkiFlow(service=down), "").list_model_names)
+    finally:
+        asyncio.run_coroutine_threadsafe(down.close(), down.runtime.loop).result(5)
+    assert closed[0].items == []
+    assert closed[0].error is not None
+
+
+def test_a_chosen_note_type_survives_the_status_check(
+    anki: tuple[FakeAnkiConnect, AnkiFlow],
+) -> None:
+    """Picking "Basic" must not be undone by the next `anki.status`.
+
+    The app's own note type is adopted when nothing usable is configured, and
+    only then: before, every status check replaced any other choice with it.
+    """
+    server, flow = anki
+    server.state.models["Basic"] = ["Front", "Back"]
+    server.state.models[DEFAULT_MODEL_NAME] = list(DEFAULT_MODEL_FIELDS)
+
+    saved: list[AppConfig] = []
+    chosen = _settings_flow(flow, "Basic", saved)
+    _collect(chosen.get_anki_status)
+    assert chosen.config.anki.model == "Basic"
+    assert saved == []
+
+    adopted: list[AppConfig] = []
+    unset = _settings_flow(flow, "", adopted)
+    _collect(unset.get_anki_status)
+    assert unset.config.anki.model == DEFAULT_MODEL_NAME
+    assert adopted and adopted[-1].anki.model == DEFAULT_MODEL_NAME
+
+    dangling: list[AppConfig] = []
+    gone = _settings_flow(flow, "Deleted Type", dangling)
+    _collect(gone.get_anki_status)
+    assert gone.config.anki.model == DEFAULT_MODEL_NAME
+
+
+def test_model_list_json_keeps_the_two_keys_a_client_reads() -> None:
+    named = model_list_to_json(
+        AnkiListResult(items=["Basic", "Translator"], error=None)
+    )
+    assert named == {"models": ["Basic", "Translator"], "error": None}
+
+    failed = model_list_to_json(AnkiListResult(items=[], error="AnkiConnect error: x"))
+    assert failed == {"models": [], "error": "AnkiConnect error: x"}
 
 
 def test_field_list_json_keeps_the_two_keys_a_client_reads() -> None:

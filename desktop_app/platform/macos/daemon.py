@@ -46,6 +46,7 @@ from desktop_app.platform.macos.ipc.protocol import (
     get_object,
     get_str,
     history_item_to_json,
+    model_list_to_json,
     view_state_to_json,
 )
 from desktop_app.platform.macos.db_download import (
@@ -223,6 +224,9 @@ class BackendApi:
         if method is Method.ANKI_MODEL_FIELDS:
             fields = await self._await_reply(session.anki_model_fields, _ANKI_TIMEOUT_S)
             return field_list_to_json(fields)
+        if method is Method.ANKI_MODEL_NAMES:
+            names = await self._await_reply(session.anki_model_names, _ANKI_TIMEOUT_S)
+            return model_list_to_json(names)
         if method is Method.ANKI_SELECT_DECK:
             deck = get_str(params, "deck")
 
