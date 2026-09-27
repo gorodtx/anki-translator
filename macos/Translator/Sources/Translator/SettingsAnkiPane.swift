@@ -164,12 +164,7 @@ struct AnkiSettingsPane: View {
             }
             if fieldsKnown {
                 if !issues.isEmpty {
-                    SettingsStatus(
-                        level: .warning,
-                        title: issues.count == 1
-                            ? "One value goes to a field this note type doesn’t have."
-                            : "\(issues.count) values go to fields this note type doesn’t have."
-                    )
+                    SettingsStatus(level: .warning, title: missingFieldsMessage)
                 }
             } else {
                 ForEach(issues, id: \.configured) { issue in
@@ -219,12 +214,24 @@ struct AnkiSettingsPane: View {
             ForEach(names, id: \.self) { Text($0).tag($0) }
             if missing {
                 Divider()
-                Text("\(current) (not in this note type)").tag(current)
+                Text(current).tag(current)
             }
         }
         .labelsHidden()
         .frame(width: 170)
         .help(missing ? "“\(current)” is not a field of this note type." : "The field that takes the \(label.lowercased()).")
+    }
+
+    /// The names the pop-ups show that the note type does not have: they would fail when a
+    /// card is added, so they are named, once, under the pop-ups.
+    private var missingFieldsMessage: String {
+        let names = issues.map { "“\($0.configured)”" }
+        let noteType = model.settings.anki.model.isEmpty ? "the note type" : model.settings.anki.model
+        // Not ListFormatter: it joins in the Mac's language, and this window is English.
+        let list = names.joined(separator: ", ")
+        return names.count == 1
+            ? "\(list) isn’t a field of \(noteType). Choose one from the list."
+            : "\(list) aren’t fields of \(noteType). Choose them from the lists."
     }
 
     /// Naming the near miss turns a hunt into a correction.
