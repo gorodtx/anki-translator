@@ -125,7 +125,12 @@ final class ShortcutRecorderField: NSSearchField, NSSearchFieldDelegate {
         guard !isRecording else { return }
         isRecording = true
         stringValue = ""
+        // A new placeholder restarts the field editor, which ends editing on the way; that
+        // end is ours and must not end listening. Seen when listening starts from a button
+        // or VoiceOver: the field is already being edited when this runs.
+        restartingEditor = true
         placeholderString = Self.listeningPrompt
+        restartingEditor = false
         onRecordingChange?(true)
         monitor = NSEvent.addLocalMonitorForEvents(matching: [.keyDown, .flagsChanged, .leftMouseDown]) { [weak self] event in
             let passes = MainActor.assumeIsolated {
@@ -246,8 +251,12 @@ final class ShortcutRecorderField: NSSearchField, NSSearchFieldDelegate {
     // MARK: - NSSearchFieldDelegate
 
     func controlTextDidEndEditing(_ notification: Notification) {
+        guard !restartingEditor else { return }
         stopRecording()
     }
+
+    /// Set while the field changes its own placeholder (see `startRecording`).
+    private var restartingEditor = false
 
     private var resignObserver: NSObjectProtocol?
 
