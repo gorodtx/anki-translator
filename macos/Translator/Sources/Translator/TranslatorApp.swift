@@ -55,10 +55,7 @@ private struct MenuBarContent: View {
         Button("Show History") { delegate.showHistory() }
         Divider()
         // An accessory app never shows its app menu, so About has to live here.
-        Button("About Translator") {
-            NSApp.activate()
-            NSApp.orderFrontStandardAboutPanel(nil)
-        }
+        Button("About Translator") { delegate.showAbout() }
         Button("Settings…") { delegate.showSettings() }
             .keyboardShortcut(",")
         Divider()
@@ -402,6 +399,14 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
                 stack.append(contentsOf: view.subviews)
             }
         }
+    }
+
+    /// The standard About panel: the icon, name and version from the bundle (Info.plist's
+    /// CFBundleIconFile, the version keys). `options` stand in for a bundle that is not
+    /// there, as in snapshot runs of the bare binary.
+    func showAbout(options: [NSApplication.AboutPanelOptionKey: Any] = [:]) {
+        NSApp.activate()
+        NSApp.orderFrontStandardAboutPanel(options: options)
     }
 
     /// Shows Settings on `pane`, or on the pane it was left on when nil. The window and

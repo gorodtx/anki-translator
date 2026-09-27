@@ -211,6 +211,7 @@ final class SnapshotRunner {
             try? await Task.sleep(for: .milliseconds(pane == .anki ? 1500 : 700))
             logControls(in: window, name: "settings-\(pane.rawValue)-\(appearance)")
             write(window, "settings-\(pane.rawValue)-\(appearance)")
+            if pane == .anki { probeAnkiPopUps(in: window, appearance: appearance) }
             if pane == .sources, appearance == appearances.first?.0 {
                 await probeAutoSave(in: window)
             }
@@ -246,8 +247,11 @@ final class SnapshotRunner {
         if unsettled.contains("recorder"), await probeRecorder(in: window) { unsettled.remove("recorder") }
         if appearance == appearances.first?.0 {
             await probeErrorsStayInSettings()
+            probeShortcutRules()
+            await probeMenuStatusLine()
         }
         await captureUnloaded(appearance: appearance)
+        await captureAbout(appearance: appearance)
 
         // Closed the way a user closes it from the keyboard, through the main menu. History
         // and Add to Anki first, while the app is still active with Settings open: an
@@ -463,9 +467,9 @@ final class SnapshotRunner {
         guard let delegate else { return }
         let saved = delegate.model.settingsProblems
         delegate.model.settingsProblems = [
-            .loginItem: "Could not turn on opening at login: The operation couldn’t be completed.",
+            .loginItem: "Couldn’t turn on opening at login: The operation couldn’t be completed.",
             .save: "Changes weren’t saved: Backend is not connected. They are sent again when the backend is back.",
-            .databases: "Could not start the download: Backend is not connected.",
+            .databases: "Couldn’t start the download: Backend is not connected.",
         ]
         for pane in [SettingsPaneID.general, .sources, .advanced] {
             settings.select(pane)
@@ -493,14 +497,25 @@ final class SnapshotRunner {
     /// Sources and Anki before the backend's settings are read: disabled, and saying why.
     private func captureUnloaded(appearance: String) async {
         let offline = AppModel(client: IPCClient(socketPath: "/nonexistent/translator.sock"))
+        // Connected, but the read of the settings failed: said, with Try Again, instead of
+        // "Reading the settings…" for as long as the window stays key. The failure is a
+        // real one (no backend behind this client); the connection is stood in for.
+        let unread = AppModel(client: IPCClient(socketPath: "/nonexistent/translator.sock"))
+        await unread.refreshSettings()
+        unread.connection = .connected
+        if appearance == appearances.first?.0 {
+            let said = unread.settingsProblems[.load]
+            NSLog("PROBE settings-load-failure-said \(said != nil && !unread.settingsLoaded ? "PASS" : "FAIL") problem=\(said ?? "nil")")
+        }
         for (name, view) in [
             ("sources", AnyView(SourcesSettingsPane(model: offline))),
             ("anki", AnyView(AnkiSettingsPane(model: offline))),
+            ("sources-unread", AnyView(SourcesSettingsPane(model: unread))),
         ] {
             let controller = NSHostingController(rootView: view.fixedSize())
             let window = NSWindow(contentViewController: controller)
             window.styleMask = [.titled, .closable]
-            window.title = name == "sources" ? "Sources" : "Anki"
+            window.title = name.hasPrefix("sources") ? "Sources" : "Anki"
             window.isReleasedWhenClosed = false
             window.setContentSize(controller.view.fittingSize)
             window.center()

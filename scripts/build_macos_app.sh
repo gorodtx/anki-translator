@@ -183,6 +183,8 @@ ln -sf ../python/bin/python3.13 "${RESOURCES}/bin/TranslatorEngine"
 chmod +x "${RESOURCES}/bin/run-backend"
 
 cp "${ROOT_DIR}/scripts/db-bundle.lock.json" "${RESOURCES}/db-bundle.lock.json"
+# The app icon (drawn by macos/Translator/scripts/make_icon.swift); CFBundleIconFile below.
+cp "${ROOT_DIR}/macos/Translator/Resources/AppIcon.icns" "${RESOURCES}/AppIcon.icns"
 cp "${ROOT_DIR}/scripts/runtime-requirements.txt" "${RESOURCES}/runtime-requirements.txt"
 
 # --- Info.plist ------------------------------------------------------------------------------
@@ -200,6 +202,7 @@ cat > "${CONTENTS}/Info.plist" <<PLIST
   <key>CFBundlePackageType</key><string>APPL</string>
   <key>CFBundleShortVersionString</key><string>${APP_VERSION}</string>
   <key>CFBundleVersion</key><string>${APP_VERSION}</string>
+  <key>CFBundleIconFile</key><string>AppIcon</string>
   <key>LSMinimumSystemVersion</key><string>${MIN_MACOS}</string>
   <key>LSUIElement</key><true/>
   <key>LSApplicationCategoryType</key><string>public.app-category.reference</string>

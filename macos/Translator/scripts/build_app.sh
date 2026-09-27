@@ -25,6 +25,8 @@ rm -rf "$OUT"
 mkdir -p "$OUT/Contents/MacOS" "$OUT/Contents/Resources"
 cp "$BIN" "$OUT/Contents/MacOS/${APP_NAME}"
 cp Resources/Info.plist "$OUT/Contents/Info.plist"
+# CFBundleIconFile names it; the About panel and Finder show it.
+cp Resources/AppIcon.icns "$OUT/Contents/Resources/AppIcon.icns"
 printf 'APPL????' > "$OUT/Contents/PkgInfo"
 
 # Ad-hoc signature: enough for local runs (a Developer ID identity is needed for
