@@ -32,8 +32,14 @@ final class AppModel {
     var history: [HistoryItem] = []
     var ankiStatus = AnkiStatus()
     var ankiDecks: [String] = []
-    var settings = BackendSettings()
-    var hotKey: KeyCombo = KeyCombo.defaultCombo
+    /// What the backend runs with. Settings apply as they change, as a Mac settings window
+    /// does: every change schedules a save (see `scheduleSettingsSave`), whoever made it —
+    /// a Settings pane, or the deck pop-up of Add to Anki.
+    var settings = BackendSettings() {
+        didSet { scheduleSettingsSave() }
+    }
+    /// The global shortcut; nil when the user cleared it (Services still works).
+    var hotKey: KeyCombo? = KeyCombo.defaultCombo
     var accessibilityTrusted: Bool = SelectionCapture.isTrusted
     /// Whether the current combination actually registered; another app may own it.
     var shortcutRegistered = true
@@ -44,6 +50,13 @@ final class AppModel {
     var isPreparingUpsert = false
 
     private let client: IPCClient
+    /// The settings the backend is known to hold: loaded from it, or saved to it. Nil
+    /// until the first load.
+    @ObservationIgnored private var syncedSettings: BackendSettings?
+    /// The debounced save of a change, while it waits.
+    @ObservationIgnored private var pendingSettingsSave: Task<Void, Never>?
+    /// Saves sent and not answered yet; a load meanwhile would bring back the old values.
+    @ObservationIgnored private var settingsSavesInFlight = 0
     private var bannerDismissTask: Task<Void, Never>?
     /// The last warning the backend sent, so an error phase can say why instead of
     /// "Translation failed."
@@ -422,34 +435,78 @@ final class AppModel {
 
     // MARK: - Settings
 
+    /// How long a change waits for the next one before it is saved: long enough that
+    /// typing a field name is one save, short enough to feel immediate.
+    private static let settingsSaveDelay: Duration = .milliseconds(400)
+
     func refreshSettings() async {
         guard let data = try? await client.send(IPCMethod.settingsGet),
               let loaded = try? BackendSettings.decode(from: data)
         else { return }
-        settings = loaded
+        // A change still waiting to be saved is newer than what the backend has; it wins,
+        // and the save that is about to run brings the backend up to date.
+        guard pendingSettingsSave == nil, settingsSavesInFlight == 0 else { return }
+        // What the backend holds is by definition saved, so taking it must not schedule a
+        // save of its own.
+        syncedSettings = loaded
+        if settings != loaded { settings = loaded }
     }
 
-    func saveSettings() async {
-        do {
-            let payload = try settings.jsonObject()
-            let result = try await client.send(IPCMethod.settingsSave, params: ["config": payload], as: ActionResult.self)
-            apply(result)
-            show(banner: result.message.isEmpty ? "Settings saved." : result.message, level: .success)
-        } catch {
-            show(banner: message(for: error), level: .error)
+    /// Called on every change to `settings`. Loading from the backend does not count as a
+    /// change: `syncedSettings` is what the backend has, and equal values are not sent.
+    private func scheduleSettingsSave() {
+        // Before the first load `settings` holds defaults, and saving them would overwrite
+        // the user's real configuration.
+        guard let synced = syncedSettings else { return }
+        guard settings != synced else {
+            pendingSettingsSave?.cancel()
+            pendingSettingsSave = nil
+            return
+        }
+        pendingSettingsSave?.cancel()
+        pendingSettingsSave = Task { [weak self] in
+            try? await Task.sleep(for: Self.settingsSaveDelay)
+            guard !Task.isCancelled, let self else { return }
+            self.pendingSettingsSave = nil
+            await self.saveSettings()
         }
     }
 
-    func updateHotKey(_ combo: KeyCombo) {
+    /// Sends the current settings. Silent when it works — the change is visible where it
+    /// was made — and says so only when it did not.
+    func saveSettings() async {
+        let sent = settings
+        settingsSavesInFlight += 1
+        defer { settingsSavesInFlight -= 1 }
+        do {
+            let payload = try sent.jsonObject()
+            let result = try await client.send(IPCMethod.settingsSave, params: ["config": payload], as: ActionResult.self)
+            syncedSettings = sent
+            apply(result)
+            // The engines report which sources are on; setup reads it from there.
+            await refreshPing()
+        } catch {
+            show(banner: "Settings weren’t saved: \(message(for: error))", level: .error)
+        }
+    }
+
+    /// Records a new shortcut, or nil for none.
+    func updateHotKey(_ combo: KeyCombo?) {
         hotKey = combo
-        UserDefaults.standard.set(combo.storageString, forKey: "hotKey")
+        UserDefaults.standard.set(combo?.storageString ?? Self.noHotKey, forKey: "hotKey")
     }
 
     func loadStoredHotKey() {
-        if let raw = UserDefaults.standard.string(forKey: "hotKey"), let combo = KeyCombo(storageString: raw) {
+        guard let raw = UserDefaults.standard.string(forKey: "hotKey") else { return }
+        if raw == Self.noHotKey {
+            hotKey = nil
+        } else if let combo = KeyCombo(storageString: raw) {
             hotKey = combo
         }
     }
+
+    /// Stored for a shortcut the user cleared, so the default does not come back.
+    private static let noHotKey = "none"
 
     func refreshAccessibilityTrust() {
         accessibilityTrusted = SelectionCapture.isTrusted

@@ -1,117 +1,62 @@
+import AppKit
 import SwiftUI
-import Translation
 import TranslatorCore
 
-/// The stages a fresh install has to pass, at the top of Settings.
-///
-/// Each row says what the stage is for, whether it is done, and carries the one button
-/// that advances it. What is blocking, what is merely suggested and whether the app is
-/// usable yet is decided by `SetupPlanner`, which is under test; this only draws it.
-struct SetupCard: View {
-    @Bindable var model: AppModel
-    var onRecordShortcut: () -> Void
-
-    /// Set while the language pair downloads, so the row can show progress.
-    @State private var pairConfiguration: TranslationSession.Configuration?
-    @State private var pairMessage: String?
-    @State private var pairWorking = false
-
-    private var plan: SetupPlan {
+extension AppModel {
+    /// What a fresh install still has to do, from what the shell knows right now.
+    var setupPlan: SetupPlan {
         SetupPlanner.plan(
-            connected: model.isConnected,
-            ping: model.ping,
-            accessibilityTrusted: model.accessibilityTrusted,
-            shortcutRegistered: model.shortcutRegistered,
-            shortcut: model.hotKey.displayString,
-            loginItem: model.loginItem,
-            anki: model.ankiStatus
+            connected: isConnected,
+            ping: ping,
+            accessibilityTrusted: accessibilityTrusted,
+            shortcutRegistered: shortcutRegistered,
+            shortcut: hotKey?.displayString ?? "",
+            loginItem: loginItem,
+            anki: ankiStatus
         )
     }
+}
+
+/// The `Setup:` rows of the General pane: one per step that still stops the app from
+/// working, each with its state, one line on what it is for, and the one button that
+/// advances it. The pane shows none of this once setup is done.
+///
+/// Which steps are listed and what they say is decided by `SetupPlanner` (under test);
+/// this only draws it and runs the actions.
+struct SetupChecklist: View {
+    @Bindable var model: AppModel
+    /// Sends the user to the shortcut recorder on the same pane.
+    var onRecordShortcut: () -> Void
 
     var body: some View {
-        let plan = plan
-        Card("Setup") {
-            VStack(alignment: .leading, spacing: 10) {
-                summary(for: plan)
-                ForEach(plan.steps) { step in
-                    row(step)
-                    if step.id != plan.steps.last?.id { Divider().opacity(0.12) }
-                }
-                if let pairMessage {
-                    Text(pairMessage).font(.captionText).foregroundStyle(.secondary)
-                }
-            }
-        }
-        // The system download sheet only appears from a translationTask, so the row's
-        // button sets a configuration and the work happens here.
-        .translationTask(pairConfiguration) { session in
-            do {
-                try await session.prepareTranslation()
-                await MainActor.run {
-                    pairMessage = "Language pair ready."
-                    pairWorking = false
-                    pairConfiguration = nil
-                }
-                // The snapshot is cached for five minutes, so without this the stage
-                // would keep offering a download for the pair just installed.
-                await model.refreshEngines()
-            } catch {
-                await MainActor.run {
-                    pairMessage = "Download failed: \(error.localizedDescription)"
-                    pairWorking = false
-                    pairConfiguration = nil
-                }
-            }
-        }
-    }
-
-    // MARK: - Pieces
-
-    private func summary(for plan: SetupPlan) -> some View {
-        HStack(spacing: 8) {
-            Image(systemName: plan.isReady ? "checkmark.seal.fill" : "arrow.right.circle.fill")
-                .foregroundStyle(plan.isReady ? Color.green : Color.accentColor)
-                .font(.popupTranslation)
-            Text(plan.summary)
-                .font(.controlLabel)
-                .fixedSize(horizontal: false, vertical: true)
-            Spacer(minLength: 0)
-            Button("Re-check") {
-                model.refreshAccessibilityTrust()
-                Task { await model.refreshAll() }
-            }
-            .buttonStyle(.bordered)
-            .controlSize(.small)
-        }
-    }
-
-    private func row(_ step: SetupStep) -> some View {
-        HStack(alignment: .firstTextBaseline, spacing: 9) {
-            icon(for: step)
-            VStack(alignment: .leading, spacing: 2) {
-                HStack(spacing: 6) {
-                    Text(step.title).font(.controlLabel)
-                    if step.isOptional, step.state != .done {
-                        Text("optional")
-                            .font(.badgePlain)
-                            .foregroundStyle(.tertiary)
-                            .padding(.horizontal, 5)
-                            .padding(.vertical, 1)
-                            .innerSurface(radius: 5)
+        ForEach(model.setupPlan.checklist) { step in
+            VStack(alignment: .leading, spacing: 6) {
+                SettingsStatus(level: level(for: step), title: step.title, note: detail(for: step))
+                SettingsStatusDetail {
+                    if step.id == .databases, !model.databaseDownloads.isEmpty {
+                        ProgressView(value: databaseFraction)
+                            .progressViewStyle(.linear)
+                            .controlSize(.small)
+                            .frame(width: 200)
+                        Button("Stop") { perform(.cancelDatabaseDownload) }
+                    } else if let action = step.action, let label = step.actionLabel {
+                        Button(label) { perform(action) }
                     }
                 }
-                Text(detail(for: step))
-                    .font(.captionText)
-                    .foregroundStyle(.secondary)
-                    .fixedSize(horizontal: false, vertical: true)
-                if step.id == .databases, !model.databaseDownloads.isEmpty {
-                    ProgressView(value: databaseFraction)
-                        .progressViewStyle(.linear)
-                        .controlSize(.small)
-                }
             }
-            Spacer(minLength: 8)
-            action(for: step)
+        }
+    }
+
+    private func level(for step: SetupStep) -> SettingsStatusLevel {
+        if step.id == .databases, !model.databaseDownloads.isEmpty { return .working }
+        switch step.state {
+        case .done: return .ok
+        case .actionNeeded: return .warning
+        case .switchedOff: return .unknown
+        case .waiting:
+            // A backend that is not running is the one failure here; everything else that
+            // waits is unknown until it answers.
+            return step.id == .backend && !model.isConnected ? .error : .unknown
         }
     }
 
@@ -149,84 +94,19 @@ struct SetupCard: View {
         return share / Double(files.count)
     }
 
-    /// Shape carries the state, not colour alone: a check, a chevron or a spinner.
-    @ViewBuilder
-    private func icon(for step: SetupStep) -> some View {
-        switch step.state {
-        case .done:
-            Image(systemName: "checkmark.circle.fill")
-                .foregroundStyle(Color.green)
-                .font(.secondaryText)
-        case .actionNeeded:
-            Image(systemName: step.isOptional ? "circle.dotted" : "exclamationmark.circle.fill")
-                .foregroundStyle(step.isOptional ? Color.secondary : Color.orange)
-                .font(.secondaryText)
-        case .waiting:
-            ProgressView().controlSize(.mini)
-        case .switchedOff:
-            // A deliberate choice, so neither a tick that claims it works nor a warning
-            // that asks to be fixed.
-            Image(systemName: "minus.circle")
-                .foregroundStyle(.tertiary)
-                .font(.secondaryText)
-        }
-    }
-
-    @ViewBuilder
-    private func action(for step: SetupStep) -> some View {
-        if step.id == .translationPair, pairWorking {
-            ProgressView().controlSize(.mini)
-        } else if step.id == .databases, !model.databaseDownloads.isEmpty {
-            Button("Stop") { perform(.cancelDatabaseDownload) }
-                .buttonStyle(.bordered)
-                .controlSize(.small)
-        } else if let action = step.action, let label = step.actionLabel {
-            Button(label) { perform(action) }
-                .buttonStyle(.bordered)
-                .controlSize(.small)
-        }
-    }
-
-    /// Ask launchd to run the login agent now.
-    ///
-    /// Its KeepAlive only covers a crash, so a backend stopped cleanly stays down until
-    /// the next login. `kickstart` restarts a service that is still loaded; one that was
-    /// booted out is not there to kick, so that case bootstraps the agent first.
-    private func startBackendAgent() {
-        let label = "com.translator.desktop"
-        let domain = "gui/\(getuid())"
-        if launchctl(["kickstart", "-k", "\(domain)/\(label)"]) != 0 {
-            let plist = FileManager.default.homeDirectoryForCurrentUser
-                .appendingPathComponent("Library/LaunchAgents/\(label).plist")
-            _ = launchctl(["bootstrap", domain, plist.path])
-        }
-        Task {
-            // It opens three SQLite bases and warms the sidecar before it answers.
-            try? await Task.sleep(for: .seconds(8))
-            await model.refreshAll()
-        }
-    }
-
-    @discardableResult
-    private func launchctl(_ arguments: [String]) -> Int32 {
-        let process = Process()
-        process.executableURL = URL(fileURLWithPath: "/bin/launchctl")
-        process.arguments = arguments
-        process.standardOutput = FileHandle.nullDevice
-        process.standardError = FileHandle.nullDevice
-        do {
-            try process.run()
-            process.waitUntilExit()
-            return process.terminationStatus
-        } catch {
-            return -1
-        }
-    }
-
     private func perform(_ action: SetupAction) {
+        SetupActions.perform(action, model: model, onRecordShortcut: onRecordShortcut)
+    }
+}
+
+/// What each setup button does. Shared by the checklist and the panes that carry the
+/// optional steps, so one button never behaves two ways.
+@MainActor
+enum SetupActions {
+    static func perform(_ action: SetupAction, model: AppModel, onRecordShortcut: () -> Void = {}) {
         switch action {
         case .startBackend:
-            startBackendAgent()
+            startBackendAgent(model: model)
         case .grantAccessibility:
             // Raises Apple's own dialog; the click in it is the user's.
             SelectionCapture.requestTrust()
@@ -237,14 +117,10 @@ struct SetupCard: View {
         case .recordShortcut:
             onRecordShortcut()
         case .downloadLanguagePair:
-            pairMessage = nil
-            pairWorking = true
-            pairConfiguration = TranslationSession.Configuration(
-                source: Locale.Language(identifier: model.settings.languages.source),
-                target: Locale.Language(identifier: model.settings.languages.target)
-            )
+            // Only a SwiftUI `translationTask` can raise the system download sheet; the
+            // Sources pane owns that control.
+            break
         case .enableLoginItem:
-            // The same path as the switch below, so the two cannot disagree.
             model.setLoginItem(true)
         case .openLoginItemsSettings:
             LoginItem.openSettings()
@@ -262,6 +138,42 @@ struct SetupCard: View {
         case .recheck:
             model.refreshAccessibilityTrust()
             Task { await model.refreshAll() }
+        }
+    }
+
+    /// Ask launchd to run the login agent now.
+    ///
+    /// Its KeepAlive only covers a crash, so a backend stopped cleanly stays down until
+    /// the next login. `kickstart` restarts a service that is still loaded; one that was
+    /// booted out is not there to kick, so that case bootstraps the agent first.
+    private static func startBackendAgent(model: AppModel) {
+        let label = "com.translator.desktop"
+        let domain = "gui/\(getuid())"
+        if launchctl(["kickstart", "-k", "\(domain)/\(label)"]) != 0 {
+            let plist = FileManager.default.homeDirectoryForCurrentUser
+                .appendingPathComponent("Library/LaunchAgents/\(label).plist")
+            _ = launchctl(["bootstrap", domain, plist.path])
+        }
+        Task {
+            // It opens three SQLite bases and warms the sidecar before it answers.
+            try? await Task.sleep(for: .seconds(8))
+            await model.refreshAll()
+        }
+    }
+
+    @discardableResult
+    private static func launchctl(_ arguments: [String]) -> Int32 {
+        let process = Process()
+        process.executableURL = URL(fileURLWithPath: "/bin/launchctl")
+        process.arguments = arguments
+        process.standardOutput = FileHandle.nullDevice
+        process.standardError = FileHandle.nullDevice
+        do {
+            try process.run()
+            process.waitUntilExit()
+            return process.terminationStatus
+        } catch {
+            return -1
         }
     }
 }

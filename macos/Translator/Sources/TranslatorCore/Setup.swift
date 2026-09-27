@@ -124,6 +124,19 @@ public struct SetupPlan: Equatable, Sendable {
 
     public var isReady: Bool { blocking.isEmpty }
 
+    /// The rows of the Setup checklist in Settings: what still stops the app from working.
+    ///
+    /// Only required steps. Every optional one has a home of its own in Settings (Open at
+    /// login under Startup, the language pair under Sources, Anki in its pane), and a row
+    /// here as well would show the same state twice. While the backend is down only it is
+    /// listed: the rest is unknown rather than wrong and settles the moment it answers.
+    public var checklist: [SetupStep] {
+        if let backend = steps.first(where: { $0.id == .backend }), backend.state != .done {
+            return [backend]
+        }
+        return blocking
+    }
+
     /// One line for the top of the section, so the state is legible without reading rows.
     public var summary: String {
         // Everything the backend reports is unknown until it answers, not wrong. Listing
@@ -195,7 +208,7 @@ public enum SetupPlanner {
             state: .waiting,
             isOptional: false,
             action: connected ? .recheck : .startBackend,
-            actionLabel: connected ? "Re-check" : "Start"
+            actionLabel: connected ? "Check Again" : "Start Backend"
         )
     }
 
@@ -269,11 +282,22 @@ public enum SetupPlanner {
             state: .actionNeeded,
             isOptional: false,
             action: .grantAccessibility,
-            actionLabel: "Grant…"
+            actionLabel: "Open System Settings…"
         )
     }
 
+    /// An empty `shortcut` means the user cleared it: a choice, like a source switched off,
+    /// so neither done nor something to fix. Services still translates a selection.
     private static func shortcutStep(registered: Bool, shortcut: String) -> SetupStep {
+        if shortcut.isEmpty {
+            return SetupStep(
+                id: .shortcut,
+                title: "Shortcut",
+                detail: "None. Services on any selected text still translates it.",
+                state: .switchedOff,
+                isOptional: false
+            )
+        }
         if registered {
             return SetupStep(
                 id: .shortcut,
@@ -356,7 +380,7 @@ public enum SetupPlanner {
             return SetupStep(
                 id: .dictionary,
                 title: "Apple Dictionary",
-                detail: "Switched off in Sources below.",
+                detail: "Switched off in Sources.",
                 state: .switchedOff,
                 isOptional: true
             )
@@ -398,7 +422,7 @@ public enum SetupPlanner {
             return SetupStep(
                 id: .translationPair,
                 title: "Offline translation",
-                detail: "Switched off in Sources below. Phrases go over the network.",
+                detail: "Switched off in Sources. Phrases go over the network.",
                 state: .switchedOff,
                 isOptional: true
             )
@@ -454,7 +478,7 @@ public enum SetupPlanner {
                 state: .actionNeeded,
                 isOptional: true,
                 action: .connectAnki,
-                actionLabel: "Re-check"
+                actionLabel: "Check Again"
             )
         }
         let hasModel = anki.modelStatus.localizedCaseInsensitiveContains("ready")
@@ -469,8 +493,8 @@ public enum SetupPlanner {
             )
         }
         var missing: [String] = []
-        if !hasModel { missing.append("model") }
-        if !hasDeck { missing.append("deck") }
+        if !hasModel { missing.append("a note type") }
+        if !hasDeck { missing.append("a deck") }
         return SetupStep(
             id: .anki,
             title: "Anki",

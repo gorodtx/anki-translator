@@ -178,15 +178,57 @@ final class SnapshotRunner {
         try? await Task.sleep(for: .milliseconds(300))
     }
 
+    /// One image per pane, each selected the way the toolbar selects it, plus General with
+    /// its Setup checklist showing (a shortcut another app owns, simulated in the model).
     private func settingsScene(appearance: String) async {
         guard let delegate else { return }
-        delegate.showSettings()
-        // The view refreshes ping, settings and Anki on appear.
+        let settings = delegate.snapshotSettingsWindow
+        let windowBefore = settings.window
+        delegate.showSettings(pane: .general)
+        // The window refreshes ping, settings and Anki when it becomes key.
         try? await Task.sleep(for: .seconds(3))
-        guard let window = delegate.snapshotWindow(id: "settings") else { return }
-        await captureScrollingPages(window, prefix: "settings-\(appearance)")
+        guard let window = settings.window, window.isVisible else {
+            NSLog("[snapshot] settings window not visible")
+            return
+        }
+        NSLog("[snapshot] settings window reused=\(windowBefore === window) key=\(window.isKeyWindow) active=\(NSApp.isActive)")
+        for pane in SettingsPaneID.allCases {
+            settings.select(pane)
+            // The pane switch animates the frame over 0.25 s; Anki asks AnkiConnect.
+            try? await Task.sleep(for: .milliseconds(pane == .anki ? 1500 : 700))
+            logControls(in: window, name: "settings-\(pane.rawValue)-\(appearance)")
+            write(window, "settings-\(pane.rawValue)-\(appearance)")
+        }
+        // The checklist appears only while setup is unfinished, which the isolated
+        // backend never is; a taken shortcut is the one gap the model can stand in for.
+        let registered = delegate.model.shortcutRegistered
+        delegate.model.shortcutRegistered = false
+        settings.select(.general)
+        try? await Task.sleep(for: .milliseconds(900))
+        logControls(in: window, name: "settings-general-setup-\(appearance)")
+        write(window, "settings-general-setup-\(appearance)")
+        delegate.model.shortcutRegistered = registered
+        try? await Task.sleep(for: .milliseconds(500))
         window.close()
         try? await Task.sleep(for: .milliseconds(300))
+    }
+
+    /// Where every checkbox and button of a window sits, in points from the content's
+    /// left edge, so alignment can be checked against the image.
+    private func logControls(in window: NSWindow, name: String) {
+        var stack = [window.contentView].compactMap { $0 }
+        var lines: [String] = []
+        while let view = stack.popLast() {
+            if view.accessibilityRole() == .checkBox || view is NSButton {
+                let frame = view.convert(view.bounds, to: nil)
+                let top = window.contentLayoutRect.maxY - frame.maxY
+                let role = view.accessibilityRole()?.rawValue ?? "?"
+                let label = view.accessibilityLabel() ?? (view as? NSButton)?.title ?? ""
+                lines.append(String(format: "%@ x=%.1f y=%.1f w=%.1f '%@'", role, frame.minX, top, frame.width, label))
+            }
+            stack.append(contentsOf: view.subviews)
+        }
+        NSLog("[snapshot] controls \(name): \(lines.sorted().joined(separator: " | "))")
     }
 
     /// The list as the popup scenes left it (or its empty state on a fresh backend), then
