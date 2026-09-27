@@ -22,7 +22,7 @@ struct HistoryView: View {
     @State private var didLoad = false
 
     private var filtered: [HistoryItem] {
-        let needle = query.trimmingCharacters(in: .whitespaces)
+        let needle = needle
         guard !needle.isEmpty else { return model.history }
         return model.history.filter {
             $0.text.localizedStandardContains(needle) || $0.translation.localizedStandardContains(needle)
@@ -30,20 +30,31 @@ struct HistoryView: View {
     }
 
     var body: some View {
-        List(filtered, selection: $selection) { item in
-            HistoryRow(item: item)
-        }
-        .contextMenu(forSelectionType: Int.self) { ids in
-            if let id = ids.first, let item = model.history.first(where: { $0.entryId == id }) {
-                Button("Open") { onOpen(id) }
-                Divider()
-                Button("Copy Word") { Self.copy(item.text) }
-                Button("Copy Translation") { Self.copy(item.translation) }
-                    .disabled(!item.hasTranslation)
+        ScrollViewReader { proxy in
+            List(filtered, selection: $selection) { item in
+                HistoryRow(item: item)
             }
-        } primaryAction: { ids in
-            // Double-click and Return.
-            if let id = ids.first { onOpen(id) }
+            .contextMenu(forSelectionType: Int.self) { ids in
+                if let id = ids.first, let item = model.history.first(where: { $0.entryId == id }) {
+                    Button("Open") { onOpen(id) }
+                    Divider()
+                    Button("Copy Word") { Self.copy(item.text) }
+                    Button("Copy Translation") { Self.copy(item.translation) }
+                        .disabled(!item.hasTranslation)
+                }
+            } primaryAction: { ids in
+                // Double-click and Return.
+                if let id = ids.first { onOpen(id) }
+            }
+            // The list keeps its place between opens, and each row a lookup added at the
+            // top meanwhile pushes that place further down: reopened, it would start part
+            // way down with the newest word half under the toolbar. A reopened History
+            // starts at the newest word, unless the user left a selection or a search to
+            // come back to.
+            .onChange(of: model.historyReopens) {
+                guard selection == nil, needle.isEmpty, let first = filtered.first?.entryId else { return }
+                proxy.scrollTo(first, anchor: .top)
+            }
         }
         .overlay { emptyState }
         .searchable(text: $query, placement: .toolbar)
@@ -52,12 +63,35 @@ struct HistoryView: View {
             await model.loadHistory()
             didLoad = true
         }
+        .alert(
+            model.historyOpenFailure.map { $0.word.isEmpty ? "Can’t Open the Entry" : "Can’t Open “\($0.word)”" } ?? "",
+            isPresented: Binding(
+                get: { model.historyOpenFailure != nil },
+                set: { if !$0 { model.historyOpenFailure = nil } }
+            ),
+            presenting: model.historyOpenFailure
+        ) { _ in
+            Button("OK") {}
+        } message: { failure in
+            Text(failure.message)
+        }
     }
+
+    private var needle: String { query.trimmingCharacters(in: .whitespaces) }
 
     @ViewBuilder
     private var emptyState: some View {
         if model.history.isEmpty {
-            if didLoad {
+            if let error = model.historyLoadError {
+                // Not "No History": the list is empty because nobody could ask for it.
+                ContentUnavailableView {
+                    Label("Can’t Load History", systemImage: "exclamationmark.triangle")
+                } description: {
+                    Text(error)
+                } actions: {
+                    Button("Try Again") { Task { await model.loadHistory() } }
+                }
+            } else if didLoad {
                 ContentUnavailableView(
                     "No History",
                     systemImage: "clock",
@@ -65,7 +99,7 @@ struct HistoryView: View {
                 )
             }
         } else if filtered.isEmpty {
-            ContentUnavailableView.search(text: query.trimmingCharacters(in: .whitespaces))
+            ContentUnavailableView.search(text: needle)
         }
     }
 
