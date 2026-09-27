@@ -39,16 +39,21 @@ struct AnkiUpsertSheet: View {
     @State private var isApplying = false
     @State private var applyFailure: String?
     @State private var formHeight: CGFloat = 0
+    /// The newest preparation this window started; an older one finishing late is ignored.
+    @State private var preparation = UUID()
 
     var body: some View {
         VStack(spacing: 0) {
             switch phase {
             case .preparing:
                 ProgressView {
-                    Text("Reading your Anki collection…")
+                    Text(model.state.loading ? "Translating “\(currentSource.text)”…" : "Reading your Anki collection…")
                         .foregroundStyle(.secondary)
+                        .lineLimit(1)
+                        .truncationMode(.middle)
                 }
                 .frame(maxWidth: .infinity)
+                .padding(.horizontal, 20)
                 .frame(height: Self.placeholderHeight)
             case let .notSetUp(instruction):
                 // Its one way forward is the default button below, as in an alert.
@@ -73,12 +78,64 @@ struct AnkiUpsertSheet: View {
             footer
         }
         .frame(width: Self.width)
-        .task { await prepare() }
+        .onAppear { prepare() }
+        .onDisappear {
+            // Closed: no preparation of ours is wanted any more.
+            preparation = UUID()
+            model.ankiNoteSource = nil
+            model.abandonUpsertPreparation()
+        }
         // Fixed in Settings while this window waited: carry on without being asked.
         .onChange(of: model.settings.anki) {
             if case .notSetUp = phase, AnkiSetupGap.gaps(in: model.settings.anki).isEmpty {
-                Task { await prepare() }
+                prepare()
             }
+        }
+        // Another lookup while this window is open — a new word, a history entry, the
+        // popup dismissed — drops the note the backend prepared, and Add would fail.
+        .onChange(of: lookup) { followLookup() }
+    }
+
+    // MARK: - The lookup underneath
+
+    /// The lookup the app holds now, in the terms the note was prepared from.
+    private var currentSource: AnkiNoteSource {
+        AnkiNoteSource(
+            text: model.state.originalText.trimmingCharacters(in: .whitespacesAndNewlines),
+            requestId: model.activeRequestId,
+            closedSessions: model.closedSessions,
+            finished: !model.state.loading
+        )
+    }
+
+    private struct Lookup: Equatable {
+        var source: AnkiNoteSource
+        var loading: Bool
+        var canAdd: Bool
+    }
+
+    private var lookup: Lookup {
+        Lookup(source: currentSource, loading: model.state.loading, canAdd: model.state.canAddAnki)
+    }
+
+    /// Follows a new lookup: prepares the note again from it once it has finished, and
+    /// closes when there is nothing left to add from.
+    private func followLookup() {
+        let now = lookup
+        switch AnkiSheetFollowUp.after(
+            preparedFrom: model.ankiNoteSource, now: now.source, loading: now.loading, canAdd: now.canAdd
+        ) {
+        case .keep:
+            break
+        case .wait:
+            preparation = UUID()
+            model.abandonUpsertPreparation()
+            applyFailure = nil
+            phase = .preparing
+        case .prepare:
+            prepare()
+        case .close:
+            onFinished(false)
         }
     }
 
@@ -110,7 +167,8 @@ struct AnkiUpsertSheet: View {
     @ViewBuilder
     private func sections(_ preview: UpsertPreview) -> some View {
         SettingsSection(title: "Word") {
-            Text(model.state.originalText)
+            // The word the values below were prepared from, not whatever the popup shows.
+            Text(model.ankiNoteSource?.text ?? "")
                 .lineLimit(2)
                 .textSelection(.enabled)
         }
@@ -170,7 +228,7 @@ struct AnkiUpsertSheet: View {
                 model.settings.anki.deck = deck
                 Task {
                     await model.selectDeck(deck)
-                    await prepare()
+                    prepare()
                 }
             }
         )) {
@@ -327,7 +385,7 @@ struct AnkiUpsertSheet: View {
         case .notSetUp:
             return ("Open Settings…", true, openSettings)
         case .failed:
-            return ("Try Again", true, { Task { await prepare() } })
+            return ("Try Again", true, { prepare() })
         case .preparing:
             return ("Add", false, {})
         case .ready:
@@ -345,13 +403,30 @@ struct AnkiUpsertSheet: View {
 
     // MARK: - Actions
 
-    private func prepare() async {
+    /// Prepares the note from the lookup the app holds now, and remembers which one that
+    /// was: the Word row shows it, and a later lookup is measured against it.
+    private func prepare() {
+        let token = UUID()
+        preparation = token
+        model.ankiNoteSource = currentSource
         phase = .preparing
         applyFailure = nil
         formHeight = 0
+        // Still translating: the backend has no result to prepare from yet, or only a
+        // partial one. `followLookup` prepares once the lookup has finished.
+        guard !model.state.loading else {
+            model.abandonUpsertPreparation()
+            return
+        }
+        Task { await finishPreparing(token) }
+    }
+
+    private func finishPreparing(_ token: UUID) async {
         async let status: Void = model.refreshAnkiStatus()
         await model.prepareUpsert()
         await status
+        // A newer lookup or a closed window took over while this one was out.
+        guard token == preparation else { return }
         guard let preview = model.upsertPreview else {
             let gaps = AnkiSetupGap.gaps(in: model.settings.anki)
             if let instruction = AnkiSetupGap.instruction(for: gaps) {

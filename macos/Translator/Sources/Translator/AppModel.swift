@@ -30,6 +30,13 @@ final class AppModel {
     /// Progress per database file while a download runs; empty when none is.
     var databaseDownloads: [String: DatabaseProgressEvent] = [:]
     var history: [HistoryItem] = []
+    /// Why the last load of the history failed; nil once one succeeds. The History window
+    /// says so instead of claiming there is no history.
+    var historyLoadError: String?
+    /// Why an entry could not be opened, for the History window to report.
+    var historyOpenFailure: HistoryOpenFailure?
+    /// Counts the History window's reopenings, each after its list has been reloaded.
+    var historyReopens = 0
     var ankiStatus = AnkiStatus()
     var ankiDecks: [String] = []
     /// What the backend runs with. Settings apply as they change, as a Mac settings window
@@ -48,6 +55,13 @@ final class AppModel {
     // Anki sheet
     var upsertPreview: UpsertPreview?
     var isPreparingUpsert = false
+    /// The lookup the Add to Anki window prepared its note from; the Word row shows it.
+    var ankiNoteSource: AnkiNoteSource?
+    /// How many times the backend session has been closed. Closing drops the note Add to
+    /// Anki prepared, so the window watches this.
+    private(set) var closedSessions = 0
+    /// The newest preparation; an older one answering late must not replace its preview.
+    @ObservationIgnored private var upsertPreparation = 0
 
     private let client: IPCClient
     /// The settings the backend is known to hold: loaded from it, or saved to it. Nil
@@ -66,6 +80,12 @@ final class AppModel {
         let id = UUID()
         var text: String
         var level: NotificationLevel
+    }
+
+    struct HistoryOpenFailure: Equatable, Identifiable {
+        let id = UUID()
+        var word: String
+        var message: String
     }
 
     init(client: IPCClient) {
@@ -353,6 +373,7 @@ final class AppModel {
 
     func closeSession() async {
         _ = try? await client.send(IPCMethod.close)
+        closedSessions += 1
     }
 
     func refreshExamples() async {
@@ -378,23 +399,34 @@ final class AppModel {
         }
     }
 
-    func loadHistory() async {
+    /// Reloads the history. A failure is kept in `historyLoadError` for the History window
+    /// to show: a banner would go to the popup, which is not on screen.
+    @discardableResult
+    func loadHistory() async -> Bool {
         do {
             history = try await client.send(IPCMethod.historyList, as: HistoryListResponse.self).items
+            historyLoadError = nil
+            return true
         } catch {
-            show(banner: message(for: error), level: .error)
+            historyLoadError = message(for: error)
+            return false
         }
     }
 
-    func selectHistory(_ entryId: Int) async {
+    /// Makes a history entry the current lookup. False when the backend refused; the
+    /// reason is in `historyOpenFailure` and the state still holds the previous lookup.
+    func selectHistory(_ entryId: Int) async -> Bool {
         do {
             let response = try await client.send(
                 IPCMethod.historySelect, params: ["entry_id": entryId], as: TranslateResponse.self
             )
             activeRequestId = response.requestId
             withAnimation(Motion.stateChange) { state = response.state }
+            return true
         } catch {
-            show(banner: message(for: error), level: .error)
+            let word = history.first { $0.entryId == entryId }?.text ?? ""
+            historyOpenFailure = HistoryOpenFailure(word: word, message: message(for: error))
+            return false
         }
     }
 
@@ -439,16 +471,31 @@ final class AppModel {
         if let name = result.deckName { ankiStatus.deckName = name }
     }
 
+    /// Asks the backend to prepare the note for the current lookup. Only the newest call
+    /// counts: a preparation for a lookup that has since been replaced may answer late (or,
+    /// once the backend has dropped it, only by timing out), and it must neither replace
+    /// the newer preview nor raise a banner about a word nobody is adding any more.
     func prepareUpsert() async {
+        upsertPreparation += 1
+        let preparation = upsertPreparation
         isPreparingUpsert = true
-        defer { isPreparingUpsert = false }
+        defer { if preparation == upsertPreparation { isPreparingUpsert = false } }
         do {
             let response = try await client.send(IPCMethod.ankiPrepareUpsert, as: UpsertPreviewResponse.self)
+            guard preparation == upsertPreparation else { return }
             upsertPreview = response.preview
         } catch {
+            guard preparation == upsertPreparation else { return }
             upsertPreview = nil
             show(banner: message(for: error), level: .error)
         }
+    }
+
+    /// Forgets any preparation still in flight, so its answer is ignored.
+    func abandonUpsertPreparation() {
+        upsertPreparation += 1
+        isPreparingUpsert = false
+        upsertPreview = nil
     }
 
     func applyUpsert(_ decision: UpsertDecision) async -> Bool {

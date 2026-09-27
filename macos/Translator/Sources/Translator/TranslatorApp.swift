@@ -94,6 +94,8 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     private var windows: [String: NSWindow] = [:]
     /// Dialogs that follow their content's size (see `present(id:…)`).
     private var contentSizeObservers: [String: NSKeyValueObservation] = [:]
+    /// Windows whose content is rebuilt on every open drop it on close.
+    private var closeObservers: [String: NSObjectProtocol] = [:]
 
     override init() {
         let client = IPCClient(socketPath: IPCClient.defaultSocketPath())
@@ -314,10 +316,39 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
             size: HistoryView.defaultSize,
             chrome: .document(autosaveName: "History", searchInToolbar: true),
             onReopen: .keepContent,
-            view: HistoryView(model: model) { [weak self] entryId in self?.showHistoryEntry(entryId) }
+            view: HistoryView(
+                model: model,
+                onOpen: { [weak self] entryId in self?.showHistoryEntry(entryId) },
+                scrollToTop: { [weak self] in self?.scrollHistoryToTop() }
+            )
         )
-        // The view is kept between opens, so its first-load task does not run again.
-        if reopening { Task { await model.loadHistory() } }
+        // The view is kept between opens, so its first-load task does not run again. The
+        // count goes up once the list holds the new rows, which is when the view can put
+        // the newest one at the top.
+        if reopening {
+            Task {
+                await model.loadHistory()
+                model.historyReopens += 1
+            }
+        }
+    }
+
+    /// Scrolls History's list to its top edge once the rows the reload just brought in are
+    /// laid out (the list moves itself when they are inserted, so this waits for that).
+    private func scrollHistoryToTop() {
+        DispatchQueue.main.async { [weak self] in
+            guard let root = self?.windows["history"]?.contentView else { return }
+            var stack = [root]
+            while let view = stack.popLast() {
+                if let table = view as? NSTableView, let scroll = table.enclosingScrollView {
+                    let clip = scroll.contentView
+                    clip.scroll(to: NSPoint(x: clip.bounds.origin.x, y: -scroll.contentInsets.top))
+                    scroll.reflectScrolledClipView(clip)
+                    return
+                }
+                stack.append(contentsOf: view.subviews)
+            }
+        }
     }
 
     /// Shows Settings on `pane`, or on the pane it was left on when nil. The window and
@@ -368,9 +399,14 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         let text = model.history.first { $0.entryId == entryId }?.text ?? ""
         let pointer = NSEvent.mouseLocation
         // The entry comes from the local history, so it is quick: show the panel once the
-        // state holds it, not over the previous lookup.
+        // state holds it, not over the previous lookup. When the backend refuses, the
+        // state still holds the previous lookup, so there is nothing to show; the History
+        // window says why.
         Task {
-            await model.selectHistory(entryId)
+            guard await model.selectHistory(entryId) else { return }
+            // As for a new lookup: nothing said about the previous one carries over.
+            model.lastError = nil
+            model.banner = nil
             showPopup(width: PopupLayout.width(forQuery: text.isEmpty ? model.state.originalText : text), at: pointer)
         }
     }
@@ -456,6 +492,21 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
             }
         } else {
             window.setContentSize(size)
+        }
+        if onReopen == .rebuildContent {
+            // A closed window is only ordered out, and a view left in it would go on
+            // reacting to the model: Add to Anki preparing notes nobody sees. Its content
+            // goes with the window; the next open builds it again anyway.
+            closeObservers[id] = NotificationCenter.default.addObserver(
+                forName: NSWindow.willCloseNotification, object: window, queue: .main
+            ) { [weak controller] _ in
+                DispatchQueue.main.async {
+                    MainActor.assumeIsolated {
+                        guard let controller, controller.view.window?.isVisible != true else { return }
+                        controller.rootView = AnyView(EmptyView())
+                    }
+                }
+            }
         }
         window.center()
         if let name = chrome.autosaveName {

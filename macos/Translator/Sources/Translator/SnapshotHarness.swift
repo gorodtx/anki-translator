@@ -345,9 +345,16 @@ final class SnapshotRunner {
         delegate.showHistory()
         try? await Task.sleep(for: .seconds(2))
         guard let window = delegate.snapshotWindow(id: "history") else { return }
+        let reopened = firstOpened["history"] != nil
         probeReuse("history", window)
         // The frame is autosaved; a size left by an earlier run must not change the image.
         window.setContentSize(HistoryView.defaultSize)
+        if reopened, !delegate.model.history.isEmpty {
+            // The popup scenes of this appearance added a row at the top while the window
+            // was closed: the newest row must still open fully below the toolbar.
+            try? await Task.sleep(for: .milliseconds(300))
+            Self.probeFirstRow("history-first-row-on-reopen", in: window)
+        }
         // Activation is left to the system: forcing it would take the keyboard from
         // whoever is typing on this Mac while the run is on screen. So a window may be
         // captured in its inactive look.
@@ -399,23 +406,150 @@ final class SnapshotRunner {
             } else {
                 NSLog("[snapshot] history search field not found in the toolbar")
             }
+            await historyReopenAfterLookup(window, appearance: appearance)
+            await historyFailures(window, appearance: appearance)
         }
         window.close()
         try? await Task.sleep(for: .milliseconds(300))
+    }
+
+    /// What a user does between two looks at History: close it, look a new word up, open
+    /// it again. The new word is the first row, fully in view below the toolbar.
+    private func historyReopenAfterLookup(_ window: NSWindow, appearance: String) async {
+        guard let delegate else { return }
+        window.close()
+        try? await Task.sleep(for: .milliseconds(300))
+        let word = appearance == "dark" ? "gregarious" : "meticulous"
+        let popup = delegate.snapshotPopup
+        popup.suspendsDismissal = true
+        delegate.snapshotPresent(text: word)
+        await waitUntil(timeout: 25) { !delegate.model.state.loading }
+        popup.suspendsDismissal = false
+        delegate.snapshotHidePopup()
+        try? await Task.sleep(for: .milliseconds(300))
+        delegate.showHistory()
+        Self.probeFirstRow("history-scroll-at-show", in: window, log: false)
+        await waitUntil(timeout: 5) { delegate.model.history.first?.text == word }
+        Self.probeFirstRow("history-scroll-after-load", in: window, log: false)
+        try? await Task.sleep(for: .milliseconds(700))
+        let newest = delegate.model.history.first?.text == word
+        Self.probeFirstRow(
+            "history-first-row-after-lookup", in: window,
+            problem: newest ? nil : "the newest row is not “\(word)”"
+        )
+        write(window, "history-reopened-\(appearance)")
+    }
+
+    /// History when the backend lets it down.
+    ///
+    /// Opening an entry the backend refuses is real: no entry has id -1, and the backend
+    /// answers "No history entry -1.". A failed load cannot be had from a running backend,
+    /// so its state (no rows, the client's own "not connected" words) is set on the model;
+    /// the Try Again that follows is a real reload.
+    private func historyFailures(_ window: NSWindow, appearance: String) async {
+        guard let delegate else { return }
+        let model = delegate.model
+
+        // An entry that cannot be opened: no popup over the previous lookup, the reason
+        // in this window.
+        delegate.snapshotHidePopup()
+        model.historyOpenFailure = nil
+        let before = model.state.originalText
+        delegate.showHistoryEntry(-1)
+        await waitUntil(timeout: 4) { model.historyOpenFailure != nil }
+        try? await Task.sleep(for: .milliseconds(500))
+        let popupShown = delegate.snapshotPopupWindow?.isVisible == true
+        let alert = window.attachedSheet
+        let opened = model.historyOpenFailure != nil && !popupShown && alert != nil
+        NSLog("[snapshot] PROBE history-open-failure \(opened ? "PASS" : "FAIL") popup \(popupShown ? "shown" : "hidden"), alert \(alert == nil ? "none" : "shown"), message “\(model.historyOpenFailure?.message ?? "-")”, state still “\(model.state.originalText)” (was “\(before)”)")
+        if let alert {
+            write(alert, "history-open-failed-\(appearance)")
+            // Return is the alert's default button.
+            alert.sendEvent(Self.key(36, "\r", in: alert))
+            await waitUntil(timeout: 3) { window.attachedSheet == nil && model.historyOpenFailure == nil }
+            let gone = window.attachedSheet == nil && model.historyOpenFailure == nil
+            NSLog("[snapshot] PROBE history-open-failure-dismissed \(gone ? "PASS" : "FAIL") sheet \(window.attachedSheet == nil ? "gone" : "still shown")")
+        }
+        model.historyOpenFailure = nil
+
+        // A load that failed with nothing to show: not "No History".
+        let rows = model.history.count
+        model.history = []
+        model.historyLoadError = "Backend is not connected."
+        try? await Task.sleep(for: .milliseconds(500))
+        write(window, "history-error-\(appearance)")
+        // Pressed the way VoiceOver presses it: SwiftUI's button is no NSButton.
+        let pressed = Self.pressButton(titled: "Try Again", in: window)
+        await waitUntil(timeout: 5) { !model.history.isEmpty }
+        let recovered = pressed && model.history.count == rows && model.historyLoadError == nil
+        NSLog("[snapshot] PROBE history-load-error-retry \(recovered ? "PASS" : "FAIL") button \(pressed ? "pressed" : "missing"), rows \(model.history.count) of \(rows), error \(model.historyLoadError ?? "none")")
+        if !recovered {
+            model.historyLoadError = nil
+            await model.loadHistory()
+        }
+        try? await Task.sleep(for: .milliseconds(300))
+    }
+
+    /// Finds a button by its accessibility title and presses it through accessibility.
+    private static func pressButton(titled title: String, in window: NSWindow) -> Bool {
+        // SwiftUI's own elements are not declared as NSAccessibility conformers, so they
+        // are asked by message rather than by protocol.
+        var stack: [AnyObject] = [window.contentView].compactMap { $0 }
+        var visited = 0
+        while let element = stack.popLast(), visited < 5000 {
+            visited += 1
+            let role = element.accessibilityRole?() ?? nil
+            let names = [element.accessibilityTitle?() ?? nil, element.accessibilityLabel?() ?? nil]
+            if role == .button, names.contains(title) {
+                return element.accessibilityPerformPress?() ?? false
+            }
+            let children = element.accessibilityChildren?() ?? nil
+            stack.append(contentsOf: (children ?? []).map { $0 as AnyObject })
+        }
+        return false
+    }
+
+    /// Whether the list's first row is fully visible below the toolbar with the list at its
+    /// top. With `log: false` it records the geometry only, for diagnosis.
+    private static func probeFirstRow(_ name: String, in window: NSWindow, log: Bool = true, problem: String? = nil) {
+        guard let table = firstView(ofType: NSTableView.self, in: window.contentView),
+              let scroll = table.enclosingScrollView else {
+            NSLog("[snapshot] PROBE \(name) FAIL no list in the window")
+            return
+        }
+        guard table.numberOfRows > 0 else {
+            NSLog("[snapshot] PROBE \(name) FAIL the list is empty")
+            return
+        }
+        let row = table.convert(table.rect(ofRow: 0), to: nil)
+        let clip = scroll.contentView
+        let visibleTop = clip.convert(clip.bounds, to: nil).maxY
+        let insetTop = scroll.contentInsets.top
+        let atTop = clip.bounds.origin.y <= -insetTop + 0.5
+        let inView = row.maxY <= min(visibleTop - insetTop, window.contentLayoutRect.maxY) + 0.5
+        let geometry = "row0 top \(row.maxY), clip top \(visibleTop), layout top \(window.contentLayoutRect.maxY), "
+            + "clip y \(clip.bounds.origin.y), inset \(insetTop), rows \(table.numberOfRows)"
+        guard log else {
+            NSLog("[snapshot] \(name): \(geometry)")
+            return
+        }
+        let ok = atTop && inView && problem == nil
+        NSLog("[snapshot] PROBE \(name) \(ok ? "PASS" : "FAIL") \(problem.map { $0 + "; " } ?? "")\(geometry)")
     }
 
     /// Add to Anki after a real lookup. Whatever the isolated backend answers — usually
     /// "not set up", since its configuration is fresh — is what gets captured.
     private func ankiScene(appearance: String) async {
         guard let delegate else { return }
-        delegate.snapshotPresent(text: environment["TRANSLATOR_DEBUG_ANKI_TEXT"] ?? "serendipity")
+        await configureAnkiStandIn()
+        delegate.snapshotPresent(text: ankiText)
         await waitUntil(timeout: 25) { !delegate.model.state.loading }
         try? await Task.sleep(for: .milliseconds(400))
         delegate.showAnkiSheet()
         let opened = delegate.snapshotWindow(id: "anki")?.frame
         // The sheet starts preparing from its own task; let that begin, then finish.
         try? await Task.sleep(for: .milliseconds(500))
-        await waitUntil(timeout: 20) { !delegate.model.isPreparingUpsert }
+        await waitUntil(timeout: 20) { Self.ankiSettled(delegate.model) }
         // The deck list and the form's own measuring pass.
         try? await Task.sleep(for: .milliseconds(1200))
         if let window = delegate.snapshotWindow(id: "anki"), window.isVisible {
@@ -437,6 +571,109 @@ final class SnapshotRunner {
         } else {
             NSLog("[snapshot] anki window not visible")
         }
+        delegate.snapshotHidePopup()
+        try? await Task.sleep(for: .milliseconds(300))
+        await ankiFollowsNewLookup(appearance: appearance)
+    }
+
+    private var ankiText: String { environment["TRANSLATOR_DEBUG_ANKI_TEXT"] ?? "serendipity" }
+
+    /// Add to Anki has nothing left to do: no preparation out, and not waiting on a lookup.
+    private static func ankiSettled(_ model: AppModel) -> Bool {
+        !model.isPreparingUpsert && model.ankiNoteSource?.finished != false
+    }
+
+    /// `TRANSLATOR_DEBUG_ANKI_STUB=1`: an AnkiConnect stand-in answers at `ANKI_CONNECT_URL`
+    /// with a deck "English::Vocabulary" and a note type "Translator". The isolated
+    /// backend is pointed at both, so the sheet shows its form and Add really adds.
+    private var ankiStandIn: Bool { environment["TRANSLATOR_DEBUG_ANKI_STUB"] == "1" }
+
+    private func configureAnkiStandIn() async {
+        guard ankiStandIn, let model = delegate?.model else { return }
+        guard model.settings.anki.deck.isEmpty || model.settings.anki.model.isEmpty else { return }
+        model.settings.anki.deck = "English::Vocabulary"
+        model.settings.anki.model = "Translator"
+        // The debounced save, then the backend's own status check.
+        try? await Task.sleep(for: .milliseconds(1200))
+        await model.refreshAnkiStatus()
+    }
+
+    /// A new lookup while Add to Anki is open drops the note the backend prepared. The
+    /// window must follow the new lookup (prepare again from it, with its word in the Word
+    /// row) or close; never show one word over another's values with an Add that fails.
+    /// Then Esc on the new lookup's popup closes the session, and the window with it.
+    private func ankiFollowsNewLookup(appearance: String) async {
+        guard let delegate else { return }
+        let model = delegate.model
+        let popup = delegate.snapshotPopup
+        let second = ankiText == "bank" ? "went" : "bank"
+
+        popup.suspendsDismissal = true
+        delegate.snapshotPresent(text: ankiText)
+        await waitUntil(timeout: 25) { !model.state.loading }
+        popup.suspendsDismissal = false
+        delegate.showAnkiSheet()
+        try? await Task.sleep(for: .milliseconds(500))
+        await waitUntil(timeout: 20) { Self.ankiSettled(model) }
+        try? await Task.sleep(for: .milliseconds(800))
+        guard let window = delegate.snapshotWindow(id: "anki"), window.isVisible else {
+            NSLog("[snapshot] PROBE anki-new-lookup-follows FAIL the window did not open")
+            return
+        }
+        let before = model.ankiNoteSource
+
+        // The popup comes up over the open window for another word, as a hot key press does.
+        popup.suspendsDismissal = true
+        delegate.snapshotPresent(text: second)
+        await waitUntil(timeout: 25) { !model.state.loading }
+        try? await Task.sleep(for: .milliseconds(500))
+        await waitUntil(timeout: 20) { Self.ankiSettled(model) }
+        try? await Task.sleep(for: .milliseconds(1000))
+        popup.suspendsDismissal = false
+        let after = model.ankiNoteSource
+        let followed = window.isVisible && after?.text == second && after?.requestId == model.activeRequestId
+        let closed = !window.isVisible && after == nil
+        let what = followed ? "prepared again for “\(second)”" : closed ? "closed" : "stale"
+        NSLog("[snapshot] PROBE anki-new-lookup-follows \(followed || closed ? "PASS" : "FAIL") \(what): before “\(before?.text ?? "-")” #\(before?.requestId ?? -1), now “\(after?.text ?? "-")” #\(after?.requestId ?? -1), lookup “\(model.state.originalText)” #\(model.activeRequestId), preview \(model.upsertPreview == nil ? "none" : "ready")")
+        guard window.isVisible else { return }
+        write(window, "anki-new-lookup-\(appearance)")
+
+        if ankiStandIn {
+            // Return is the default button: Add must now succeed, for the new word.
+            window.sendEvent(Self.key(36, "\r", in: window))
+            await waitUntil(timeout: 10) { !window.isVisible }
+            let banner = model.banner
+            let added = !window.isVisible && banner?.level == .success
+            NSLog("[snapshot] PROBE anki-add-after-new-lookup \(added ? "PASS" : "FAIL") window \(window.isVisible ? "open" : "closed"), banner “\(banner?.text ?? "-")”")
+            delegate.snapshotHidePopup()
+            try? await Task.sleep(for: .milliseconds(300))
+            delegate.showAnkiSheet()
+            try? await Task.sleep(for: .milliseconds(500))
+            await waitUntil(timeout: 20) { Self.ankiSettled(model) }
+            try? await Task.sleep(for: .milliseconds(500))
+        } else {
+            NSLog("[snapshot] PROBE anki-add-after-new-lookup SKIP no AnkiConnect stand-in (TRANSLATOR_DEBUG_ANKI_STUB)")
+        }
+
+        // Esc on the popup ends the session, and the backend forgets the prepared note.
+        var detail = "popup not shown"
+        var passed = false
+        for attempt in 1...3 where window.isVisible {
+            delegate.snapshotReshowPopup()
+            try? await Task.sleep(for: .milliseconds(300))
+            guard let panel = delegate.snapshotPopupWindow, panel.isVisible else { continue }
+            let sessions = popup.sessionsEnded
+            panel.sendEvent(Self.escape(for: panel))
+            await waitUntil(timeout: 3) { !window.isVisible }
+            // The closed window drops its content on the next turn.
+            try? await Task.sleep(for: .milliseconds(300))
+            let ended = popup.sessionsEnded - sessions
+            passed = ended == 1 && !window.isVisible && model.ankiNoteSource == nil
+            detail = "closeSession=+\(ended) window \(window.isVisible ? "open" : "closed") attempt=\(attempt)"
+            if ended == 1 { break }
+        }
+        NSLog("[snapshot] PROBE anki-session-close-closes \(passed ? "PASS" : "FAIL") \(detail)")
+        window.close()
         delegate.snapshotHidePopup()
         try? await Task.sleep(for: .milliseconds(300))
     }
