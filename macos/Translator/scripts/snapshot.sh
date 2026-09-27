@@ -10,12 +10,13 @@
 #
 # Pass-through knobs: TRANSLATOR_DEBUG_SNAPSHOT_TEXTS ("a|b|c"),
 # TRANSLATOR_DEBUG_APPEARANCE (light|dark|both), TRANSLATOR_DEBUG_SNAPSHOT_SCENES
-# (popup,settings,history).
+# (popup,settings,history), TRANSLATOR_BACKEND_REPO (checkout whose backend and .venv to run).
 set -euo pipefail
 
 OUT="${1:?usage: scripts/snapshot.sh OUT_DIR [--no-build]}"
 HERE="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
-REPO="$(cd "${HERE}/../.." && pwd)"
+# The backend can run from another checkout (a worktree has no .venv of its own).
+REPO="${TRANSLATOR_BACKEND_REPO:-$(cd "${HERE}/../.." && pwd)}"
 mkdir -p "${OUT}"
 OUT="$(cd "${OUT}" && pwd)"
 
