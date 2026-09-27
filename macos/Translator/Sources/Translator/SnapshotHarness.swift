@@ -652,7 +652,6 @@ final class SnapshotRunner {
         }
 
         await probeKeyboardScroll()
-        await probeFooterArrows()
 
         await probe("click-inside-keeps") { panel in
             // On the headword, in window coordinates (origin bottom-left).
@@ -673,6 +672,10 @@ final class SnapshotRunner {
             return (panel.isVisible, "visible=\(panel.isVisible) isKeyWindow=\(panel.isKeyWindow) firstResponder=\(responder)")
         }
 
+        // After the click above left a text view first responder: a new showing must
+        // give the arrows back to the footer.
+        await probeFooterArrows()
+        await probeFooterAccessibility()
         await probeMonitorsLifecycle()
         await probeAnnouncementsStayOffKey()
         await probeNoEmptyGlass()
@@ -708,8 +711,13 @@ final class SnapshotRunner {
             guard let delegate = self.delegate else { return (false, "no delegate") }
             let popup = delegate.snapshotPopup
             guard popup.bodyScrolls, let scroll = popup.bodyScrollView else {
-                return (false, "body not capped (bodyScrolls=\(popup.bodyScrolls)); nothing to scroll")
+                let s = delegate.model.state
+                return (false, "body not capped (bodyScrolls=\(popup.bodyScrolls)); nothing to scroll; state “\(s.originalText)” loading=\(s.loading) translation=\(s.hasTranslation) error=\(delegate.model.lastError ?? "-") frame=\(panel.frame)")
             }
+            // Scrolling is under test, not dismissal: focus taken from outside (a sibling
+            // run, the user) during the key presses must not hide the panel.
+            popup.suspendsDismissal = true
+            defer { popup.suspendsDismissal = false }
             @MainActor func offset() -> CGFloat { scroll.contentView.bounds.minY }
             @MainActor func press(_ code: UInt16, _ characters: String) async {
                 panel.sendEvent(Self.key(code, characters, in: panel))
@@ -773,6 +781,42 @@ final class SnapshotRunner {
         }
     }
 
+    /// VoiceOver hears each footer row's shortcut: the glyphs are hidden from it, so the
+    /// row's hint carries the shortcut in words (or why the row is disabled).
+    ///
+    /// SwiftUI builds its accessibility elements only for a connected assistive client;
+    /// without one the walk finds no rows and the probe says SKIP (the words themselves
+    /// are covered by `PopupSpeechTests.shortcutsAreSpokenAsWords`).
+    private func probeFooterAccessibility() async {
+        guard let delegate else { return }
+        delegate.snapshotHidePopup()
+        delegate.snapshotReshowPopup()
+        try? await Task.sleep(for: .milliseconds(300))
+        guard let panel = delegate.snapshotPopupWindow else { return }
+        var found: [String: String] = [:]
+        // From the window down, through AppKit views and SwiftUI's own elements.
+        var stack: [Any] = [panel]
+        var visited = 0
+        while let next = stack.popLast(), visited < 4000 {
+            visited += 1
+            if let view = next as? NSView { stack.append(contentsOf: view.subviews) }
+            guard let element = next as? NSAccessibilityProtocol else { continue }
+            if let label = element.accessibilityLabel(), PopupFooterRow.allCases.contains(where: { $0.title == label }) {
+                found[label] = element.accessibilityHelp() ?? ""
+            }
+            stack.append(contentsOf: element.accessibilityChildren() ?? [])
+        }
+        guard !found.isEmpty else {
+            NSLog("PROBE footer-accessibility-hints SKIP no SwiftUI accessibility elements without an assistive client (\(visited) AppKit elements walked)")
+            return
+        }
+        let copy = found[PopupFooterRow.copyTranslation.title]
+        let examples = found[PopupFooterRow.newExamples.title]
+        let passed = copy == "Shift-Command-C" && (examples == nil || examples == "Command-R")
+        let listed = found.sorted { $0.key < $1.key }.map { "\($0.key)=“\($0.value)”" }.joined(separator: ", ")
+        NSLog("PROBE footer-accessibility-hints \(passed ? "PASS" : "FAIL") \(listed)")
+    }
+
     /// The dismissal monitors exist exactly while the panel is on screen: installed on
     /// show, kept (not replaced) by a new lookup while open, gone after every kind of hide.
     private func probeMonitorsLifecycle() async {
@@ -804,19 +848,27 @@ final class SnapshotRunner {
             ("programmatic", { _ in delegate.snapshotHidePopup() }),
         ]
         for (name, hide) in hides {
-            let open = await shown()
-            let installs = open.installs
-            // A new lookup while the panel is open keeps the monitors it has.
-            delegate.snapshotReshowPopup()
-            try? await Task.sleep(for: .milliseconds(150))
-            let reshown = popup.monitorState
-            guard let panel = delegate.snapshotPopupWindow else { break }
-            await hide(panel)
-            try? await Task.sleep(for: .milliseconds(200))
-            let closed = popup.monitorState
-            let ok = open.all && reshown.all && reshown.installs == installs && !panel.isVisible && closed.none
+            var ok = false
+            var line = ""
+            for attempt in 1...3 {
+                let open = await shown()
+                let installs = open.installs
+                // A new lookup while the panel is open keeps the monitors it has.
+                delegate.snapshotReshowPopup()
+                try? await Task.sleep(for: .milliseconds(150))
+                let reshown = popup.monitorState
+                guard let panel = delegate.snapshotPopupWindow else { break }
+                // Focus taken from outside hid it before the hide under test: try again.
+                let interfered = !panel.isVisible
+                await hide(panel)
+                try? await Task.sleep(for: .milliseconds(200))
+                let closed = popup.monitorState
+                ok = open.all && reshown.all && reshown.installs == installs && !panel.isVisible && closed.none
+                line = "\(name)\(ok ? "" : " ✗"): open[\(open)] reshown[\(reshown)] hidden(\(Self.name(popup.lastHideReason)))[\(closed)] attempt=\(attempt)"
+                if ok || !interfered { break }
+            }
             passed = passed && ok
-            lines.append("\(name)\(ok ? "" : " ✗"): open[\(open)] reshown[\(reshown)] hidden(\(Self.name(popup.lastHideReason)))[\(closed)]")
+            lines.append(line)
         }
         // The announcement: installed although it never takes key, gone when its timer ends.
         delegate.snapshotAnnounce("No text selected.", level: .info)
@@ -839,10 +891,16 @@ final class SnapshotRunner {
             delegate.snapshotAnnounce("No text selected.", level: .info)
             try? await Task.sleep(for: .milliseconds(300))
             let visible = panel.isVisible, key = panel.isKeyWindow
-            return (wasKey && visible && !key, "keyBefore=\(wasKey) visible=\(visible) isKeyWindow=\(key)")
+            let keyNow = NSApp.keyWindow.map { String(describing: Swift.type(of: $0)) } ?? "none"
+            let reason = Self.name(delegate.snapshotPopup.lastHideReason)
+            return (wasKey && visible && !key, "keyBefore=\(wasKey) visible=\(visible) isKeyWindow=\(key) appKeyWindow=\(keyNow) lastHide=\(reason)")
         }
         await probe("hotkey-over-announcement-captures") { panel in
             guard let delegate = self.delegate else { return (false, "no delegate") }
+            // What the press does is under test, not dismissal: a sibling run taking focus
+            // during the lookup must not hide the card it opened.
+            delegate.snapshotPopup.suspendsDismissal = true
+            defer { delegate.snapshotPopup.suspendsDismissal = false }
             delegate.snapshotAnnounce("No text selected.", level: .info)
             try? await Task.sleep(for: .milliseconds(250))
             var captures = 0

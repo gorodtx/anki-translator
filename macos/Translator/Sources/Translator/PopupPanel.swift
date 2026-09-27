@@ -228,7 +228,12 @@ final class PopupPanelController: NSObject {
         CATransaction.flush()
         panel.invalidateShadow()
         panel.orderFrontRegardless()
-        if takesKey { panel.makeKey() }
+        if takesKey {
+            panel.makeKey()
+            // A text view the last lookup's selection left first responder would keep
+            // the arrow keys from the footer.
+            panel.makeFirstResponder(nil)
+        }
         shownAppearance = Self.currentAppearance
         installMonitors()
         scheduleResize()
@@ -567,8 +572,12 @@ final class PopupPanelController: NSObject {
     }
 
     /// Another of our windows became key: hide at once, and keep the session.
+    ///
+    /// Not an announcement: it never had focus to lose, and handing focus back when it
+    /// replaces a card may itself make one of our windows key (History, when the app is
+    /// active); it stays up over that window until its timer or a click ends it.
     private func ownWindowBecameKey(_ window: NSWindow) {
-        guard let panel, panel.isVisible, window !== panel, !suspendsDismissal else { return }
+        guard let panel, panel.isVisible, window !== panel, !suspendsDismissal, !showingAnnouncement else { return }
         hide(reason: .ownWindowFocused)
     }
 
