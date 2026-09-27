@@ -39,7 +39,7 @@ struct HistoryView: View {
                 Divider()
                 Button("Copy Word") { Self.copy(item.text) }
                 Button("Copy Translation") { Self.copy(item.translation) }
-                    .disabled(item.translation.isEmpty)
+                    .disabled(!item.hasTranslation)
             }
         } primaryAction: { ids in
             // Double-click and Return.
@@ -82,13 +82,21 @@ private struct HistoryRow: View {
         VStack(alignment: .leading, spacing: 1) {
             Text(item.text)
                 .lineLimit(1)
-            if !item.translation.isEmpty {
-                Text(item.translation)
-                    .foregroundStyle(.secondary)
-                    .lineLimit(1)
-            }
+            Text(item.hasTranslation ? item.translation : "No translation")
+                .foregroundStyle(.secondary)
+                .lineLimit(1)
         }
         .padding(.vertical, 3)
         .accessibilityElement(children: .combine)
+    }
+}
+
+private extension HistoryItem {
+    /// A lookup that found nothing is stored with the query as its translation; showing
+    /// "qwzxv" under "qwzxv" would read as a fault rather than as "nothing found".
+    var hasTranslation: Bool {
+        let translation = translation.trimmingCharacters(in: .whitespacesAndNewlines)
+        return !translation.isEmpty
+            && translation.compare(text.trimmingCharacters(in: .whitespacesAndNewlines), options: .caseInsensitive) != .orderedSame
     }
 }
