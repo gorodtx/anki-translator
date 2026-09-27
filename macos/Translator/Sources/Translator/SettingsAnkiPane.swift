@@ -8,6 +8,9 @@ struct AnkiSettingsPane: View {
 
     @State private var isChecking = false
 
+    /// The width of every control in the Fields grid, pop-up or text field alike.
+    private static let fieldControlWidth: CGFloat = 170
+
     private var connected: Bool { model.ankiStatus.available }
     private var issues: [AnkiFieldIssue] { model.ankiFieldIssues }
     /// Whether the app's own note type exists in the collection.
@@ -58,9 +61,6 @@ struct AnkiSettingsPane: View {
     /// shown but not changeable, since there is nothing to choose from.
     private var deckPicker: some View {
         let current = model.settings.anki.deck
-        let decks = model.ankiDecks.contains(current) || current.isEmpty
-            ? model.ankiDecks
-            : [current] + model.ankiDecks
         return Picker("Deck", selection: Binding(
             get: { current },
             set: { deck in
@@ -71,11 +71,10 @@ struct AnkiSettingsPane: View {
                 Task { await model.selectDeck(deck) }
             }
         )) {
-            if decks.isEmpty { Text("None").tag("") }
-            ForEach(decks, id: \.self) { Text($0).tag($0) }
+            AnkiPopUpItems(current: current, listed: model.ankiDecks)
         }
         .labelsHidden()
-        .fixedSize()
+        .frame(width: AnkiPopUpItems.width, alignment: .leading)
         .disabled(model.ankiDecks.isEmpty)
         .help(model.ankiDecks.isEmpty ? "Anki hasn’t listed its decks. Is Anki running?" : "The deck new cards go to.")
     }
@@ -83,7 +82,7 @@ struct AnkiSettingsPane: View {
     @ViewBuilder
     private var noteType: some View {
         if model.ankiNoteTypesSupported {
-            AnkiNoteTypePicker(model: model)
+            AnkiNoteTypePicker(model: model, width: AnkiPopUpItems.width)
             if connected, !appNoteTypeReady { createNoteType }
         } else {
             legacyNoteType
@@ -180,7 +179,7 @@ struct AnkiSettingsPane: View {
     @ViewBuilder
     private func fieldRow(_ label: String, text: Binding<String>) -> some View {
         GridRow {
-            Text(label)
+            SettingsRowLabel(label)
                 .gridColumnAlignment(.leading)
             if fieldsKnown {
                 fieldPicker(label, selection: text)
@@ -188,7 +187,7 @@ struct AnkiSettingsPane: View {
                 TextField(label, text: text, prompt: Text("Field name"))
                     .labelsHidden()
                     .textFieldStyle(.roundedBorder)
-                    .frame(width: 170)
+                    .frame(width: Self.fieldControlWidth)
                     .overlay(alignment: .trailing) {
                         if issues.contains(where: { $0.configured == text.wrappedValue }) {
                             Image(systemName: "exclamationmark.triangle.fill")
@@ -218,7 +217,9 @@ struct AnkiSettingsPane: View {
             }
         }
         .labelsHidden()
-        .frame(width: 170)
+        // Leading, as the text fields in the same place are: a pop-up keeps a width of its
+        // own, and a frame centres it, so each field's pop-up started somewhere else.
+        .frame(width: Self.fieldControlWidth, alignment: .leading)
         .help(missing ? "“\(current)” is not a field of this note type." : "The field that takes the \(label.lowercased()).")
     }
 
@@ -270,13 +271,33 @@ struct AnkiSettingsPane: View {
 /// A new choice is saved at once and its fields are read again; `onChange` runs after.
 struct AnkiNoteTypePicker: View {
     @Bindable var model: AppModel
+    /// One width for the pop-ups of a column (the Anki pane passes `AnkiPopUpItems.width`);
+    /// nil sizes the pop-up to its longest item.
+    var width: CGFloat?
     var onChange: () async -> Void = {}
 
     var body: some View {
+        sized(picker)
+            .disabled(model.ankiNoteTypes.isEmpty)
+            .help(model.ankiNoteTypes.isEmpty ? "Anki hasn’t listed its note types. Is Anki running?" : "The note type new cards are made with.")
+            .task {
+                // Add to Anki opens without the pane having asked.
+                if model.ankiStatus.available, model.ankiNoteTypes.isEmpty { await model.loadNoteTypes() }
+            }
+    }
+
+    @ViewBuilder
+    private func sized(_ picker: some View) -> some View {
+        if let width {
+            picker.frame(width: width, alignment: .leading)
+        } else {
+            picker.fixedSize()
+        }
+    }
+
+    private var picker: some View {
         let current = model.settings.anki.model
-        let types = model.ankiNoteTypes
-        let items = types.contains(current) || current.isEmpty ? types : [current] + types
-        Picker("Note Type", selection: Binding(
+        return Picker("Note Type", selection: Binding(
             get: { current },
             set: { name in
                 guard name != current else { return }
@@ -287,16 +308,32 @@ struct AnkiNoteTypePicker: View {
                 }
             }
         )) {
-            if items.isEmpty { Text("None").tag("") }
-            ForEach(items, id: \.self) { Text($0).tag($0) }
+            AnkiPopUpItems(current: current, listed: model.ankiNoteTypes)
         }
         .labelsHidden()
-        .fixedSize()
-        .disabled(types.isEmpty)
-        .help(types.isEmpty ? "Anki hasn’t listed its note types. Is Anki running?" : "The note type new cards are made with.")
-        .task {
-            // Add to Anki opens without the pane having asked.
-            if model.ankiStatus.available, types.isEmpty { await model.loadNoteTypes() }
+    }
+}
+
+/// The items of a Deck or Note Type pop-up. The selection always has an item to show:
+/// "None" while nothing is chosen, and a configured name Anki did not list (or has not
+/// listed yet) at the top, so the pop-up never draws an empty title. Neither is an empty
+/// string item, which would be a blank row in the menu.
+struct AnkiPopUpItems: View {
+    let current: String
+    let listed: [String]
+
+    /// The width of the Deck and Note Type pop-ups in Settings, one for both so the column
+    /// reads as a set; wide enough for a "Parent::Child" deck, longer names truncate.
+    static let width: CGFloat = 200
+
+    var body: some View {
+        if current.isEmpty {
+            Text("None").tag("")
+            if !listed.isEmpty { Divider() }
+        } else if !listed.contains(current) {
+            Text(current).tag(current)
+            if !listed.isEmpty { Divider() }
         }
+        ForEach(listed, id: \.self) { Text($0).tag($0) }
     }
 }

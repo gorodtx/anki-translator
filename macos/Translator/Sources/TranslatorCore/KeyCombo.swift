@@ -108,6 +108,11 @@ public enum ShortcutConflict: Equatable, Sendable {
     /// ⌘ with one letter or digit and nothing else: what every app uses for its own
     /// commands, even where this app's menu does not.
     case appCommand
+    /// ⌥ or ⌥⇧ with a character key: it types a character (⌥E is the accent key, and the
+    /// ⌥ layer of many layouts holds letters), and since macOS 15 the system no longer
+    /// delivers such a combination to a global shortcut — as KeyboardShortcuts' own
+    /// `isDisallowed` says.
+    case typesCharacter
 
     /// The alert's title.
     public func message(for combo: KeyCombo) -> String {
@@ -118,6 +123,8 @@ public enum ShortcutConflict: Equatable, Sendable {
             return "\(combo.displayString) is already used by macOS."
         case .appCommand:
             return "\(combo.displayString) is used by apps for their own commands."
+        case .typesCharacter:
+            return "\(combo.displayString) types a character, so it can’t be a shortcut."
         }
     }
 
@@ -128,6 +135,8 @@ public enum ShortcutConflict: Equatable, Sendable {
             return "A global shortcut would take it away from every app. Choose one with ⌥ or ⌃, such as ⌥⌘T."
         case .systemShortcut:
             return "It is set in System Settings > Keyboard > Keyboard Shortcuts. Choose another combination, or turn that one off there."
+        case .typesCharacter:
+            return "macOS doesn’t support shortcuts made of only ⌥ or ⌥⇧ and a key that types. Add ⌘ or ⌃, such as ⌥⌘T."
         }
     }
 }
@@ -144,7 +153,15 @@ extension KeyCombo {
     }
 
     /// The first thing that already answers to this combination, or nil when it is free.
+    ///
+    /// `menuItems` holds every command of this app with a key equivalent: its main menu
+    /// and the popup's own commands (⇧⌘C, ⌘R), which no menu lists. A hot key on one of
+    /// those would fire instead of the command whenever the popup is key.
     public func conflict(menuItems: [MenuKeyEquivalent], systemHotKeys: [SystemHotKey]) -> ShortcutConflict? {
+        if menuCharacter != nil,
+           modifiers == Self.optionMask || modifiers == Self.optionMask | Self.shiftMask {
+            return .typesCharacter
+        }
         if let character = menuCharacter,
            let item = menuItems.first(where: { $0.key == character && $0.modifiers == modifiers }) {
             return .menuItem(item.title)

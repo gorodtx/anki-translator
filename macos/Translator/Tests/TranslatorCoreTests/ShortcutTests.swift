@@ -76,6 +76,44 @@ import Testing
         #expect(ShortcutConflict.menuItem("Close").message(for: close) == "⌘W is already used by the menu item “Close”.")
     }
 
+    /// The popup's commands are in no menu; the app passes them with the menu's items.
+    private var popupCommands: [MenuKeyEquivalent] {
+        [
+            MenuKeyEquivalent(title: "Copy Translation", key: "c", modifiers: KeyCombo.commandMask | KeyCombo.shiftMask),
+            MenuKeyEquivalent(title: "New Examples", key: "r", modifiers: KeyCombo.commandMask),
+        ]
+    }
+
+    @Test func thePopupsOwnCommandsAreTakenAndNamed() {
+        let copyTranslation = KeyCombo(keyCode: c, modifiers: KeyCombo.commandMask | KeyCombo.shiftMask)
+        #expect(copyTranslation.conflict(menuItems: menu + popupCommands, systemHotKeys: []) == .menuItem("Copy Translation"))
+        // Named as the command rather than as a generic ⌘-letter.
+        let newExamples = KeyCombo(keyCode: 15, modifiers: KeyCombo.commandMask)
+        #expect(newExamples.conflict(menuItems: menu + popupCommands, systemHotKeys: []) == .menuItem("New Examples"))
+    }
+
+    @Test func optionOrOptionShiftWithACharacterKeyTypesACharacter() {
+        let optionT = KeyCombo(keyCode: t, modifiers: KeyCombo.optionMask)
+        #expect(optionT.conflict(menuItems: menu, systemHotKeys: []) == .typesCharacter)
+        let optionShiftE = KeyCombo(keyCode: 14, modifiers: KeyCombo.optionMask | KeyCombo.shiftMask)
+        #expect(optionShiftE.conflict(menuItems: menu, systemHotKeys: []) == .typesCharacter)
+        let optionDigit = KeyCombo(keyCode: 18, modifiers: KeyCombo.optionMask)
+        #expect(optionDigit.conflict(menuItems: [], systemHotKeys: []) == .typesCharacter)
+        let optionComma = KeyCombo(keyCode: comma, modifiers: KeyCombo.optionMask)
+        #expect(optionComma.conflict(menuItems: [], systemHotKeys: []) == .typesCharacter)
+        let optionSpace = KeyCombo(keyCode: space, modifiers: KeyCombo.optionMask)
+        #expect(optionSpace.conflict(menuItems: [], systemHotKeys: []) == .typesCharacter)
+        #expect(ShortcutConflict.typesCharacter.message(for: optionT) == "⌥T types a character, so it can’t be a shortcut.")
+    }
+
+    @Test func optionWithAnotherModifierOrANonTypingKeyIsFree() {
+        // ⌃⌥T: the extra modifier makes it a command, not a character (⌥⌘T is covered above).
+        #expect(KeyCombo(keyCode: t, modifiers: KeyCombo.optionMask | KeyCombo.controlMask).conflict(menuItems: menu, systemHotKeys: []) == nil)
+        // ⌥F5 and ⌥↑ type nothing.
+        #expect(KeyCombo(keyCode: 96, modifiers: KeyCombo.optionMask).conflict(menuItems: menu, systemHotKeys: []) == nil)
+        #expect(KeyCombo(keyCode: 126, modifiers: KeyCombo.optionMask).conflict(menuItems: menu, systemHotKeys: []) == nil)
+    }
+
     @Test func menuCharacterCoversPrintableKeysOnly() {
         #expect(KeyCombo(keyCode: t, modifiers: 0).menuCharacter == "t")
         #expect(KeyCombo(keyCode: space, modifiers: 0).menuCharacter == " ")

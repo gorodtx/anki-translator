@@ -31,11 +31,14 @@ struct SettingsSection<Content: View>: View {
     @ViewBuilder var content: Content
 
     @Environment(\.settingsLabelWidth) private var labelWidth
+    @Environment(\.isEnabled) private var isEnabled
 
     var body: some View {
         HStack(alignment: alignment) {
             Text(title.isEmpty ? "" : "\(title):")
                 .font(.system(size: 13))
+                // The label of controls that are all disabled dims with them, as AppKit's do.
+                .foregroundStyle(isEnabled ? .primary : .tertiary)
                 .fixedSize()
                 .background {
                     GeometryReader { proxy in
@@ -90,21 +93,23 @@ struct SettingsToggle<Detail: View>: View {
             Toggle(title, isOn: $isOn)
                 .toggleStyle(SettingsToggleStyle.current)
                 .labelsHidden()
-                .accessibilityHint(description ?? "")
             VStack(alignment: .leading, spacing: 6) {
                 VStack(alignment: .leading, spacing: 2) {
                     Text(title)
                         .foregroundStyle(isEnabled ? .primary : .tertiary)
                         .fixedSize(horizontal: false, vertical: true)
+                        // The Toggle already carries the title; reading it twice helps nobody.
+                        .accessibilityHidden(true)
                     if let description {
+                        // Read as the text after the checkbox, as System Settings' footnotes
+                        // are. A hint is spoken late, or never with hints turned off, and a
+                        // description can be content (the note Add to Anki would update).
                         SettingsNote(description)
                     }
                 }
                 .frame(maxWidth: .infinity, alignment: .leading)
                 .contentShape(.rect)
                 .onTapGesture { if isEnabled { isOn.toggle() } }
-                // The Toggle already carries the title; reading it twice helps nobody.
-                .accessibilityHidden(true)
                 detail
             }
         }
@@ -214,9 +219,12 @@ struct SettingsStatusDetail<Content: View>: View {
     }
 }
 
-/// Secondary explanatory text under a control, in the small system size.
+/// Secondary explanatory text under a control, in the small system size. Under a
+/// disabled control it dims further, so it never reads stronger than the title above it.
 struct SettingsNote: View {
     let text: String
+
+    @Environment(\.isEnabled) private var isEnabled
 
     init(_ text: String) {
         self.text = text
@@ -225,8 +233,26 @@ struct SettingsNote: View {
     var body: some View {
         Text(text)
             .font(.subheadline)
-            .foregroundStyle(.secondary)
+            .foregroundStyle(isEnabled ? .secondary : .tertiary)
             .fixedSize(horizontal: false, vertical: true)
+    }
+}
+
+/// The name of one row in a grid of controls (Anki's fields, Add to Anki's merge rows).
+/// A view of its own so that it reads `isEnabled` where it is drawn: a function of the
+/// parent would read the parent's environment, not that of the disabled rows.
+struct SettingsRowLabel: View {
+    let text: String
+
+    @Environment(\.isEnabled) private var isEnabled
+
+    init(_ text: String) {
+        self.text = text
+    }
+
+    var body: some View {
+        Text(text)
+            .foregroundStyle(isEnabled ? .primary : .tertiary)
     }
 }
 

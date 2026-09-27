@@ -1,5 +1,6 @@
 import AppKit
 import Carbon.HIToolbox
+import SwiftUI
 import TranslatorCore
 
 /// Global hot key via Carbon `RegisterEventHotKey` — works with no TCC permission at all.
@@ -93,7 +94,27 @@ final class HotKeyManager {
 @MainActor
 enum ShortcutAvailability {
     static func conflict(for combo: KeyCombo) -> ShortcutConflict? {
-        combo.conflict(menuItems: menuItems(in: NSApp.mainMenu), systemHotKeys: systemHotKeys())
+        combo.conflict(
+            menuItems: menuItems(in: NSApp.mainMenu) + popupCommands,
+            systemHotKeys: systemHotKeys()
+        )
+    }
+
+    /// The popup's own commands, which no menu lists: taken by the hot key, ⇧⌘C in a key
+    /// popup would close it (a second press closes it) instead of copying. Read from the
+    /// footer rows themselves so the two cannot drift apart; a bare key (Return) is left
+    /// out, since a hot key always has a modifier.
+    static var popupCommands: [MenuKeyEquivalent] {
+        PopupFooterRow.allCases.compactMap { row in
+            let shortcut = row.keyboardShortcut
+            guard !shortcut.modifiers.isEmpty else { return nil }
+            var modifiers: UInt32 = 0
+            if shortcut.modifiers.contains(.command) { modifiers |= KeyCombo.commandMask }
+            if shortcut.modifiers.contains(.option) { modifiers |= KeyCombo.optionMask }
+            if shortcut.modifiers.contains(.control) { modifiers |= KeyCombo.controlMask }
+            if shortcut.modifiers.contains(.shift) { modifiers |= KeyCombo.shiftMask }
+            return MenuKeyEquivalent(title: row.title, key: String(shortcut.key.character), modifiers: modifiers)
+        }
     }
 
     /// Every key equivalent of `menu` and its submenus, as KeyboardShortcuts'

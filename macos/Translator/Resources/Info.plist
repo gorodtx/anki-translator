@@ -20,13 +20,14 @@
 	<string>0.3.0</string>
 	<key>CFBundleVersion</key>
 	<string>1</string>
+	<!-- Resources/AppIcon.icns, drawn by scripts/make_icon.swift. -->
+	<key>CFBundleIconFile</key>
+	<string>AppIcon</string>
 	<key>LSMinimumSystemVersion</key>
 	<string>26.0</string>
 	<!-- Menu-bar app: no Dock icon, no window on launch. -->
 	<key>LSUIElement</key>
 	<true/>
-	<key>NSHumanReadableCopyright</key>
-	<string></string>
 	<!-- Reading the selection through Accessibility; the Services entry needs no permission. -->
 	<key>NSAppleEventsUsageDescription</key>
 	<string>Translator reads the text you have selected so it can translate it.</string>

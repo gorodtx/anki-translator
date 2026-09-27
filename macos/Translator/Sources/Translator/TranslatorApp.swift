@@ -45,17 +45,17 @@ private struct MenuBarContent: View {
     let delegate: AppDelegate
 
     var body: some View {
-        Text(model.connectionSummary)
-        Divider()
+        // Only while something is missing: a working app's menu starts with its commands.
+        if let status = model.connectionSummary {
+            Text(status)
+            Divider()
+        }
         translateItem
         // A verb, and no ellipsis: it opens a list and asks nothing.
         Button("Show History") { delegate.showHistory() }
         Divider()
         // An accessory app never shows its app menu, so About has to live here.
-        Button("About Translator") {
-            NSApp.activate()
-            NSApp.orderFrontStandardAboutPanel(nil)
-        }
+        Button("About Translator") { delegate.showAbout() }
         Button("Settings…") { delegate.showSettings() }
             .keyboardShortcut(",")
         Divider()
@@ -415,6 +415,14 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
                 stack.append(contentsOf: view.subviews)
             }
         }
+    }
+
+    /// The standard About panel: the icon, name and version from the bundle (Info.plist's
+    /// CFBundleIconFile, the version keys). `options` stand in for a bundle that is not
+    /// there, as in snapshot runs of the bare binary.
+    func showAbout(options: [NSApplication.AboutPanelOptionKey: Any] = [:]) {
+        NSApp.activate()
+        NSApp.orderFrontStandardAboutPanel(options: options)
     }
 
     /// Shows Settings on `pane`, or on the pane it was left on when nil. The window and

@@ -212,6 +212,7 @@ final class SnapshotRunner {
             try? await Task.sleep(for: .milliseconds(pane == .anki ? 1500 : 700))
             logControls(in: window, name: "settings-\(pane.rawValue)-\(appearance)")
             write(window, "settings-\(pane.rawValue)-\(appearance)")
+            if pane == .anki { probeAnkiPopUps(in: window, appearance: appearance) }
             if pane == .sources, appearance == appearances.first?.0 {
                 await probeAutoSave(in: window)
             }
@@ -247,8 +248,11 @@ final class SnapshotRunner {
         if unsettled.contains("recorder"), await probeRecorder(in: window) { unsettled.remove("recorder") }
         if appearance == appearances.first?.0 {
             await probeErrorsStayInSettings()
+            probeShortcutRules()
+            await probeMenuStatusLine()
         }
         await captureUnloaded(appearance: appearance)
+        await captureAbout(appearance: appearance)
 
         // Closed the way a user closes it from the keyboard, through the main menu. History
         // and Add to Anki first, while the app is still active with Settings open: an
@@ -464,9 +468,9 @@ final class SnapshotRunner {
         guard let delegate else { return }
         let saved = delegate.model.settingsProblems
         delegate.model.settingsProblems = [
-            .loginItem: "Could not turn on opening at login: The operation couldn’t be completed.",
+            .loginItem: "Couldn’t turn on opening at login: The operation couldn’t be completed.",
             .save: "Changes weren’t saved: Backend is not connected. They are sent again when the backend is back.",
-            .databases: "Could not start the download: Backend is not connected.",
+            .databases: "Couldn’t start the download: Backend is not connected.",
         ]
         for pane in [SettingsPaneID.general, .sources, .advanced] {
             settings.select(pane)
@@ -494,14 +498,25 @@ final class SnapshotRunner {
     /// Sources and Anki before the backend's settings are read: disabled, and saying why.
     private func captureUnloaded(appearance: String) async {
         let offline = AppModel(client: IPCClient(socketPath: "/nonexistent/translator.sock"))
+        // Connected, but the read of the settings failed: said, with Try Again, instead of
+        // "Reading the settings…" for as long as the window stays key. The failure is a
+        // real one (no backend behind this client); the connection is stood in for.
+        let unread = AppModel(client: IPCClient(socketPath: "/nonexistent/translator.sock"))
+        await unread.refreshSettings()
+        unread.connection = .connected
+        if appearance == appearances.first?.0 {
+            let said = unread.settingsProblems[.load]
+            NSLog("PROBE settings-load-failure-said \(said != nil && !unread.settingsLoaded ? "PASS" : "FAIL") problem=\(said ?? "nil")")
+        }
         for (name, view) in [
             ("sources", AnyView(SourcesSettingsPane(model: offline))),
             ("anki", AnyView(AnkiSettingsPane(model: offline))),
+            ("sources-unread", AnyView(SourcesSettingsPane(model: unread))),
         ] {
             let controller = NSHostingController(rootView: view.fixedSize())
             let window = NSWindow(contentViewController: controller)
             window.styleMask = [.titled, .closable]
-            window.title = name == "sources" ? "Sources" : "Anki"
+            window.title = name.hasPrefix("sources") ? "Sources" : "Anki"
             window.isReleasedWhenClosed = false
             window.setContentSize(controller.view.fittingSize)
             window.center()
@@ -669,6 +684,93 @@ final class SnapshotRunner {
             stack.append(contentsOf: view.subviews)
         }
         NSLog("[snapshot] controls \(name): \(lines.sorted().joined(separator: " | "))")
+    }
+
+    /// The Anki pane's pop-ups: every one shows an item (an unset deck says so instead of
+    /// drawing an empty bezel), and the field pop-ups of the Fields column share one
+    /// leading edge. The fields are text fields while Anki is closed, so that half only
+    /// applies when Anki listed them.
+    private func probeAnkiPopUps(in window: NSWindow, appearance: String) {
+        var stack = [window.contentView].compactMap { $0 }
+        var popUps: [(x: CGFloat, y: CGFloat, title: String)] = []
+        while let view = stack.popLast() {
+            if let popUp = view as? NSPopUpButton {
+                let frame = popUp.convert(popUp.bounds, to: nil)
+                popUps.append((frame.minX, window.contentLayoutRect.maxY - frame.maxY, popUp.titleOfSelectedItem ?? ""))
+            }
+            stack.append(contentsOf: view.subviews)
+        }
+        popUps.sort { $0.y < $1.y }
+        guard !popUps.isEmpty else {
+            NSLog("PROBE anki-popups SKIP no pop-up buttons in the pane (\(appearance))")
+            return
+        }
+        let untitled = popUps.filter { $0.title.isEmpty }
+        // Deck and Note Type come first; anything below them is the Fields column.
+        let fields = popUps.dropFirst(2)
+        let edges = Set(fields.map { ($0.x * 2).rounded() / 2 })
+        let aligned = edges.count <= 1
+        let detail = popUps.map { String(format: "'%@'@x=%.1f", $0.title, $0.x) }.joined(separator: " ")
+        NSLog("PROBE anki-popups \(untitled.isEmpty && aligned ? "PASS" : "FAIL") (\(appearance)) untitled=\(untitled.count) fieldEdges=\(edges.sorted()) \(detail)")
+    }
+
+    /// The recorder's refusals, asked of the same function the recorder asks: what a menu,
+    /// the popup or typing already owns is refused; an ordinary global shortcut is not.
+    private func probeShortcutRules() {
+        let command = KeyCombo.commandMask, shift = KeyCombo.shiftMask, option = KeyCombo.optionMask
+        let cases: [(String, KeyCombo, Bool)] = [
+            ("⌘C", KeyCombo(keyCode: 8, modifiers: command), true),
+            ("⌘Q", KeyCombo(keyCode: 12, modifiers: command), true),
+            ("⇧⌘C", KeyCombo(keyCode: 8, modifiers: command | shift), true),
+            ("⌥T", KeyCombo(keyCode: 17, modifiers: option), true),
+            ("⌥⇧T", KeyCombo(keyCode: 17, modifiers: option | shift), true),
+            ("⌥⌘T", KeyCombo(keyCode: 17, modifiers: option | command), false),
+        ]
+        var wrong: [String] = []
+        let seen = cases.map { name, combo, refused -> String in
+            let conflict = ShortcutAvailability.conflict(for: combo)
+            if (conflict != nil) != refused { wrong.append(name) }
+            return "\(name)=\(conflict.map { "\($0)" } ?? "free")"
+        }
+        NSLog("PROBE shortcut-rules \(wrong.isEmpty ? "PASS" : "FAIL") \(seen.joined(separator: " "))\(wrong.isEmpty ? "" : " wrong=\(wrong)")")
+    }
+
+    /// The menu's first line: nothing while connected, a few words otherwise — never the
+    /// socket path or a retry count.
+    private func probeMenuStatusLine() async {
+        guard let model = delegate?.model else { return }
+        let lines = [
+            BackendConnectionSummary.text(connected: false, connecting: true, failedBefore: false),
+            BackendConnectionSummary.text(connected: false, connecting: true, failedBefore: true),
+            BackendConnectionSummary.text(connected: false, connecting: false, failedBefore: true),
+        ].compactMap { $0 }
+        let leaks = lines.filter { $0.contains("/") || $0.rangeOfCharacter(from: .decimalDigits) != nil }
+        let connectedLine = model.isConnected ? model.connectionSummary : nil
+        let passed = leaks.isEmpty && lines.count == 3 && connectedLine == nil
+        NSLog("PROBE menu-status-line \(passed ? "PASS" : "FAIL") connected=\(model.isConnected) connectedLine=\(connectedLine ?? "none") lines=\(lines)")
+    }
+
+    /// The standard About panel, with the icon the bundle names. The snapshot binary runs
+    /// outside a bundle, so the icon is handed over from the source tree.
+    private func captureAbout(appearance: String) async {
+        guard let delegate else { return }
+        let before = Set(NSApp.windows.map(\.windowNumber))
+        let icon = URL(fileURLWithPath: #filePath)
+            .deletingLastPathComponent().deletingLastPathComponent().deletingLastPathComponent()
+            .appendingPathComponent("Resources/AppIcon.icns")
+        var options: [NSApplication.AboutPanelOptionKey: Any] = [:]
+        if let image = NSImage(contentsOf: icon) { options[.applicationIcon] = image }
+        delegate.showAbout(options: options)
+        try? await Task.sleep(for: .milliseconds(700))
+        guard let panel = NSApp.windows.first(where: { $0.isVisible && !before.contains($0.windowNumber) })
+            ?? NSApp.windows.first(where: { $0.isVisible && $0 is NSPanel && $0 !== delegate.snapshotPopupWindow })
+        else {
+            NSLog("[snapshot] about panel not visible")
+            return
+        }
+        write(panel, "about-\(appearance)")
+        panel.close()
+        try? await Task.sleep(for: .milliseconds(200))
     }
 
     /// The list as the popup scenes left it (or its empty state on a fresh backend), then
