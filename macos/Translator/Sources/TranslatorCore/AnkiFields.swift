@@ -101,3 +101,53 @@ public enum AnkiSetupGap: Equatable, Sendable {
         return "Choose \(list) in Settings."
     }
 }
+
+/// The lookup an Add to Anki note is prepared from.
+///
+/// The backend keeps one prepared note, and it belongs to the current lookup: a lookup of
+/// another word, opening a history entry, or closing the session (Esc or a click outside
+/// the popup) drops it, and adding then fails with "Prepare an upsert first.". The window
+/// compares what it prepared from with what the app holds now.
+public struct AnkiNoteSource: Equatable, Sendable {
+    /// The looked-up text, as the Word row shows it.
+    public var text: String
+    public var requestId: Int
+    /// How many times the backend session has been closed so far.
+    public var closedSessions: Int
+
+    public init(text: String, requestId: Int, closedSessions: Int) {
+        self.text = text
+        self.requestId = requestId
+        self.closedSessions = closedSessions
+    }
+}
+
+/// What Add to Anki does when the lookup under it changes while it is open.
+public enum AnkiSheetFollowUp: Equatable, Sendable {
+    /// Still the lookup it was prepared from.
+    case keep
+    /// A new lookup is still translating; prepare once it has finished.
+    case wait
+    /// A new lookup finished with something to add: prepare the note from it.
+    case prepare
+    /// Nothing is left to add from: the session was closed, or the new lookup has no
+    /// result. The window closes rather than offer an Add that must fail.
+    case close
+
+    public static func after(
+        preparedFrom prepared: AnkiNoteSource?,
+        now: AnkiNoteSource,
+        loading: Bool,
+        canAdd: Bool
+    ) -> AnkiSheetFollowUp {
+        // Not prepared yet: the first preparation reads the lookup as it is then.
+        guard let prepared else { return .keep }
+        // A closed session has no active request, and the backend drops a preparation
+        // made for none without answering.
+        if now.closedSessions != prepared.closedSessions { return .close }
+        // The same word looked up again reuses the entry and keeps the prepared note.
+        if now.text == prepared.text, now.requestId == prepared.requestId { return .keep }
+        if loading { return .wait }
+        return canAdd ? .prepare : .close
+    }
+}

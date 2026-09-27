@@ -177,3 +177,46 @@ import Testing
         #expect(AnkiSetupGap.instruction(for: gaps) == "Choose a deck, a note type and field names in Settings.")
     }
 }
+
+/// Add to Anki is prepared from one lookup, and the backend drops that preparation when
+/// the lookup changes: the window must follow rather than offer an Add that fails.
+@Suite struct AnkiSheetFollowUpTests {
+    private let bank = AnkiNoteSource(text: "bank", requestId: 4, closedSessions: 1)
+
+    private func after(_ now: AnkiNoteSource, loading: Bool = false, canAdd: Bool = true) -> AnkiSheetFollowUp {
+        AnkiSheetFollowUp.after(preparedFrom: bank, now: now, loading: loading, canAdd: canAdd)
+    }
+
+    @Test func theSameLookupKeepsTheNote() {
+        #expect(after(bank) == .keep)
+    }
+
+    @Test func nothingPreparedYetLeavesItToTheFirstPreparation() {
+        #expect(AnkiSheetFollowUp.after(preparedFrom: nil, now: bank, loading: true, canAdd: false) == .keep)
+    }
+
+    /// The reported case: "went" looked up while the window was open for "bank".
+    @Test func aNewWordThatFinishedIsPrepared() {
+        #expect(after(AnkiNoteSource(text: "went", requestId: 5, closedSessions: 1)) == .prepare)
+    }
+
+    @Test func aNewWordStillTranslatingIsWaitedFor() {
+        let went = AnkiNoteSource(text: "went", requestId: 5, closedSessions: 1)
+        #expect(after(went, loading: true, canAdd: false) == .wait)
+    }
+
+    /// Opening the same word from History is a new request, and drops the note as well.
+    @Test func aNewRequestForTheSameWordIsPrepared() {
+        #expect(after(AnkiNoteSource(text: "bank", requestId: 6, closedSessions: 1)) == .prepare)
+    }
+
+    @Test func aNewLookupWithNothingToAddCloses() {
+        #expect(after(AnkiNoteSource(text: "qwzxv", requestId: 5, closedSessions: 1), canAdd: false) == .close)
+    }
+
+    /// Esc on the popup of a later lookup closes the session, and the note with it.
+    @Test func aClosedSessionCloses() {
+        #expect(after(AnkiNoteSource(text: "bank", requestId: 4, closedSessions: 2)) == .close)
+        #expect(after(AnkiNoteSource(text: "went", requestId: 5, closedSessions: 2), loading: true) == .close)
+    }
+}
