@@ -214,6 +214,17 @@ import Testing
         #expect(after(AnkiNoteSource(text: "qwzxv", requestId: 5, closedSessions: 1), canAdd: false) == .close)
     }
 
+    /// Opened before the lookup finished: prepared from the final result once it is in.
+    @Test func aNotePreparedWhileTranslatingIsPreparedAgainOnceFinished() {
+        let early = AnkiNoteSource(text: "bank", requestId: 4, closedSessions: 1, finished: false)
+        let still = AnkiSheetFollowUp.after(preparedFrom: early, now: early, loading: true, canAdd: true)
+        let done = AnkiSheetFollowUp.after(preparedFrom: early, now: bank, loading: false, canAdd: true)
+        let empty = AnkiSheetFollowUp.after(preparedFrom: early, now: bank, loading: false, canAdd: false)
+        #expect(still == .keep)
+        #expect(done == .prepare)
+        #expect(empty == .close)
+    }
+
     /// Esc on the popup of a later lookup closes the session, and the note with it.
     @Test func aClosedSessionCloses() {
         #expect(after(AnkiNoteSource(text: "bank", requestId: 4, closedSessions: 2)) == .close)

@@ -114,11 +114,20 @@ public struct AnkiNoteSource: Equatable, Sendable {
     public var requestId: Int
     /// How many times the backend session has been closed so far.
     public var closedSessions: Int
+    /// The lookup had its final result. A note prepared from a partial one is prepared
+    /// again when the final one arrives.
+    public var finished: Bool
 
-    public init(text: String, requestId: Int, closedSessions: Int) {
+    public init(text: String, requestId: Int, closedSessions: Int, finished: Bool = true) {
         self.text = text
         self.requestId = requestId
         self.closedSessions = closedSessions
+        self.finished = finished
+    }
+
+    /// The same lookup, whether or not it has finished since.
+    public func isSameLookup(as other: AnkiNoteSource) -> Bool {
+        text == other.text && requestId == other.requestId
     }
 }
 
@@ -126,9 +135,9 @@ public struct AnkiNoteSource: Equatable, Sendable {
 public enum AnkiSheetFollowUp: Equatable, Sendable {
     /// Still the lookup it was prepared from.
     case keep
-    /// A new lookup is still translating; prepare once it has finished.
+    /// The lookup is still translating; prepare once it has finished.
     case wait
-    /// A new lookup finished with something to add: prepare the note from it.
+    /// A lookup finished with something to add: prepare the note from it.
     case prepare
     /// Nothing is left to add from: the session was closed, or the new lookup has no
     /// result. The window closes rather than offer an Add that must fail.
@@ -145,8 +154,12 @@ public enum AnkiSheetFollowUp: Equatable, Sendable {
         // A closed session has no active request, and the backend drops a preparation
         // made for none without answering.
         if now.closedSessions != prepared.closedSessions { return .close }
-        // The same word looked up again reuses the entry and keeps the prepared note.
-        if now.text == prepared.text, now.requestId == prepared.requestId { return .keep }
+        if now.isSameLookup(as: prepared) {
+            // The same word looked up again reuses the entry and keeps the prepared note;
+            // one prepared before the lookup finished is prepared again from the result.
+            guard !prepared.finished, !loading else { return .keep }
+            return canAdd ? .prepare : .close
+        }
         if loading { return .wait }
         return canAdd ? .prepare : .close
     }

@@ -542,7 +542,7 @@ final class SnapshotRunner {
         let opened = delegate.snapshotWindow(id: "anki")?.frame
         // The sheet starts preparing from its own task; let that begin, then finish.
         try? await Task.sleep(for: .milliseconds(500))
-        await waitUntil(timeout: 20) { !delegate.model.isPreparingUpsert }
+        await waitUntil(timeout: 20) { Self.ankiSettled(delegate.model) }
         // The deck list and the form's own measuring pass.
         try? await Task.sleep(for: .milliseconds(1200))
         if let window = delegate.snapshotWindow(id: "anki"), window.isVisible {
@@ -570,6 +570,11 @@ final class SnapshotRunner {
     }
 
     private var ankiText: String { environment["TRANSLATOR_DEBUG_ANKI_TEXT"] ?? "serendipity" }
+
+    /// Add to Anki has nothing left to do: no preparation out, and not waiting on a lookup.
+    private static func ankiSettled(_ model: AppModel) -> Bool {
+        !model.isPreparingUpsert && model.ankiNoteSource?.finished != false
+    }
 
     /// `TRANSLATOR_DEBUG_ANKI_STUB=1`: an AnkiConnect stand-in answers at `ANKI_CONNECT_URL`
     /// with a deck "English::Vocabulary" and a note type "Translator". The isolated
@@ -602,7 +607,7 @@ final class SnapshotRunner {
         popup.suspendsDismissal = false
         delegate.showAnkiSheet()
         try? await Task.sleep(for: .milliseconds(500))
-        await waitUntil(timeout: 20) { !model.isPreparingUpsert }
+        await waitUntil(timeout: 20) { Self.ankiSettled(model) }
         try? await Task.sleep(for: .milliseconds(800))
         guard let window = delegate.snapshotWindow(id: "anki"), window.isVisible else {
             NSLog("[snapshot] PROBE anki-new-lookup-follows FAIL the window did not open")
@@ -615,7 +620,7 @@ final class SnapshotRunner {
         delegate.snapshotPresent(text: second)
         await waitUntil(timeout: 25) { !model.state.loading }
         try? await Task.sleep(for: .milliseconds(500))
-        await waitUntil(timeout: 20) { !model.isPreparingUpsert }
+        await waitUntil(timeout: 20) { Self.ankiSettled(model) }
         try? await Task.sleep(for: .milliseconds(1000))
         popup.suspendsDismissal = false
         let after = model.ankiNoteSource
@@ -637,7 +642,7 @@ final class SnapshotRunner {
             try? await Task.sleep(for: .milliseconds(300))
             delegate.showAnkiSheet()
             try? await Task.sleep(for: .milliseconds(500))
-            await waitUntil(timeout: 20) { !model.isPreparingUpsert }
+            await waitUntil(timeout: 20) { Self.ankiSettled(model) }
             try? await Task.sleep(for: .milliseconds(500))
         } else {
             NSLog("[snapshot] PROBE anki-add-after-new-lookup SKIP no AnkiConnect stand-in (TRANSLATOR_DEBUG_ANKI_STUB)")

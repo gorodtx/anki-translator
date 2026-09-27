@@ -103,7 +103,8 @@ struct AnkiUpsertSheet: View {
         AnkiNoteSource(
             text: model.state.originalText.trimmingCharacters(in: .whitespacesAndNewlines),
             requestId: model.activeRequestId,
-            closedSessions: model.closedSessions
+            closedSessions: model.closedSessions,
+            finished: !model.state.loading
         )
     }
 
@@ -411,6 +412,12 @@ struct AnkiUpsertSheet: View {
         phase = .preparing
         applyFailure = nil
         formHeight = 0
+        // Still translating: the backend has no result to prepare from yet, or only a
+        // partial one. `followLookup` prepares once the lookup has finished.
+        guard !model.state.loading else {
+            model.abandonUpsertPreparation()
+            return
+        }
         Task { await finishPreparing(token) }
     }
 
