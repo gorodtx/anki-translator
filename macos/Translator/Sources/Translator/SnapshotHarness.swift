@@ -48,7 +48,8 @@ enum WindowSnapshot {
 ///
 /// - `TRANSLATOR_DEBUG_SNAPSHOT_TEXTS` — lookups to run, separated by `|`.
 /// - `TRANSLATOR_DEBUG_APPEARANCE` — `light`, `dark` or `both` (default).
-/// - `TRANSLATOR_DEBUG_SNAPSHOT_SCENES` — any of `popup,settings,history` (default all).
+/// - `TRANSLATOR_DEBUG_SNAPSHOT_SCENES` — any of `popup,settings,history,anki` (default all).
+/// - `TRANSLATOR_DEBUG_ANKI_TEXT` — the lookup the `anki` scene opens Add to Anki for.
 @MainActor
 final class SnapshotRunner {
     private weak var delegate: AppDelegate?
@@ -85,7 +86,7 @@ final class SnapshotRunner {
     }
 
     private var scenes: Set<String> {
-        let raw = environment["TRANSLATOR_DEBUG_SNAPSHOT_SCENES"] ?? "popup,settings,history"
+        let raw = environment["TRANSLATOR_DEBUG_SNAPSHOT_SCENES"] ?? "popup,settings,history,anki"
         return Set(raw.split(separator: ",").map { String($0).trimmingCharacters(in: .whitespaces) })
     }
 
@@ -99,6 +100,7 @@ final class SnapshotRunner {
                 if scenes.contains("popup") { await popupScenes(appearance: name) }
                 if scenes.contains("settings") { await settingsScene(appearance: name) }
                 if scenes.contains("history") { await historyScene(appearance: name) }
+                if scenes.contains("anki") { await ankiScene(appearance: name) }
             }
             NSLog("[snapshot] done")
             exit(0)
@@ -141,13 +143,72 @@ final class SnapshotRunner {
         try? await Task.sleep(for: .milliseconds(300))
     }
 
+    /// The list as the popup scenes left it (or its empty state on a fresh backend), then
+    /// the no-match state, reached by typing into the toolbar's own search field.
     private func historyScene(appearance: String) async {
         guard let delegate else { return }
         delegate.showHistory()
         try? await Task.sleep(for: .seconds(2))
         guard let window = delegate.snapshotWindow(id: "history") else { return }
-        write(window, "history-\(appearance)")
+        // The frame is autosaved; a size left by an earlier run must not change the image.
+        window.setContentSize(HistoryView.defaultSize)
+        // Activation is left to the system: forcing it would take the keyboard from
+        // whoever is typing on this Mac while the run is on screen. So a window may be
+        // captured in its inactive look.
+        try? await Task.sleep(for: .milliseconds(300))
+        if delegate.model.history.isEmpty {
+            write(window, "history-empty-\(appearance)")
+        } else {
+            write(window, "history-\(appearance)")
+            // The second row selected, the way a click or an arrow key leaves it.
+            if let table = Self.firstView(ofType: NSTableView.self, in: window.contentView), table.numberOfRows > 1 {
+                window.makeFirstResponder(table)
+                table.selectRowIndexes([1], byExtendingSelection: false)
+                try? await Task.sleep(for: .milliseconds(300))
+                write(window, "history-selected-\(appearance)")
+                table.deselectAll(nil)
+            }
+            if let field = Self.searchField(in: window) {
+                // A field that grows on focus has run out of room and pushes the title into
+                // the toolbar's overflow menu.
+                let idle = field.frame.width
+                Self.type("qwzxvq", into: field, of: window)
+                try? await Task.sleep(for: .milliseconds(500))
+                let verdict = field.frame.width == idle ? "PASS" : "FAIL"
+                NSLog("[snapshot] PROBE history-search-width \(verdict) \(idle) -> \(field.frame.width) in \(window.frame.width)")
+                write(window, "history-nomatch-\(appearance)")
+                Self.type("", into: field, of: window)
+                // Leave the keyboard with the list, where the next open expects it.
+                window.makeFirstResponder(Self.firstView(ofType: NSTableView.self, in: window.contentView))
+                try? await Task.sleep(for: .milliseconds(200))
+            } else {
+                NSLog("[snapshot] history search field not found in the toolbar")
+            }
+        }
         window.close()
+        try? await Task.sleep(for: .milliseconds(300))
+    }
+
+    /// Add to Anki after a real lookup. Whatever the isolated backend answers — usually
+    /// "not set up", since its configuration is fresh — is what gets captured.
+    private func ankiScene(appearance: String) async {
+        guard let delegate else { return }
+        delegate.snapshotPresent(text: environment["TRANSLATOR_DEBUG_ANKI_TEXT"] ?? "serendipity")
+        await waitUntil(timeout: 25) { !delegate.model.state.loading }
+        try? await Task.sleep(for: .milliseconds(400))
+        delegate.showAnkiSheet()
+        // The sheet starts preparing from its own task; let that begin, then finish.
+        try? await Task.sleep(for: .milliseconds(500))
+        await waitUntil(timeout: 20) { !delegate.model.isPreparingUpsert }
+        // The deck list and the form's own measuring pass.
+        try? await Task.sleep(for: .milliseconds(1200))
+        if let window = delegate.snapshotWindow(id: "anki"), window.isVisible {
+            write(window, "anki-\(appearance)")
+            window.close()
+        } else {
+            NSLog("[snapshot] anki window not visible")
+        }
+        delegate.snapshotHidePopup()
         try? await Task.sleep(for: .milliseconds(300))
     }
 
@@ -201,6 +262,42 @@ final class SnapshotRunner {
             stack.append(contentsOf: next.subviews)
         }
         return best
+    }
+
+    private static func firstView<T: NSView>(ofType type: T.Type, in root: NSView?) -> T? {
+        var stack = [root].compactMap { $0 }
+        while !stack.isEmpty {
+            let next = stack.removeFirst()
+            if let match = next as? T { return match }
+            stack.append(contentsOf: next.subviews)
+        }
+        return nil
+    }
+
+    /// The search field SwiftUI's `.searchable` put into the window's toolbar.
+    private static func searchField(in window: NSWindow) -> NSSearchField? {
+        if let item = window.toolbar?.items.lazy.compactMap({ $0 as? NSSearchToolbarItem }).first {
+            return item.searchField
+        }
+        var stack = [window.contentView?.superview].compactMap { $0 }
+        while let next = stack.popLast() {
+            if let field = next as? NSSearchField { return field }
+            stack.append(contentsOf: next.subviews)
+        }
+        return nil
+    }
+
+    /// Replaces the field's text through its field editor, the way typing does, so the
+    /// view hears about it exactly as it would from the keyboard.
+    private static func type(_ text: String, into field: NSSearchField, of window: NSWindow) {
+        window.makeFirstResponder(field)
+        guard let editor = field.currentEditor() as? NSTextView else { return }
+        editor.selectAll(nil)
+        if text.isEmpty {
+            editor.deleteBackward(nil)
+        } else {
+            editor.insertText(text, replacementRange: editor.selectedRange())
+        }
     }
 
     private func waitUntil(timeout: TimeInterval, _ condition: () -> Bool) async {
