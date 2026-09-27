@@ -40,6 +40,8 @@ struct TranslationPopupView: View {
                 scrolled = isScrolled
             }
             .contentMargins(.vertical, PopupMetrics.indicatorInset, for: .scrollIndicators)
+            // A new lookup starts at the top, not where the last one was scrolled to.
+            .id(query)
             measured(\.bottom) { bottom }
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)
@@ -253,6 +255,7 @@ struct TranslationPopupView: View {
                 .padding(.bottom, PopupMetrics.separatorInset)
             MenuRow(
                 title: "Add to Anki…",
+                chrome: chrome,
                 shortcut: KeyHint(key: "↩"),
                 keyboardShortcut: .defaultAction,
                 disabledReason: ankiUnavailableReason,
@@ -260,6 +263,7 @@ struct TranslationPopupView: View {
             )
             MenuRow(
                 title: "Copy Translation",
+                chrome: chrome,
                 shortcut: KeyHint(modifiers: "⇧⌘", key: "C"),
                 keyboardShortcut: KeyboardShortcut("c", modifiers: [.shift, .command]),
                 disabledReason: state.hasTranslation ? nil : "There is no translation to copy.",
@@ -268,6 +272,7 @@ struct TranslationPopupView: View {
             if state.canRefreshExamples {
                 MenuRow(
                     title: "New Examples",
+                    chrome: chrome,
                     shortcut: KeyHint(modifiers: "⌘", key: "R"),
                     keyboardShortcut: KeyboardShortcut("r", modifiers: .command),
                     busy: state.refreshingExamples,
@@ -316,6 +321,9 @@ enum PopupMetrics {
 @Observable
 final class PopupChrome {
     var bodyScrolls = false
+    /// Snapshot runs only: the row drawn as if the pointer were on it, since a capture
+    /// has no pointer.
+    var highlightedRowForSnapshot: String?
 }
 
 /// Natural heights of the parts, kept outside SwiftUI's state so writing one does not
@@ -407,6 +415,7 @@ struct KeyHint: View {
 /// A footer row that looks and highlights exactly like a menu item.
 private struct MenuRow: View {
     let title: String
+    let chrome: PopupChrome
     let shortcut: KeyHint
     let keyboardShortcut: KeyboardShortcut
     var busy = false
@@ -417,7 +426,9 @@ private struct MenuRow: View {
     @State private var hovering = false
 
     private var enabled: Bool { disabledReason == nil }
-    private var highlighted: Bool { hovering && enabled }
+    private var highlighted: Bool {
+        (hovering || chrome.highlightedRowForSnapshot == title) && enabled
+    }
 
     var body: some View {
         Button(action: action) {

@@ -158,6 +158,13 @@ final class SnapshotRunner {
         delegate.model.show(banner: "Added to Anki: English::Vocabulary", level: .success)
         try? await Task.sleep(for: .milliseconds(450))
         await capturePopup("popup-banner-\(appearance)")
+        // A footer row under the pointer.
+        delegate.snapshotPresent(text: "look up")
+        await waitUntil(timeout: 25) { !delegate.model.state.loading }
+        popup.highlightRowForSnapshot("Copy Translation")
+        try? await Task.sleep(for: .milliseconds(450))
+        await capturePopup("popup-hover-\(appearance)")
+        popup.highlightRowForSnapshot(nil)
         // The announcement path: a bare message, no lookup behind it.
         delegate.snapshotAnnounce("No text selected.", level: .info)
         try? await Task.sleep(for: .milliseconds(400))

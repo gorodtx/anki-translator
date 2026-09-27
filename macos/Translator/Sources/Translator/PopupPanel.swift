@@ -50,6 +50,15 @@ final class TranslationPanel: NSPanel {
         onCancel?()
     }
 
+    /// ⌘C copies selected text. An accessory app that is not active may have no Edit
+    /// menu to turn the key into `copy:`, so the panel sends it down the responder chain.
+    override func performKeyEquivalent(with event: NSEvent) -> Bool {
+        if super.performKeyEquivalent(with: event) { return true }
+        let flags = event.modifierFlags.intersection(.deviceIndependentFlagsMask)
+        guard flags == .command, event.charactersIgnoringModifiers == "c" else { return false }
+        return NSApp.sendAction(#selector(NSText.copy(_:)), to: nil, from: self)
+    }
+
     /// Esc is taken before any view sees it: nothing in the panel has a use for it, and a
     /// selectable text view would otherwise swallow it.
     override func sendEvent(_ event: NSEvent) {
@@ -112,6 +121,11 @@ final class PopupPanelController: NSObject {
     /// The window itself, for the snapshot harness.
     var window: NSWindow? { panel }
 
+    /// Snapshot runs only: draw this footer row highlighted, as under the pointer.
+    func highlightRowForSnapshot(_ title: String?) {
+        chrome.highlightedRowForSnapshot = title
+    }
+
     /// Show the panel with its top-left corner at `pointer`.
     ///
     /// - Parameter width: decided by the caller from the query and kept for the lookup.
@@ -135,7 +149,10 @@ final class PopupPanelController: NSObject {
         // height during the layout the first frame change triggers, and the panel takes
         // that height before it is ever on screen.
         let reports = heightReports
-        panel.setFrame(frame(height: Self.headerOnlyHeight, pointer: pointer, visible: visible), display: false)
+        // Already on screen (a new lookup while open): no provisional height that could
+        // reach the screen for a frame.
+        let provisional = panel.isVisible ? panel.frame.height : Self.headerOnlyHeight
+        panel.setFrame(frame(height: provisional, pointer: pointer, visible: visible), display: false)
         hosting?.layoutSubtreeIfNeeded()
         if heightReports != reports || naturalHeightWidth == width {
             panel.setFrame(frame(height: naturalHeight, pointer: pointer, visible: visible), display: false)
@@ -266,7 +283,8 @@ final class PopupPanelController: NSObject {
     private var shownAppearance: NSAppearance.Name?
 
     private static var currentAppearance: NSAppearance.Name? {
-        NSApp.effectiveAppearance.bestMatch(from: [
+        // An appearance set on the app applies at once; the effective one follows later.
+        (NSApp.appearance ?? NSApp.effectiveAppearance).bestMatch(from: [
             .aqua, .darkAqua, .accessibilityHighContrastAqua, .accessibilityHighContrastDarkAqua,
         ])
     }
