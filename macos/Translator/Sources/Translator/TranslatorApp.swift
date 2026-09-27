@@ -43,7 +43,6 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     private var announceDismissal: Task<Void, Never>?
     private lazy var popup = PopupPanelController(model: model)
     private var windows: [String: NSWindow] = [:]
-    private var stateObserver: Task<Void, Never>?
 
     override init() {
         let client = IPCClient(socketPath: IPCClient.defaultSocketPath())
@@ -58,7 +57,6 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         // app may be running beside them, and a clash would put a banner in every image.
         if let dir = ProcessInfo.processInfo.environment["TRANSLATOR_DEBUG_SNAPSHOT"], !dir.isEmpty {
             model.start()
-            observePopupResize()
             SnapshotRunner(delegate: self, output: URL(fileURLWithPath: dir)).run()
             return
         }
@@ -72,7 +70,6 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         applyHotKey(model.hotKey)
         openSetupIfUnfinished()
         model.start()
-        observePopupResize()
         openDebugTargets()
     }
 
@@ -118,7 +115,6 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     }
 
     func applicationWillTerminate(_ notification: Notification) {
-        stateObserver?.cancel()
         hotKeys.unregister()
         model.stop()
     }
@@ -189,15 +185,15 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     /// selected, or a combination another app already owns — used to set state that
     /// nobody displayed: the key did nothing and said nothing. The panel comes up with
     /// the message and closes itself, since there is no translation to keep it open for.
-    private func announce(_ message: String, level: NotificationLevel) {
+    private func announce(_ message: String, level: NotificationLevel, at pointer: CGPoint? = nil) {
         model.clearForAnnouncement()
-        showPopup()
+        showPopup(width: PopupLayout.announcementWidth, at: pointer)
         model.show(banner: message, level: level)
         announceDismissal?.cancel()
         announceDismissal = Task { [weak self] in
             try? await Task.sleep(for: .seconds(level == .info ? 2.5 : 4))
             guard !Task.isCancelled else { return }
-            await MainActor.run { self?.popup.hide() }
+            await MainActor.run { self?.popup.hide(reason: .announcementEnded) }
         }
     }
 
@@ -214,32 +210,23 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         present(text: text)
     }
 
-    private func present(text: String) {
-        showPopup()
-        Task { await model.translate(text) }
-    }
-
-    private func showPopup() {
-        popup.show(
-            at: NSEvent.mouseLocation,
-            openAnki: { [weak self] in self?.showAnkiSheet() },
-            onClose: { [weak self] in Task { await self?.model.closeSession() } }
-        )
-    }
-
-    /// Keep the panel fitted while partial → final content grows.
-    private func observePopupResize() {
-        stateObserver = Task { [weak self] in
-            var lastState: ViewState?
-            while !Task.isCancelled {
-                try? await Task.sleep(for: .milliseconds(120))
-                guard let self else { return }
-                if self.model.state != lastState {
-                    lastState = self.model.state
-                    self.popup.resizeToContent()
-                }
-            }
+    private func present(text: String, at pointer: CGPoint? = nil) {
+        announceDismissal?.cancel()
+        // One task, so the panel is ordered front in the same turn in which `translate`
+        // puts the query into the state: the first frame already shows the headword.
+        Task { @MainActor in
+            showPopup(width: PopupLayout.width(forQuery: text), at: pointer)
+            await model.translate(text)
         }
+    }
+
+    private func showPopup(width: CGFloat, at pointer: CGPoint? = nil) {
+        popup.show(
+            width: width,
+            at: pointer ?? NSEvent.mouseLocation,
+            openAnki: { [weak self] in self?.showAnkiSheet() },
+            onDismiss: { [weak self] in Task { await self?.model.closeSession() } }
+        )
     }
 
     // MARK: - Windows
@@ -272,7 +259,9 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     }
 
     func showHistoryEntry(_ entryId: Int) {
-        showPopup()
+        announceDismissal?.cancel()
+        let text = model.history.first { $0.entryId == entryId }?.text ?? ""
+        showPopup(width: PopupLayout.width(forQuery: text))
         Task { await model.selectHistory(entryId) }
     }
 
@@ -301,8 +290,23 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
 
     // MARK: - Snapshot hooks (see SnapshotHarness.swift)
 
-    func snapshotPresent(text: String) { present(text: text) }
+    /// Where snapshot scenes open the panel: a fixed point, so every image is framed alike.
+    var snapshotPointer: CGPoint {
+        let visible = (NSScreen.main ?? NSScreen.screens[0]).visibleFrame
+        return CGPoint(x: visible.minX + 160, y: visible.maxY - 40)
+    }
+
+    func snapshotPresent(text: String) { present(text: text, at: snapshotPointer) }
     func snapshotHidePopup() { popup.hide() }
     var snapshotPopupWindow: NSWindow? { popup.window }
+    var snapshotPopup: PopupPanelController { popup }
+    /// Show the panel again over whatever the model holds now, without a new lookup.
+    func snapshotReshowPopup() {
+        showPopup(width: PopupLayout.width(forQuery: model.state.originalText), at: snapshotPointer)
+    }
+    /// Show an announcement, as the hot key does when nothing is selected.
+    func snapshotAnnounce(_ message: String, level: NotificationLevel) {
+        announce(message, level: level, at: snapshotPointer)
+    }
     func snapshotWindow(id: String) -> NSWindow? { windows[id] }
 }

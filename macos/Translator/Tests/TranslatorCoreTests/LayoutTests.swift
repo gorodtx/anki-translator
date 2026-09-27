@@ -41,99 +41,126 @@ import Testing
 @Suite struct PopupLayoutTests {
     private let screen = CGRect(x: 0, y: 0, width: 1440, height: 900)
 
-    @Test func widthGrowsWithContent() {
-        let short = ViewState(original: "bank", translationRaw: "берег")
-        let long = ViewState(
-            original: String(repeating: "word ", count: 40),
-            translationRaw: String(repeating: "слово ", count: 40)
-        )
-        #expect(PopupLayout.preferredWidth(for: short) < PopupLayout.preferredWidth(for: long))
-        #expect(PopupLayout.preferredWidth(for: long) == PopupLayout.maxWidth)
-        #expect(PopupLayout.preferredWidth(for: short) >= PopupLayout.minWidth)
+    /// The width is a property of the query, fixed for the whole lookup.
+    @Test func widthComesFromTheQueryAlone() {
+        #expect(PopupLayout.width(forQuery: "bank") == PopupLayout.narrowWidth)
+        #expect(PopupLayout.width(forQuery: "look up to") == PopupLayout.narrowWidth)
+        #expect(PopupLayout.width(forQuery: "") == PopupLayout.narrowWidth)
+        #expect(PopupLayout.width(forQuery: "look up to them") == PopupLayout.wideWidth)
+        let sentence = "The committee postponed its decision until the auditors had reviewed every account."
+        #expect(PopupLayout.width(forQuery: sentence) == PopupLayout.wideWidth)
     }
 
-    @Test func widthAlsoConsidersExamplesAndDefinitions() {
-        let base = ViewState(original: "run", translationRaw: "бежать")
-        var wide = base
-        wide.examples = [ExampleItem(en: String(repeating: "x", count: 200))]
-        #expect(PopupLayout.preferredWidth(for: wide) > PopupLayout.preferredWidth(for: base))
-        var withDefs = base
-        withDefs.definitionsItems = [String(repeating: "y", count: 130)]
-        #expect(PopupLayout.preferredWidth(for: withDefs) > PopupLayout.preferredWidth(for: base))
+    @Test func aVeryLongWordGetsTheWidePanel() {
+        #expect(PopupLayout.width(forQuery: "pneumonoultramicroscopicsilicovolcanoconiosis") == PopupLayout.wideWidth)
     }
 
-    @Test func popupSitsBelowRightOfPointer() {
+    @Test func moreThanThreeWordsIsASentence() {
+        #expect(!PopupLayout.isSentence("serendipity"))
+        #expect(!PopupLayout.isSentence("  look   up  to "))
+        #expect(PopupLayout.isSentence("once upon a time"))
+    }
+
+    @Test func topLeftCornerSitsAtThePointer() {
         let frame = PopupLayout.frame(
             for: CGSize(width: 380, height: 300),
             pointer: CGPoint(x: 600, y: 700),
             visible: screen
         )
-        #expect(frame.minX == 614)
-        #expect(frame.maxY == 682)
-        #expect(screen.contains(frame))
+        #expect(frame.minX == 600)
+        #expect(frame.maxY == 700)
     }
 
-    @Test func popupStaysOnScreenNearRightEdge() {
-        let frame = PopupLayout.frame(
-            for: CGSize(width: 500, height: 300),
+    @Test func panelIsClampedIntoTheVisibleFrame() {
+        let nearRight = PopupLayout.frame(
+            for: CGSize(width: 440, height: 300),
             pointer: CGPoint(x: 1430, y: 700),
             visible: screen
         )
-        #expect(frame.maxX <= screen.maxX - PopupLayout.screenMargin)
-        #expect(frame.minX >= screen.minX)
-    }
-
-    @Test func popupFlipsAboveWhenItWouldOverflowBottom() {
-        let frame = PopupLayout.frame(
+        #expect(nearRight.maxX == screen.maxX)
+        let nearBottom = PopupLayout.frame(
             for: CGSize(width: 380, height: 400),
             pointer: CGPoint(x: 400, y: 120),
             visible: screen
         )
-        #expect(frame.minY >= screen.minY + PopupLayout.screenMargin)
-        #expect(frame.maxY <= screen.maxY - PopupLayout.screenMargin)
+        #expect(nearBottom.minY == screen.minY)
+        #expect(nearBottom.height == 400)
     }
 
-    @Test func tallerContentKeepsTopLeftAnchored() {
+    @Test func panelStaysOnASecondScreenWithANegativeOrigin() {
+        let left = CGRect(x: -1920, y: 0, width: 1920, height: 1080)
+        let frame = PopupLayout.frame(for: CGSize(width: 380, height: 200), pointer: CGPoint(x: -10, y: 500), visible: left)
+        #expect(frame.maxX <= left.maxX)
+        #expect(left.contains(frame))
+    }
+
+    @Test func growingKeepsTheTopEdge() {
         let original = CGRect(x: 300, y: 500, width: 380, height: 200)
-        let grown = PopupLayout.resizedKeepingTopLeft(original, to: CGSize(width: 380, height: 320), visible: screen)
+        let grown = PopupLayout.resized(original, toHeight: 320, visible: screen)
         #expect(grown.maxY == original.maxY)
         #expect(grown.minX == original.minX)
+        #expect(grown.width == original.width)
         #expect(grown.height == 320)
     }
 
-    @Test func growthClampsAtScreenBottom() {
+    /// Growth that would cross the bottom moves the panel up just enough.
+    @Test func growthAtTheBottomMovesThePanelUp() {
         let original = CGRect(x: 300, y: 40, width: 380, height: 120)
-        let grown = PopupLayout.resizedKeepingTopLeft(original, to: CGSize(width: 380, height: 400), visible: screen)
-        #expect(grown.minY >= screen.minY + PopupLayout.screenMargin)
-    }
-
-    @Test func widthGrowthPullsPanelBackOnScreen() {
-        let original = CGRect(x: 1200, y: 400, width: 340, height: 200)
-        let grown = PopupLayout.resizedKeepingTopLeft(original, to: CGSize(width: 520, height: 200), visible: screen)
-        #expect(grown.maxX <= screen.maxX - PopupLayout.screenMargin)
+        let grown = PopupLayout.resized(original, toHeight: 400, visible: screen)
+        #expect(grown.minY == screen.minY)
+        #expect(grown.height == 400)
     }
 }
 
-@Suite struct BodyHeightTests {
-    /// The cap decides how much of a dictionary card is read without scrolling; it has to
-    /// use a large display without letting the popup take over a small one.
-    @Test func capScalesWithTheScreenWithinBounds() {
-        #expect(PopupLayout.bodyMaxHeight(forScreenHeight: 900) == 450)
-        #expect(PopupLayout.bodyMaxHeight(forScreenHeight: 1440) == 640)
-        #expect(PopupLayout.bodyMaxHeight(forScreenHeight: 1600) == 640)
+@Suite struct PopupHeightTests {
+    @Test func capIsTwoThirdsOfTheScreenUpToAFixedCeiling() {
+        #expect(abs(PopupLayout.heightCap(forVisibleHeight: 600) - 396) < 0.001)
+        #expect(abs(PopupLayout.heightCap(forVisibleHeight: 875) - 577.5) < 0.001)
+        #expect(PopupLayout.heightCap(forVisibleHeight: 1400) == PopupLayout.maxHeight)
     }
 
-    @Test func capNeverCollapsesOnAShortScreen() {
-        #expect(PopupLayout.bodyMaxHeight(forScreenHeight: 600) == 360)
-        #expect(PopupLayout.bodyMaxHeight(forScreenHeight: 0) == 360)
+    @Test func heightFollowsTheContentUnderTheCap() {
+        #expect(PopupLayout.height(forNatural: 212.3, visibleHeight: 900) == 213)
+        #expect(PopupLayout.height(forNatural: 5000, visibleHeight: 900) == PopupLayout.heightCap(forVisibleHeight: 900))
+        #expect(PopupLayout.height(forNatural: 0, visibleHeight: 900) == PopupLayout.minHeight)
     }
 
-    @Test func popupStillFitsTheScreenAtTheLargestCap() {
-        let screen = CGRect(x: 0, y: 0, width: 1440, height: 900)
-        let cap = PopupLayout.bodyMaxHeight(forScreenHeight: screen.height)
-        let size = CGSize(width: 480, height: cap + PopupLayout.chromeHeight)
-        let frame = PopupLayout.frame(for: size, pointer: CGPoint(x: 700, y: 500), visible: screen)
-        #expect(frame.height <= screen.height - 2 * PopupLayout.screenMargin)
+    @Test func capNeverCollapses() {
+        #expect(PopupLayout.heightCap(forVisibleHeight: 0) == PopupLayout.minHeight)
+    }
+}
+
+@Suite struct PopupFocusRuleTests {
+    /// Esc and outside clicks end the lookup; nothing else does.
+    @Test func onlyDismissalEndsTheSession() {
+        #expect(PopupHideReason.dismissed.endsSession)
+        #expect(!PopupHideReason.ownWindowFocused.endsSession)
+        #expect(!PopupHideReason.announcementEnded.endsSession)
+        #expect(!PopupHideReason.programmatic.endsSession)
+    }
+
+    /// Opening Add to Anki from the panel must not close the session it is reading.
+    @Test func ownWindowTakingFocusHidesQuietly() {
+        let reason = PopupFocusRule.reasonAfterResigningKey(
+            panelStillKey: false, newKeyWindowIsOurs: true, dismissalSuspended: false
+        )
+        #expect(reason == .ownWindowFocused)
+    }
+
+    @Test func focusLeavingTheAppDismisses() {
+        let reason = PopupFocusRule.reasonAfterResigningKey(
+            panelStillKey: false, newKeyWindowIsOurs: false, dismissalSuspended: false
+        )
+        #expect(reason == .dismissed)
+    }
+
+    @Test func regainedKeyOrSuspendedDoesNothing() {
+        #expect(PopupFocusRule.reasonAfterResigningKey(
+            panelStillKey: true, newKeyWindowIsOurs: false, dismissalSuspended: false
+        ) == nil)
+        #expect(PopupFocusRule.reasonAfterResigningKey(
+            panelStillKey: false, newKeyWindowIsOurs: false, dismissalSuspended: true
+        ) == nil)
     }
 }
 

@@ -1,74 +1,115 @@
 import CoreGraphics
 import Foundation
 
-/// Geometry for the translation popup: width heuristics ported from the GTK window and
-/// placement next to the pointer that never leaves the screen.
+/// Geometry for the translation panel.
+///
+/// The panel follows Maccy's floating panel: its top-left corner sits at the pointer,
+/// clamped into the visible frame of that screen; its width is decided once per lookup
+/// from the query alone; its height is whatever the content needs, up to a cap, with the
+/// top edge fixed while it grows.
 public enum PopupLayout {
-    public static let minWidth: CGFloat = 340
-    public static let maxWidth: CGFloat = 520
-    public static let pointerOffset = CGPoint(x: 14, y: -18)
-    public static let screenMargin: CGFloat = 12
-    /// Header, action bar and padding around the scrolling body.
-    public static let chromeHeight: CGFloat = 133
+    /// A word or a short phrase.
+    public static let narrowWidth: CGFloat = 380
+    /// A sentence, or a word too long for the narrow panel.
+    public static let wideWidth: CGFloat = 440
+    /// Width of the panel that only says something (no lookup behind it).
+    public static let announcementWidth: CGFloat = 320
 
-    /// Cap on the scrolling part of the popup.
-    ///
-    /// A dictionary card with senses, definitions and examples runs past any fixed cap on
-    /// every real lookup, so this decides how much is read without scrolling. Half the
-    /// screen keeps the popup a popup while using a large display when there is one; the
-    /// bounds keep it sane on a laptop and on a 5K panel alike.
-    public static func bodyMaxHeight(forScreenHeight height: CGFloat) -> CGFloat {
-        min(max(height * 0.5, 360), 640)
+    /// Up to this many words the query is shown as a headword; beyond it, as a sentence.
+    public static let headwordMaxWords = 3
+    public static let narrowMaxCharacters = 32
+
+    /// Absolute ceiling on the panel height, and the share of the screen it may take.
+    public static let maxHeight: CGFloat = 620
+    public static let maxScreenShare: CGFloat = 0.66
+    /// Never shorter than one line of banner or header.
+    public static let minHeight: CGFloat = 36
+
+    public static func wordCount(_ query: String) -> Int {
+        query.split(whereSeparator: { $0.isWhitespace }).count
     }
 
-    /// Width grows with the longest line the popup has to show, within bounds.
-    public static func preferredWidth(for state: ViewState) -> CGFloat {
-        var width: CGFloat = 380
-        let longestExample = state.examples.map { $0.en.count }.max() ?? 0
-        let longestDefinition = state.definitionsItems.map(\.count).max() ?? 0
-        let longest = max(state.original.count, state.translationText.count, longestExample, longestDefinition)
-        if longest > 70 { width = 430 }
-        if longest > 110 { width = 480 }
-        if longest > 160 { width = maxWidth }
-        return min(max(width, minWidth), maxWidth)
+    /// More than a few words: shown as a quoted sentence with the translation as the main text.
+    public static func isSentence(_ query: String) -> Bool {
+        wordCount(query.trimmingCharacters(in: .whitespacesAndNewlines)) > headwordMaxWords
     }
 
-    /// Place `size` near `pointer` (AppKit coordinates, origin bottom-left) inside `visible`.
-    ///
-    /// Preferred position: top-left corner just below-right of the pointer. When that would
-    /// overflow the bottom, the popup flips above the pointer; horizontally it is clamped.
+    /// Decided at show time from the query and kept for the whole lookup, so the panel
+    /// never jumps sideways while the result fills in.
+    public static func width(forQuery query: String) -> CGFloat {
+        let trimmed = query.trimmingCharacters(in: .whitespacesAndNewlines)
+        if trimmed.isEmpty { return narrowWidth }
+        if wordCount(trimmed) <= headwordMaxWords && trimmed.count <= narrowMaxCharacters {
+            return narrowWidth
+        }
+        return wideWidth
+    }
+
+    /// The tallest the panel may be on a screen whose visible frame is `visibleHeight` tall.
+    public static func heightCap(forVisibleHeight visibleHeight: CGFloat) -> CGFloat {
+        max(minHeight, min(visibleHeight * maxScreenShare, maxHeight))
+    }
+
+    /// The content's natural height, capped; the body scrolls inside when capped.
+    public static func height(forNatural natural: CGFloat, visibleHeight: CGFloat) -> CGFloat {
+        let rounded = natural.rounded(.up)
+        return min(max(rounded, minHeight), heightCap(forVisibleHeight: visibleHeight))
+    }
+
+    /// Top-left corner at the pointer (AppKit coordinates, origin bottom-left), the whole
+    /// panel kept inside `visible` so it never spills onto a neighbouring screen.
     public static func frame(for size: CGSize, pointer: CGPoint, visible: CGRect) -> CGRect {
-        var x = pointer.x + pointerOffset.x
-        var top = pointer.y + pointerOffset.y
-        let maxX = visible.maxX - screenMargin - size.width
-        let minX = visible.minX + screenMargin
-        x = min(max(x, minX), max(minX, maxX))
-
-        var bottom = top - size.height
-        if bottom < visible.minY + screenMargin {
-            // Flip above the pointer.
-            bottom = pointer.y - pointerOffset.y
-            top = bottom + size.height
-            if top > visible.maxY - screenMargin {
-                top = visible.maxY - screenMargin
-                bottom = top - size.height
-            }
-        }
-        if bottom < visible.minY + screenMargin {
-            bottom = visible.minY + screenMargin
-        }
-        return CGRect(x: x, y: bottom, width: size.width, height: size.height)
+        let origin = CGPoint(x: pointer.x, y: pointer.y - size.height)
+        return CGRect(origin: constrained(origin, size: size, to: visible), size: size)
     }
 
-    /// Keep the top-left corner fixed when the content height changes.
-    public static func resizedKeepingTopLeft(_ frame: CGRect, to size: CGSize, visible: CGRect) -> CGRect {
-        var bottom = frame.maxY - size.height
-        if bottom < visible.minY + screenMargin {
-            bottom = visible.minY + screenMargin
-        }
-        var x = frame.minX
-        let maxX = visible.maxX - screenMargin - size.width
-        if x > maxX { x = max(visible.minX + screenMargin, maxX) }
-        return CGRect(x: x, y: bottom, width: size.width, height: size.height)
+    /// A new height with the top edge fixed. When growing would cross the bottom of the
+    /// visible frame the panel moves up just enough; it never leaves the screen at the top.
+    public static func resized(_ frame: CGRect, toHeight height: CGFloat, visible: CGRect) -> CGRect {
+        let size = CGSize(width: frame.width, height: height)
+        let origin = CGPoint(x: frame.minX, y: frame.maxY - height)
+        return CGRect(origin: constrained(origin, size: size, to: visible), size: size)
+    }
+
+    private static func constrained(_ origin: CGPoint, size: CGSize, to visible: CGRect) -> CGPoint {
+        CGPoint(
+            x: min(max(origin.x, visible.minX), max(visible.minX, visible.maxX - size.width)),
+            y: min(max(origin.y, visible.minY), max(visible.minY, visible.maxY - size.height))
+        )
+    }
+}
+
+/// Why the translation panel went away, and whether that ends the lookup.
+///
+/// Only the user dismissing the panel ends the backend session. Hiding it because one of
+/// the app's own windows took focus must not: closing the session cancels pending Anki
+/// work and clears the preview the Add to Anki window is still preparing.
+public enum PopupHideReason: String, Equatable, Sendable {
+    /// Esc, or a click into another app or the desktop.
+    case dismissed
+    /// Another window of this app became key (Add to Anki, History, Settings).
+    case ownWindowFocused
+    /// A short announcement ran its course.
+    case announcementEnded
+    /// Replaced or hidden by the app itself (a new lookup, the snapshot harness).
+    case programmatic
+
+    public var endsSession: Bool { self == .dismissed }
+}
+
+public enum PopupFocusRule {
+    /// What losing key status means, decided once focus has settled.
+    ///
+    /// - Parameters:
+    ///   - panelStillKey: the panel got key back (e.g. a click inside it).
+    ///   - newKeyWindowIsOurs: another window of this app is key now.
+    ///   - dismissalSuspended: a capture run that must not react to focus theft.
+    public static func reasonAfterResigningKey(
+        panelStillKey: Bool,
+        newKeyWindowIsOurs: Bool,
+        dismissalSuspended: Bool
+    ) -> PopupHideReason? {
+        if panelStillKey || dismissalSuspended { return nil }
+        return newKeyWindowIsOurs ? .ownWindowFocused : .dismissed
     }
 }
