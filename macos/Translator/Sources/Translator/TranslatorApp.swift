@@ -11,6 +11,32 @@ struct TranslatorApp: App {
             MenuBarContent(model: delegate.model, delegate: delegate)
         }
         .menuBarExtraStyle(.menu)
+        .commands { WindowCommands(delegate: delegate) }
+    }
+}
+
+/// File > Close (⌘W) and Edit > Find (⌘F) for every window of the app.
+///
+/// SwiftUI's main menu for a menu bar app has Edit and Window menus but no File menu, so
+/// ⌘W reached no window: Settings answered it with an override of its own, History and
+/// Add to Anki beeped. One menu item is the Mac's way and covers every window. It is
+/// declared here rather than added to `NSApp.mainMenu` by hand because SwiftUI rebuilds
+/// that menu and drops what it did not make. The menu is never on screen (an accessory
+/// app shows no menu bar of its own) but answers key equivalents while our window is key.
+private struct WindowCommands: Commands {
+    let delegate: AppDelegate
+
+    var body: some Commands {
+        CommandGroup(after: .newItem) {
+            Button("Close") { NSApp.keyWindow?.performClose(nil) }
+                .keyboardShortcut("w")
+        }
+        CommandGroup(after: .textEditing) {
+            // The key window's toolbar search field (History's), as ⌘F does in any Mac
+            // window with one; nothing elsewhere.
+            Button("Find…") { delegate.focusSearch(nil) }
+                .keyboardShortcut("f")
+        }
     }
 }
 
@@ -111,7 +137,6 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
 
     func applicationDidFinishLaunching(_ notification: Notification) {
         NSApp.setActivationPolicy(.accessory)   // menu-bar app: no Dock icon
-        installWindowCommands()
         // Snapshot runs must not claim the hot key or the Services entry: the installed
         // app may be running beside them, and a clash would put a banner in every image.
         if let dir = ProcessInfo.processInfo.environment["TRANSLATOR_DEBUG_SNAPSHOT"], !dir.isEmpty {
@@ -173,37 +198,8 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         }
     }
 
-    /// File > Close (⌘W) and Edit > Find (⌘F) for every window of the app.
-    ///
-    /// SwiftUI's main menu for a menu bar app has Edit and Window menus but no File menu,
-    /// so ⌘W reached no window: Settings answered it with an override of its own, History
-    /// and Add to Anki beeped. One menu item is the Mac's way and covers every window,
-    /// present and future. The menu is never on screen (an accessory app has no menu bar
-    /// of its own) but still answers key equivalents while one of our windows is key.
-    private func installWindowCommands() {
-        guard let mainMenu = NSApp.mainMenu else {
-            NSLog("[translator] no main menu to add File > Close to")
-            return
-        }
-        if !mainMenu.items.contains(where: { $0.submenu?.items.contains { $0.action == #selector(NSWindow.performClose(_:)) } == true }) {
-            let file = NSMenu(title: "File")
-            file.addItem(withTitle: "Close", action: #selector(NSWindow.performClose(_:)), keyEquivalent: "w")
-            let item = NSMenuItem(title: "File", action: nil, keyEquivalent: "")
-            item.submenu = file
-            // After the app menu, where File always is.
-            mainMenu.insertItem(item, at: min(1, mainMenu.items.count))
-        }
-        if let edit = mainMenu.items.first(where: { $0.submenu?.items.contains { $0.action == #selector(NSText.copy(_:)) } == true })?.submenu,
-           !edit.items.contains(where: { $0.keyEquivalent == "f" && $0.keyEquivalentModifierMask == .command }) {
-            edit.addItem(.separator())
-            let find = NSMenuItem(title: "Find…", action: #selector(focusSearch(_:)), keyEquivalent: "f")
-            find.target = self
-            edit.addItem(find)
-        }
-    }
-
-    /// Edit > Find: the key window's toolbar search field (History's), as ⌘F does in any
-    /// Mac window with one.
+    /// Edit > Find (see `WindowCommands`): the key window's toolbar search field, as ⌘F
+    /// does in any Mac window with one.
     @objc func focusSearch(_ sender: Any?) {
         searchItem(in: NSApp.keyWindow)?.beginSearchInteraction()
     }
@@ -533,15 +529,6 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     /// Set by the harness: every registration the app would make (nil: none) goes here
     /// instead of to Carbon, so a probe can see them and the user's Mac is left alone.
     var snapshotHotKeys: ((KeyCombo?) -> Void)?
-}
-
-extension AppDelegate: NSMenuItemValidation {
-    func validateMenuItem(_ menuItem: NSMenuItem) -> Bool {
-        if menuItem.action == #selector(focusSearch(_:)) {
-            return searchItem(in: NSApp.keyWindow) != nil
-        }
-        return true
-    }
 }
 
 extension NSWindow {
