@@ -245,12 +245,17 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     // MARK: - Windows
 
     func showHistory() {
+        let reopening = windows["history"] != nil
         present(
             id: "history",
             title: "History",
-            size: CGSize(width: 460, height: 480),
+            size: HistoryView.defaultSize,
+            chrome: .document(autosaveName: "History", searchInToolbar: true),
+            onReopen: .keepContent,
             view: HistoryView(model: model) { [weak self] entryId in self?.showHistoryEntry(entryId) }
         )
+        // The view is kept between opens, so its first-load task does not run again.
+        if reopening { Task { await model.loadHistory() } }
     }
 
     func showSettings() {
@@ -266,8 +271,15 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         present(
             id: "anki",
             title: "Add to Anki",
-            size: CGSize(width: 560, height: 620),
-            view: AnkiUpsertSheet(model: model) { [weak self] _ in self?.close(id: "anki") }
+            size: AnkiUpsertSheet.initialSize,
+            chrome: .dialog,
+            // Every open is a new note: fresh choices, a fresh preview.
+            onReopen: .rebuildContent,
+            view: AnkiUpsertSheet(
+                model: model,
+                openSettings: { [weak self] in self?.showSettings() },
+                onFinished: { [weak self] _ in self?.close(id: "anki") }
+            )
         )
     }
 
@@ -276,21 +288,81 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         Task { await model.selectHistory(entryId) }
     }
 
-    private func present(id: String, title: String, size: CGSize, view: some View) {
-        NSApp.activate(ignoringOtherApps: true)
-        if let existing = windows[id] {
-            existing.contentViewController = NSHostingController(rootView: AnyView(view))
-            existing.makeKeyAndOrderFront(nil)
+    /// How one of the app's standard windows is framed.
+    struct WindowChrome {
+        var styleMask: NSWindow.StyleMask
+        /// Remembers the frame between launches; nil centres the window on first open.
+        var autosaveName: String?
+        /// Bridge `.searchable` / `.toolbar` from the SwiftUI view into the window's toolbar.
+        var searchInToolbar = false
+        /// The window takes the content's own size and the user cannot resize it.
+        var fitsContent = false
+
+        /// A resizable document-style window: History, and Settings until it has its own.
+        static func document(autosaveName: String? = nil, searchInToolbar: Bool = false) -> WindowChrome {
+            WindowChrome(
+                styleMask: [.titled, .closable, .miniaturizable, .resizable],
+                autosaveName: autosaveName,
+                searchInToolbar: searchInToolbar
+            )
+        }
+
+        /// A fixed-size dialog sized by its content: Add to Anki.
+        static let dialog = WindowChrome(styleMask: [.titled, .closable], fitsContent: true)
+    }
+
+    /// What reopening a window does to the view inside it. The window itself — frame,
+    /// position, controller — is always kept.
+    enum ReopenBehaviour {
+        /// Same view, same state (selection, search, scroll position).
+        case keepContent
+        /// A new view identity, so its state resets and its `.task` runs again.
+        case rebuildContent
+    }
+
+    /// Shows one of the app's own windows, creating it on first use and reusing it after.
+    ///
+    /// The windows are standard titled windows with an opaque title bar: content never runs
+    /// under the traffic lights, and toolbars get their look from the system.
+    private func present(
+        id: String,
+        title: String,
+        size: CGSize,
+        chrome: WindowChrome = .document(),
+        onReopen: ReopenBehaviour = .rebuildContent,
+        view: some View
+    ) {
+        NSApp.activate()
+        if let window = windows[id] {
+            if onReopen == .rebuildContent, let host = window.contentViewController as? NSHostingController<AnyView> {
+                host.rootView = AnyView(view.id(UUID()))
+            }
+            window.makeKeyAndOrderFront(nil)
             return
         }
         let controller = NSHostingController(rootView: AnyView(view))
-        let window = NSWindow(contentViewController: controller)
+        // One owner of the size: a dialog follows its content, a resizable window only
+        // takes its minimum from the content and is otherwise the user's to size.
+        controller.sizingOptions = chrome.fitsContent ? [.minSize, .intrinsicContentSize, .maxSize] : [.minSize]
+        if chrome.searchInToolbar { controller.sceneBridgingOptions = [.toolbars] }
+
+        let window = NSWindow(
+            contentRect: CGRect(origin: .zero, size: size),
+            styleMask: chrome.styleMask,
+            backing: .buffered,
+            defer: false
+        )
+        window.contentViewController = controller
         window.title = title
-        window.setContentSize(size)
-        window.styleMask = [.titled, .closable, .miniaturizable, .resizable, .fullSizeContentView]
-        window.titlebarAppearsTransparent = true
         window.isReleasedWhenClosed = false
+        window.tabbingMode = .disallowed
+        if !chrome.fitsContent { window.setContentSize(size) }
+        if chrome.searchInToolbar { window.toolbarStyle = .unified }
         window.center()
+        if let name = chrome.autosaveName {
+            window.setFrameUsingName(name)
+            window.setFrameAutosaveName(name)
+        }
         windows[id] = window
         window.makeKeyAndOrderFront(nil)
     }
