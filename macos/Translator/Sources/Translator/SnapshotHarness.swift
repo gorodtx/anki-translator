@@ -198,6 +198,20 @@ final class SnapshotRunner {
             try? await Task.sleep(for: .milliseconds(pane == .anki ? 1500 : 700))
             logControls(in: window, name: "settings-\(pane.rawValue)-\(appearance)")
             write(window, "settings-\(pane.rawValue)-\(appearance)")
+            if pane == .sources, appearance == appearances.first?.0 {
+                await probeAutoSave(in: window)
+            }
+            // "What runs here?" opened: the pane grows, and the window with it.
+            if pane == .advanced {
+                let closedHeight = window.frame.height
+                let top = window.frame.maxY
+                NotificationCenter.default.post(name: AdvancedSettingsPane.snapshotDisclosure, object: true)
+                try? await Task.sleep(for: .milliseconds(900))
+                NSLog("[snapshot] advanced disclosure: window height \(closedHeight) -> \(window.frame.height), top kept=\(window.frame.maxY == top)")
+                write(window, "settings-advanced-open-\(appearance)")
+                NotificationCenter.default.post(name: AdvancedSettingsPane.snapshotDisclosure, object: false)
+                try? await Task.sleep(for: .milliseconds(700))
+            }
         }
         // The checklist appears only while setup is unfinished, which the isolated
         // backend never is; a taken shortcut is the one gap the model can stand in for.
@@ -211,6 +225,82 @@ final class SnapshotRunner {
         try? await Task.sleep(for: .milliseconds(500))
         window.close()
         try? await Task.sleep(for: .milliseconds(300))
+    }
+
+    /// A click on a source's checkbox reaches the backend's config file with no Save
+    /// button, and a second click puts it back. The config lives where `snapshot.sh`
+    /// points the isolated backend.
+    private func probeAutoSave(in window: NSWindow) async {
+        guard let delegate else { return }
+        let config = output.appendingPathComponent(".backend/cfg/desktop_config.json")
+        func stored() -> Bool? {
+            guard let data = try? Data(contentsOf: config),
+                  let json = try? JSONSerialization.jsonObject(with: data) as? [String: Any],
+                  let sources = json["sources"] as? [String: Any]
+            else { return nil }
+            return sources["cambridge"] as? Bool
+        }
+        // The fourth checkbox from the top is Cambridge.
+        let boxes = Self.checkboxes(in: window)
+        guard boxes.count == 6 else {
+            NSLog("PROBE settings-autosave FAIL found \(boxes.count) checkboxes, expected 6")
+            return
+        }
+        // SwiftUI's checkbox is drawn by an NSButton that has no action of its own, so the
+        // probe clicks the way the mouse does.
+        let box = boxes[3].convert(boxes[3].bounds, to: nil)
+        let before = delegate.model.settings.sources.cambridge
+        var results: [String] = []
+        var passed = true
+        // Off, then on again; with the window key the second click goes on the title.
+        // A window that is not key takes a first click on text only to come forward (the
+        // checkbox itself accepts it), and the harness cannot activate the app while
+        // another one is in front, so then both clicks go on the box.
+        for (step, expected) in [(0, !before), (1, before)] {
+            let onTitle = step == 1 && window.isKeyWindow
+            let point = onTitle ? NSPoint(x: box.maxX + 24, y: box.midY) : NSPoint(x: box.midX, y: box.midY)
+            Self.click(at: point, in: window)
+            try? await Task.sleep(for: .milliseconds(1500))
+            let model = delegate.model.settings.sources.cambridge
+            let file = stored()
+            passed = passed && model == expected && file == expected
+            results.append("\(onTitle ? "title" : "box") click: model=\(model) file=\(file.map(String.init) ?? "nil") expected=\(expected)")
+        }
+        NSLog("PROBE settings-autosave \(passed ? "PASS" : "FAIL") \(results.joined(separator: "; "))")
+        if delegate.model.settings.sources.cambridge != before {
+            // Never leave the run's backend with a source switched off.
+            delegate.model.settings.sources.cambridge = before
+            try? await Task.sleep(for: .milliseconds(1000))
+        }
+    }
+
+    /// A left click at a point in window coordinates. The mouse-up is queued first: a
+    /// button tracks the mouse in a loop of its own and would wait for it forever.
+    private static func click(at point: NSPoint, in window: NSWindow) {
+        func event(_ type: NSEvent.EventType) -> NSEvent? {
+            NSEvent.mouseEvent(
+                with: type, location: point, modifierFlags: [],
+                timestamp: ProcessInfo.processInfo.systemUptime, windowNumber: window.windowNumber,
+                context: nil, eventNumber: 0, clickCount: 1, pressure: type == .leftMouseDown ? 1 : 0
+            )
+        }
+        guard let down = event(.leftMouseDown), let up = event(.leftMouseUp) else { return }
+        NSApp.postEvent(up, atStart: false)
+        window.sendEvent(down)
+    }
+
+    /// The window's checkboxes, top to bottom.
+    private static func checkboxes(in window: NSWindow) -> [NSButton] {
+        var stack = [window.contentView].compactMap { $0 }
+        var found: [(CGFloat, NSButton)] = []
+        while let view = stack.popLast() {
+            if let button = view as? NSButton, button.frame.width < 30,
+               !(button.cell is NSSearchFieldCell), button.accessibilityRole() != .button {
+                found.append((button.convert(button.bounds, to: nil).maxY, button))
+            }
+            stack.append(contentsOf: view.subviews)
+        }
+        return found.sorted { $0.0 > $1.0 }.map(\.1)
     }
 
     /// Where every checkbox and button of a window sits, in points from the content's

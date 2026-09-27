@@ -51,7 +51,8 @@ final class SettingsWindowController: NSWindowController, NSToolbarDelegate, NSW
     private let suspendHotKey: (Bool) -> Void
 
     private var panes: [SettingsPaneID: NSHostingController<AnyView>] = [:]
-    private var sizeObservers: [SettingsPaneID: NSKeyValueObservation] = [:]
+    /// Each pane's natural size, as SwiftUI last reported it.
+    private var measured: [SettingsPaneID: CGSize] = [:]
     private(set) var selectedPane: SettingsPaneID?
     private var hasBeenShown = false
 
@@ -149,19 +150,27 @@ final class SettingsWindowController: NSWindowController, NSToolbarDelegate, NSW
 
     private func controller(for pane: SettingsPaneID) -> NSHostingController<AnyView> {
         if let existing = panes[pane] { return existing }
-        let controller = NSHostingController(rootView: view(for: pane))
-        // One owner of the window size: this controller, from the pane's ideal size.
+        // A pane grows and shrinks with its content (a setup row done, a section opened).
+        // SwiftUI reports the content's natural size itself; the hosting controller's
+        // preferredContentSize did not follow such changes once its view was placed by
+        // hand, and it is used only as the first guess.
+        let root = view(for: pane)
+            .fixedSize(horizontal: false, vertical: true)
+            .onGeometryChange(for: CGSize.self) { $0.size } action: { [weak self] size in
+                self?.paneDidMeasure(pane, size)
+            }
+        let controller = NSHostingController(rootView: AnyView(root))
         controller.sizingOptions = [.preferredContentSize]
         panes[pane] = controller
-        // A pane grows and shrinks with its content (a setup row done, a section opened).
-        sizeObservers[pane] = controller.observe(\.preferredContentSize) { [weak self] _, _ in
-            MainActor.assumeIsolated {
-                guard let self, self.selectedPane == pane else { return }
-                // Next turn: the change arrives mid-layout.
-                DispatchQueue.main.async { self.fitWindow(animated: false) }
-            }
-        }
         return controller
+    }
+
+    private func paneDidMeasure(_ pane: SettingsPaneID, _ size: CGSize) {
+        guard size.width > 0, size.height > 0, measured[pane] != size else { return }
+        measured[pane] = size
+        guard selectedPane == pane else { return }
+        // Next turn: the report arrives in the middle of a layout pass.
+        DispatchQueue.main.async { self.fitWindow(animated: false) }
     }
 
     private func view(for pane: SettingsPaneID) -> AnyView {
@@ -182,6 +191,9 @@ final class SettingsWindowController: NSWindowController, NSToolbarDelegate, NSW
     }
 
     private func paneSize(_ controller: NSHostingController<AnyView>) -> CGSize {
+        if let pane = panes.first(where: { $0.value === controller })?.key, let size = measured[pane] {
+            return CGSize(width: ceil(size.width), height: ceil(size.height))
+        }
         let preferred = controller.preferredContentSize
         if preferred.width > 0, preferred.height > 0 { return preferred }
         return controller.view.fittingSize

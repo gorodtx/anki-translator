@@ -33,7 +33,14 @@ struct AdvancedSettingsPane: View {
 
             SettingsSection(title: "") { about }
         }
+        .onReceive(NotificationCenter.default.publisher(for: Self.snapshotDisclosure)) { note in
+            backgroundOpen = note.object as? Bool ?? false
+        }
     }
+
+    /// Opens (object `true`) or closes "What runs here?" for the snapshot harness, which
+    /// cannot click a window of an app that is not active.
+    static let snapshotDisclosure = Notification.Name("TranslatorSettingsSnapshotDisclosure")
 
     // MARK: - Databases
 
