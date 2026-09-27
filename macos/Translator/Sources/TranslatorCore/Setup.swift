@@ -314,7 +314,8 @@ public enum SetupPlanner {
             state: .actionNeeded,
             isOptional: false,
             action: .recordShortcut,
-            actionLabel: "Change…"
+            // It focuses the recorder on the same pane and opens nothing, so no ellipsis.
+            actionLabel: "Change Shortcut"
         )
     }
 

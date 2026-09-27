@@ -207,6 +207,8 @@ private func step(_ plan: SetupPlan, _ id: SetupStepID) -> SetupStep {
         #expect(shortcut.state == .actionNeeded)
         #expect(shortcut.action == .recordShortcut)
         #expect(shortcut.detail.contains("⌥⌘T"))
+        // The button focuses the recorder right below it and opens nothing: no "…".
+        #expect(shortcut.actionLabel == "Change Shortcut")
         #expect(!result.isReady)
     }
 

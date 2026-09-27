@@ -61,3 +61,102 @@ public struct KeyCombo: Codable, Equatable, Hashable, Sendable {
         names[keyCode] ?? "Key \(keyCode)"
     }
 }
+
+// MARK: - Combinations something else already answers to
+
+/// A menu item's key equivalent, in the terms AppKit gives it: the character and the
+/// modifiers. An upper-case letter carries an implied ⇧, as it does in `NSMenuItem`.
+public struct MenuKeyEquivalent: Equatable, Sendable {
+    public var title: String
+    public var key: String
+    /// Carbon mask, as `KeyCombo.modifiers`.
+    public var modifiers: UInt32
+
+    public init(title: String, key: String, modifiers: UInt32) {
+        self.title = title
+        var modifiers = modifiers
+        if key.count == 1, key.lowercased() != key {
+            modifiers |= KeyCombo.shiftMask
+        }
+        self.key = key.lowercased()
+        self.modifiers = modifiers & KeyCombo.allModifiers
+    }
+}
+
+/// A system-wide shortcut from `CopySymbolicHotKeys` (Mission Control, Spotlight, input
+/// sources…): a virtual key code and a Carbon modifier mask.
+public struct SystemHotKey: Equatable, Sendable {
+    public var keyCode: UInt32
+    public var modifiers: UInt32
+    public var enabled: Bool
+
+    public init(keyCode: UInt32, modifiers: UInt32, enabled: Bool) {
+        self.keyCode = keyCode
+        self.modifiers = modifiers & KeyCombo.allModifiers
+        self.enabled = enabled
+    }
+}
+
+/// Why a combination cannot be the global shortcut. A Carbon hot key takes its
+/// combination from every app, so one that a menu or the system already uses would stop
+/// working there: ⌘C would no longer copy anywhere.
+public enum ShortcutConflict: Equatable, Sendable {
+    /// A menu item of this app answers to it (Edit > Copy, Quit…).
+    case menuItem(String)
+    /// macOS answers to it (System Settings > Keyboard > Keyboard Shortcuts).
+    case systemShortcut
+    /// ⌘ with one letter or digit and nothing else: what every app uses for its own
+    /// commands, even where this app's menu does not.
+    case appCommand
+
+    /// The alert's title.
+    public func message(for combo: KeyCombo) -> String {
+        switch self {
+        case let .menuItem(title):
+            return "\(combo.displayString) is already used by the menu item “\(title)”."
+        case .systemShortcut:
+            return "\(combo.displayString) is already used by macOS."
+        case .appCommand:
+            return "\(combo.displayString) is used by apps for their own commands."
+        }
+    }
+
+    /// The alert's advice.
+    public var advice: String {
+        switch self {
+        case .menuItem, .appCommand:
+            return "A global shortcut would take it away from every app. Choose one with ⌥ or ⌃, such as ⌥⌘T."
+        case .systemShortcut:
+            return "It is set in System Settings > Keyboard > Keyboard Shortcuts. Choose another combination, or turn that one off there."
+        }
+    }
+}
+
+extension KeyCombo {
+    static let allModifiers = commandMask | shiftMask | optionMask | controlMask
+
+    /// The character a menu item would show for this key, when it has one.
+    public var menuCharacter: String? {
+        let name = Self.keyName(for: keyCode)
+        if name == "Space" { return " " }
+        guard name.count == 1, let scalar = name.unicodeScalars.first, scalar.isASCII else { return nil }
+        return name.lowercased()
+    }
+
+    /// The first thing that already answers to this combination, or nil when it is free.
+    public func conflict(menuItems: [MenuKeyEquivalent], systemHotKeys: [SystemHotKey]) -> ShortcutConflict? {
+        if let character = menuCharacter,
+           let item = menuItems.first(where: { $0.key == character && $0.modifiers == modifiers }) {
+            return .menuItem(item.title)
+        }
+        if systemHotKeys.contains(where: { $0.enabled && $0.keyCode == keyCode && $0.modifiers == modifiers }) {
+            return .systemShortcut
+        }
+        if modifiers == Self.commandMask, let character = menuCharacter,
+           let scalar = character.unicodeScalars.first,
+           CharacterSet.alphanumerics.contains(scalar) {
+            return .appCommand
+        }
+        return nil
+    }
+}
