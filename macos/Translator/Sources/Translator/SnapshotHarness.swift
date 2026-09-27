@@ -176,7 +176,7 @@ final class SnapshotRunner {
                 }
                 await probeOpens("history-double-click-opens", expecting: delegate.model.history[0].text) {
                     window.makeKey()
-                    Self.doubleClick(row: 0, of: table, in: window)
+                    await Self.doubleClick(row: 0, of: table, in: window)
                 }
                 table.deselectAll(nil)
             }
@@ -256,7 +256,7 @@ final class SnapshotRunner {
     ///
     /// Up to three attempts: a sibling run or the user may take focus in the middle of a
     /// synthetic click, which says nothing about the list.
-    private func probeOpens(_ name: String, expecting text: String, _ action: () -> Void) async {
+    private func probeOpens(_ name: String, expecting text: String, _ action: () async -> Void) async {
         guard let delegate else { return }
         var shown = false
         var attempt = 0
@@ -264,7 +264,7 @@ final class SnapshotRunner {
             attempt += 1
             delegate.snapshotHidePopup()
             try? await Task.sleep(for: .milliseconds(300))
-            action()
+            await action()
             await waitUntil(timeout: 4) {
                 delegate.snapshotPopupWindow?.isVisible == true && delegate.model.state.originalText == text
             }
@@ -285,21 +285,30 @@ final class SnapshotRunner {
         )!
     }
 
-    /// Two clicks on a row, delivered the way the window server would: each mouse-up is
-    /// queued before its mouse-down is sent, because the table tracks the press in a loop
-    /// that reads the up from the queue.
-    private static func doubleClick(row: Int, of table: NSTableView, in window: NSWindow) {
+    /// A double-click on a row, delivered the way the window server would: each mouse-up
+    /// is queued before its mouse-down is sent, because the table tracks the press in a
+    /// loop that reads the up from the queue.
+    ///
+    /// A lone click goes first, a double-click interval earlier: when the window was not
+    /// key, its first click only makes it key, and a double-click that starts with that
+    /// click never reaches the list.
+    private static func doubleClick(row: Int, of table: NSTableView, in window: NSWindow) async {
         let rect = table.rect(ofRow: row)
         let point = table.convert(NSPoint(x: rect.midX, y: rect.midY), to: nil)
-        for count in 1...2 {
-            for type in [NSEvent.EventType.leftMouseUp, .leftMouseDown] {
-                guard let event = NSEvent.mouseEvent(
-                    with: type, location: point, modifierFlags: [],
-                    timestamp: ProcessInfo.processInfo.systemUptime, windowNumber: window.windowNumber,
-                    context: nil, eventNumber: 0, clickCount: count, pressure: type == .leftMouseDown ? 1 : 0
-                ) else { continue }
-                if type == .leftMouseUp { NSApp.postEvent(event, atStart: false) } else { window.sendEvent(event) }
-            }
+        click(at: point, count: 1, in: window)
+        try? await Task.sleep(for: .seconds(NSEvent.doubleClickInterval + 0.2))
+        click(at: point, count: 1, in: window)
+        click(at: point, count: 2, in: window)
+    }
+
+    private static func click(at point: NSPoint, count: Int, in window: NSWindow) {
+        for type in [NSEvent.EventType.leftMouseUp, .leftMouseDown] {
+            guard let event = NSEvent.mouseEvent(
+                with: type, location: point, modifierFlags: [],
+                timestamp: ProcessInfo.processInfo.systemUptime, windowNumber: window.windowNumber,
+                context: nil, eventNumber: 0, clickCount: count, pressure: type == .leftMouseDown ? 1 : 0
+            ) else { continue }
+            if type == .leftMouseUp { NSApp.postEvent(event, atStart: false) } else { window.sendEvent(event) }
         }
     }
 
