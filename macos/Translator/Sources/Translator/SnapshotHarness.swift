@@ -174,9 +174,17 @@ final class SnapshotRunner {
                     window.makeFirstResponder(table)
                     window.sendEvent(Self.key(36, "\r", in: window))
                 }
-                await probeOpens("history-double-click-opens", expecting: delegate.model.history[0].text) {
+                // Not the newest row: in a default run that is the no-result lookup, and a
+                // rich entry followed by an empty one is exactly the resize the old popup
+                // crashes on — a popup fault this probe is not about.
+                let target = table.numberOfRows > 2 ? 2 : 0
+                await probeOpens(
+                    "history-double-click-opens",
+                    expecting: delegate.model.history[target].text,
+                    needsActiveApp: true
+                ) {
                     window.makeKey()
-                    await Self.doubleClick(row: 0, of: table, in: window)
+                    await Self.doubleClick(row: target, of: table, in: window)
                 }
                 table.deselectAll(nil)
             }
@@ -256,21 +264,34 @@ final class SnapshotRunner {
     ///
     /// Up to three attempts: a sibling run or the user may take focus in the middle of a
     /// synthetic click, which says nothing about the list.
-    private func probeOpens(_ name: String, expecting text: String, _ action: () async -> Void) async {
+    ///
+    /// `needsActiveApp`: synthetic clicks on a window of an app the system declined to
+    /// activate only ask for activation and never reach the list (a real click activates
+    /// the app first). With the app never active, such a probe proves nothing either way
+    /// and reports SKIP.
+    private func probeOpens(
+        _ name: String,
+        expecting text: String,
+        needsActiveApp: Bool = false,
+        _ action: () async -> Void
+    ) async {
         guard let delegate else { return }
         var shown = false
         var attempt = 0
+        var everActive = false
         while attempt < 3, !(shown && delegate.model.state.originalText == text) {
             attempt += 1
             delegate.snapshotHidePopup()
             try? await Task.sleep(for: .milliseconds(300))
+            everActive = everActive || NSApp.isActive
             await action()
             await waitUntil(timeout: 4) {
                 delegate.snapshotPopupWindow?.isVisible == true && delegate.model.state.originalText == text
             }
             shown = delegate.snapshotPopupWindow?.isVisible == true
         }
-        let verdict = shown && delegate.model.state.originalText == text ? "PASS" : "FAIL"
+        let opened = shown && delegate.model.state.originalText == text
+        let verdict = opened ? "PASS" : (needsActiveApp && !everActive ? "SKIP app never active" : "FAIL")
         NSLog("[snapshot] PROBE \(name) \(verdict) popup \(shown ? "shown" : "hidden") on “\(delegate.model.state.originalText)”, wanted “\(text)”, attempt \(attempt)")
         delegate.snapshotHidePopup()
         try? await Task.sleep(for: .milliseconds(200))
