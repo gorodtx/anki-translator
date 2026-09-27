@@ -44,7 +44,11 @@ struct TranslationPopupView: View {
             .id(query)
             measured(\.bottom) { bottom }
         }
-        .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)
+        // Exactly the panel's size, top-anchored. Between new content and the frame change
+        // that follows it on the next turn, content taller than the panel must hang from
+        // the header, not be centred on the old frame.
+        .frame(minWidth: 0, maxWidth: .infinity, minHeight: 0, maxHeight: .infinity, alignment: .top)
+        .clipped()
         // The bare background moves the panel; text on top of it selects instead.
         .background { WindowDragArea() }
         .ignoresSafeArea()

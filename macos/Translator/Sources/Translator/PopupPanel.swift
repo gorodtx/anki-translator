@@ -98,6 +98,9 @@ final class PopupPanelController: NSObject {
     /// The first height after showing is applied without animation: there is no open
     /// animation, so the panel must not visibly grow into its first size.
     private var sizedSinceShow = false
+    /// A new lookup replaced the content of a panel already on screen: it keeps its
+    /// height while loading instead of collapsing to one line and growing back.
+    private var holdsHeightWhileLoading = false
 
     private var globalMonitor: Any?
     private var localMonitor: Any?
@@ -141,6 +144,7 @@ final class PopupPanelController: NSObject {
         let panel = ensurePanel()
         self.width = width
         sizedSinceShow = false
+        holdsHeightWhileLoading = panel.isVisible
 
         let visible = screen(containing: pointer).visibleFrame
         // Size from the content as it is now. A hidden window keeps its last drawing, so
@@ -227,7 +231,14 @@ final class PopupPanelController: NSObject {
     private func applyHeight() {
         guard let panel, panel.isVisible, naturalHeight > 0 else { return }
         let visible = (panel.screen ?? screen(containing: panel.frame.origin)).visibleFrame
-        let height = PopupLayout.height(forNatural: naturalHeight, visibleHeight: visible.height)
+        var height = PopupLayout.height(forNatural: naturalHeight, visibleHeight: visible.height)
+        if holdsHeightWhileLoading {
+            if model.state.loading {
+                height = max(height, panel.frame.height)
+            } else {
+                holdsHeightWhileLoading = false
+            }
+        }
         let target = PopupLayout.resized(panel.frame, toHeight: height, visible: visible)
         let scrolls = naturalHeight.rounded(.up) > height
         if chrome.bodyScrolls != scrolls { chrome.bodyScrolls = scrolls }

@@ -125,14 +125,16 @@ final class SnapshotRunner {
         if environment["TRANSLATOR_DEBUG_SNAPSHOT_TEXTS"]?.isEmpty ?? true {
             texts += Self.popupExtraTexts
         }
+        // The first frame, before any answer: what the user sees while waiting. A word
+        // this run has not looked up yet, so no cached answer beats the capture.
+        let waiting = appearance == "dark" ? "ephemeral" : "quintessential"
+        delegate.snapshotPresent(text: waiting)
+        try? await Task.sleep(for: .milliseconds(16))
+        await capturePopup("popup-loading-\(appearance)", settle: false)
+        await waitUntil(timeout: 25) { !delegate.model.state.loading }
         for (index, text) in texts.enumerated() {
             let slug = Self.slug(text)
             delegate.snapshotPresent(text: text)
-            // The first frame, before any answer: what the user sees while waiting.
-            if index == 0 {
-                try? await Task.sleep(for: .milliseconds(16))
-                await capturePopup("popup-\(index)-\(slug)-loading-\(appearance)", settle: false)
-            }
             await waitUntil(timeout: 25) { !delegate.model.state.loading }
             // The resize is event-driven: one turn to measure, 0.2 s of animation.
             try? await Task.sleep(for: .milliseconds(450))
@@ -216,6 +218,9 @@ final class SnapshotRunner {
         guard window.isVisible else {
             NSLog("[snapshot] popup not visible for \(name)")
             return
+        }
+        if let state = delegate?.model.state {
+            NSLog("[snapshot] state for \(name): original='\(state.originalText.prefix(20))' loading=\(state.loading) translation=\(state.hasTranslation) canAnki=\(state.canAddAnki) banner=\(delegate?.model.banner?.text ?? "-")")
         }
         backdrop.write(panel: window, to: output.appendingPathComponent("\(name).png"))
     }
@@ -309,15 +314,26 @@ final class SnapshotRunner {
             return (panel.isVisible, "visible=\(panel.isVisible) isKeyWindow=\(panel.isKeyWindow)")
         }
 
-        // The announcement path closes itself (info: 2.5 s) and ends no session.
-        delegate.snapshotHidePopup()
-        let sessions = popup.sessionsEnded
-        delegate.snapshotAnnounce("No text selected.", level: .info)
-        try? await Task.sleep(for: .milliseconds(3200))
-        let visible = delegate.snapshotPopupWindow?.isVisible ?? false
-        let ended = popup.sessionsEnded - sessions
-        let passed = !visible && popup.lastHideReason == .announcementEnded && ended == 0
-        NSLog("PROBE announcement-auto-hides \(passed ? "PASS" : "FAIL") visible=\(visible) reason=\(Self.name(popup.lastHideReason)) closeSession=+\(ended)")
+        // The announcement path closes itself (info: 2.5 s) and ends no session. This
+        // probe is about that timer alone, so outside focus changes during the 3 s wait
+        // are kept from dismissing it (they are what the probes above test).
+        popup.suspendsDismissal = true
+        defer { popup.suspendsDismissal = false }
+        var detail = ""
+        var passed = false
+        for attempt in 1...3 {
+            delegate.snapshotHidePopup()
+            let sessions = popup.sessionsEnded
+            delegate.snapshotAnnounce("No text selected.", level: .info)
+            try? await Task.sleep(for: .milliseconds(3200))
+            let visible = delegate.snapshotPopupWindow?.isVisible ?? false
+            let ended = popup.sessionsEnded - sessions
+            passed = !visible && popup.lastHideReason == .announcementEnded && ended == 0
+            detail = "visible=\(visible) reason=\(Self.name(popup.lastHideReason)) closeSession=+\(ended) attempt=\(attempt)"
+            if passed || popup.lastHideReason != .dismissed { break }
+            detail += " (dismissed by focus taken from outside)"
+        }
+        NSLog("PROBE announcement-auto-hides \(passed ? "PASS" : "FAIL") \(detail)")
         delegate.snapshotHidePopup()
     }
 
