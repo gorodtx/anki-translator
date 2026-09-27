@@ -150,6 +150,7 @@ final class SnapshotRunner {
         delegate.showHistory()
         try? await Task.sleep(for: .seconds(2))
         guard let window = delegate.snapshotWindow(id: "history") else { return }
+        probeReuse("history", window)
         // The frame is autosaved; a size left by an earlier run must not change the image.
         window.setContentSize(HistoryView.defaultSize)
         // Activation is left to the system: forcing it would take the keyboard from
@@ -160,12 +161,23 @@ final class SnapshotRunner {
             write(window, "history-empty-\(appearance)")
         } else {
             write(window, "history-\(appearance)")
-            // The second row selected, the way a click or an arrow key leaves it.
             if let table = Self.firstView(ofType: NSTableView.self, in: window.contentView), table.numberOfRows > 1 {
+                // The second row selected, the way a click or an arrow key leaves it.
                 window.makeFirstResponder(table)
                 table.selectRowIndexes([1], byExtendingSelection: false)
                 try? await Task.sleep(for: .milliseconds(300))
                 write(window, "history-selected-\(appearance)")
+                // Return on the selection, then a double-click on another row, must each
+                // open that entry in the popup.
+                await probeOpens("history-return-opens", expecting: delegate.model.history[1].text) {
+                    window.makeKey()
+                    window.makeFirstResponder(table)
+                    window.sendEvent(Self.key(36, "\r", in: window))
+                }
+                await probeOpens("history-double-click-opens", expecting: delegate.model.history[0].text) {
+                    window.makeKey()
+                    Self.doubleClick(row: 0, of: table, in: window)
+                }
                 table.deselectAll(nil)
             }
             if let field = Self.searchField(in: window) {
@@ -197,19 +209,98 @@ final class SnapshotRunner {
         await waitUntil(timeout: 25) { !delegate.model.state.loading }
         try? await Task.sleep(for: .milliseconds(400))
         delegate.showAnkiSheet()
+        let opened = delegate.snapshotWindow(id: "anki")?.frame
         // The sheet starts preparing from its own task; let that begin, then finish.
         try? await Task.sleep(for: .milliseconds(500))
         await waitUntil(timeout: 20) { !delegate.model.isPreparingUpsert }
         // The deck list and the form's own measuring pass.
         try? await Task.sleep(for: .milliseconds(1200))
         if let window = delegate.snapshotWindow(id: "anki"), window.isVisible {
+            probeReuse("anki", window)
+            // Growing from the placeholder to the form must keep the title bar where the
+            // user saw it appear, and must not run off the screen.
+            if let opened {
+                let fixed = abs(opened.maxY - window.frame.maxY) < 1
+                let visible = window.screen.map { $0.visibleFrame.contains(window.frame) } ?? false
+                NSLog("[snapshot] PROBE anki-top-edge-fixed \(fixed ? "PASS" : "FAIL") \(opened) -> \(window.frame)")
+                NSLog("[snapshot] PROBE anki-on-screen \(visible ? "PASS" : "FAIL") \(window.frame) in \(window.screen?.visibleFrame ?? .zero)")
+            }
             write(window, "anki-\(appearance)")
+            // Esc is the Cancel button's key equivalent.
+            window.sendEvent(Self.key(53, "\u{1b}", in: window))
+            try? await Task.sleep(for: .milliseconds(300))
+            NSLog("[snapshot] PROBE anki-escape-cancels \(window.isVisible ? "FAIL still visible" : "PASS")")
             window.close()
         } else {
             NSLog("[snapshot] anki window not visible")
         }
         delegate.snapshotHidePopup()
         try? await Task.sleep(for: .milliseconds(300))
+    }
+
+    /// Window and controller identity from the first open of each window, so the second
+    /// appearance can show that reopening reuses both.
+    private var firstOpened: [String: (window: ObjectIdentifier, controller: ObjectIdentifier?)] = [:]
+
+    private func probeReuse(_ id: String, _ window: NSWindow) {
+        let now = (window: ObjectIdentifier(window), controller: window.contentViewController.map(ObjectIdentifier.init))
+        guard let first = firstOpened[id] else {
+            firstOpened[id] = now
+            return
+        }
+        let same = first.window == now.window && first.controller == now.controller
+        NSLog("[snapshot] PROBE \(id)-reuse \(same ? "PASS" : "FAIL") same window and controller on reopen")
+    }
+
+    /// Runs `action` with the popup hidden and reports whether it came up on `text`.
+    ///
+    /// Up to three attempts: a sibling run or the user may take focus in the middle of a
+    /// synthetic click, which says nothing about the list.
+    private func probeOpens(_ name: String, expecting text: String, _ action: () -> Void) async {
+        guard let delegate else { return }
+        var shown = false
+        var attempt = 0
+        while attempt < 3, !(shown && delegate.model.state.originalText == text) {
+            attempt += 1
+            delegate.snapshotHidePopup()
+            try? await Task.sleep(for: .milliseconds(300))
+            action()
+            await waitUntil(timeout: 4) {
+                delegate.snapshotPopupWindow?.isVisible == true && delegate.model.state.originalText == text
+            }
+            shown = delegate.snapshotPopupWindow?.isVisible == true
+        }
+        let verdict = shown && delegate.model.state.originalText == text ? "PASS" : "FAIL"
+        NSLog("[snapshot] PROBE \(name) \(verdict) popup \(shown ? "shown" : "hidden") on “\(delegate.model.state.originalText)”, wanted “\(text)”, attempt \(attempt)")
+        delegate.snapshotHidePopup()
+        try? await Task.sleep(for: .milliseconds(200))
+    }
+
+    private static func key(_ code: UInt16, _ characters: String, in window: NSWindow) -> NSEvent {
+        NSEvent.keyEvent(
+            with: .keyDown, location: .zero, modifierFlags: [],
+            timestamp: ProcessInfo.processInfo.systemUptime, windowNumber: window.windowNumber,
+            context: nil, characters: characters, charactersIgnoringModifiers: characters,
+            isARepeat: false, keyCode: code
+        )!
+    }
+
+    /// Two clicks on a row, delivered the way the window server would: each mouse-up is
+    /// queued before its mouse-down is sent, because the table tracks the press in a loop
+    /// that reads the up from the queue.
+    private static func doubleClick(row: Int, of table: NSTableView, in window: NSWindow) {
+        let rect = table.rect(ofRow: row)
+        let point = table.convert(NSPoint(x: rect.midX, y: rect.midY), to: nil)
+        for count in 1...2 {
+            for type in [NSEvent.EventType.leftMouseUp, .leftMouseDown] {
+                guard let event = NSEvent.mouseEvent(
+                    with: type, location: point, modifierFlags: [],
+                    timestamp: ProcessInfo.processInfo.systemUptime, windowNumber: window.windowNumber,
+                    context: nil, eventNumber: 0, clickCount: count, pressure: type == .leftMouseDown ? 1 : 0
+                ) else { continue }
+                if type == .leftMouseUp { NSApp.postEvent(event, atStart: false) } else { window.sendEvent(event) }
+            }
+        }
     }
 
     // MARK: - Capture
