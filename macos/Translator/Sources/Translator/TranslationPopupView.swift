@@ -140,10 +140,15 @@ struct TranslationPopupView: View {
         if hasResult {
             VStack(alignment: .leading, spacing: 0) {
                 if state.hasTranslation {
-                    Text(state.translationText)
-                        .font(.title3)
-                        .foregroundStyle(.primary)
-                        .frame(maxWidth: .infinity, alignment: .leading)
+                    let paragraphs = PopupContent.translationParagraphs(state.translationText)
+                    VStack(alignment: .leading, spacing: 6) {
+                        ForEach(Array(paragraphs.enumerated()), id: \.offset) { index, paragraph in
+                            Text(paragraph)
+                                .font(index == 0 ? .title3 : .body)
+                                .foregroundStyle(index == 0 ? .primary : .secondary)
+                        }
+                    }
+                    .frame(maxWidth: .infinity, alignment: .leading)
                 }
                 if let apple = state.apple, !apple.groupedEntries.isEmpty {
                     SectionHeader("Dictionary", first: !state.hasTranslation)

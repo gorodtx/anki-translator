@@ -124,6 +124,11 @@ final class PopupPanelController: NSObject {
     /// The window itself, for the snapshot harness.
     var window: NSWindow? { panel }
 
+    /// Where the panel's top-left corner was when it was last shown.
+    var lastTopLeft: CGPoint? {
+        panel.map { CGPoint(x: $0.frame.minX, y: $0.frame.maxY) }
+    }
+
     /// Snapshot runs only: draw this footer row highlighted, as under the pointer.
     func highlightRowForSnapshot(_ title: String?) {
         chrome.highlightedRowForSnapshot = title
@@ -148,6 +153,13 @@ final class PopupPanelController: NSObject {
         chrome.showCount &+= 1
 
         let visible = screen(containing: pointer).visibleFrame
+        // The previous lookup's height animation may still be running (a second lookup
+        // within 0.2 s); left alone it lands on its own frame, the old width, after this
+        // show. A zero-length animation of the frame replaces it.
+        NSAnimationContext.runAnimationGroup { context in
+            context.duration = 0
+            panel.animator().setFrame(panel.frame, display: false)
+        }
         // Size from the content as it is now. A hidden window keeps its last drawing, so
         // the content is laid out and drawn before the panel is ordered front: otherwise
         // the first frame on screen is the previous lookup. The content reports its
@@ -240,10 +252,15 @@ final class PopupPanelController: NSObject {
                 holdsHeightWhileLoading = false
             }
         }
-        let target = PopupLayout.resized(panel.frame, toHeight: height, visible: visible)
+        // The width is the lookup's, whatever frame an earlier animation left behind.
+        var current = panel.frame
+        current.size.width = width
+        let target = PopupLayout.resized(current, toHeight: height, visible: visible)
         let scrolls = naturalHeight.rounded(.up) > height
         if chrome.bodyScrolls != scrolls { chrome.bodyScrolls = scrolls }
-        guard abs(target.height - panel.frame.height) > 0.5 || abs(target.minY - panel.frame.minY) > 0.5 else {
+        guard abs(target.height - panel.frame.height) > 0.5 || abs(target.minY - panel.frame.minY) > 0.5
+            || abs(target.width - panel.frame.width) > 0.5
+        else {
             sizedSinceShow = true
             return
         }
@@ -258,9 +275,13 @@ final class PopupPanelController: NSObject {
             context.duration = 0.2
             context.allowsImplicitAnimation = false
             panel.animator().setFrame(target, display: true)
-        } completionHandler: { [weak panel] in
+        } completionHandler: { [weak self, weak panel] in
             // A clear window's shadow follows its drawn shape only when told to.
             panel?.invalidateShadow()
+            // A new lookup may have started while this ran; fit its frame.
+            MainActor.assumeIsolated {
+                if let self, let panel, abs(panel.frame.width - self.width) > 0.5 { self.scheduleResize() }
+            }
         }
     }
 

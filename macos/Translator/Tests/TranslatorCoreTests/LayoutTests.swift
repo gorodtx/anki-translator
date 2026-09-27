@@ -147,6 +147,17 @@ import Testing
         state.definitionsItems = ["to put something somewhere"]
         #expect(PopupContent.hasResult(state))
     }
+
+    /// A word's alternatives read as one list; two whole sentences do not.
+    @Test func sentenceAlternativesBecomeParagraphs() {
+        #expect(PopupContent.translationParagraphs("банка; банк; берег") == ["банка; банк; берег"])
+        #expect(
+            PopupContent.translationParagraphs("Комитет отложил решение.; Комитет отложил своё решение.")
+                == ["Комитет отложил решение.", "Комитет отложил своё решение."]
+        )
+        #expect(PopupContent.translationParagraphs("Он пришёл?; Он пришёл") == ["Он пришёл?", "Он пришёл"])
+        #expect(PopupContent.translationParagraphs("") == [])
+    }
 }
 
 @Suite struct PopupFocusRuleTests {

@@ -127,6 +127,26 @@ public enum PopupContent {
         return normalized(state.translationText) != normalized(state.originalText)
     }
 
+    /// The translation split into the alternatives the engines gave.
+    ///
+    /// The backend joins alternatives with "; ". For words that reads as a list
+    /// ("банка; банк; берег") and stays one line of text; for sentences it glues two
+    /// whole sentences together ("…все счета.; Комитет…"), so there each alternative
+    /// becomes its own paragraph.
+    public static func translationParagraphs(_ text: String) -> [String] {
+        let parts = text.components(separatedBy: "; ")
+            .map { $0.trimmingCharacters(in: .whitespacesAndNewlines) }
+            .filter { !$0.isEmpty }
+        let endsSentence: (String) -> Bool = { part in
+            guard let last = part.last else { return false }
+            return ".!?…".contains(last)
+        }
+        guard parts.count > 1, parts.dropLast().contains(where: endsSentence) else {
+            return text.isEmpty ? [] : [text]
+        }
+        return parts
+    }
+
     private static func normalized(_ text: String) -> String {
         text.trimmingCharacters(in: .whitespacesAndNewlines.union(.punctuationCharacters)).lowercased()
     }

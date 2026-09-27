@@ -271,9 +271,19 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
             view: AnkiUpsertSheet(
                 model: model,
                 openSettings: { [weak self] in self?.showSettings() },
-                onFinished: { [weak self] _ in self?.close(id: "anki") }
+                onFinished: { [weak self] added in
+                    self?.close(id: "anki")
+                    if added { self?.reshowPopupWithOutcome() }
+                }
             )
         )
+    }
+
+    /// The panel stepped aside for Add to Anki; bring it back where it was, over the card
+    /// that was just added, so the confirmation banner has somewhere to appear.
+    private func reshowPopupWithOutcome() {
+        guard !model.state.originalText.isEmpty else { return }
+        showPopup(width: PopupLayout.width(forQuery: model.state.originalText), at: popup.lastTopLeft)
     }
 
     func showHistoryEntry(_ entryId: Int) {
