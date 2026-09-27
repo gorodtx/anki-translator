@@ -33,20 +33,6 @@ enum SettingsPaneID: String, CaseIterable {
     }
 }
 
-/// Closes on ⌘W. The app's main menu (SwiftUI's default for a menu bar app) has Edit and
-/// Window menus but no File > Close, so the shortcut every window answers to has to be
-/// answered here.
-final class SettingsNSWindow: NSWindow {
-    override func performKeyEquivalent(with event: NSEvent) -> Bool {
-        let flags = event.modifierFlags.intersection(.deviceIndependentFlagsMask)
-        if flags == .command, event.charactersIgnoringModifiers == "w" {
-            performClose(nil)
-            return true
-        }
-        return super.performKeyEquivalent(with: event)
-    }
-}
-
 /// The Settings window, built the way sindresorhus/Settings (which Maccy uses) builds it:
 /// a standard titled window with a preference-style toolbar of panes, titled after the
 /// selected pane, each pane its own size.
@@ -78,7 +64,9 @@ final class SettingsWindowController: NSWindowController, NSToolbarDelegate, NSW
         self.model = model
         self.applyHotKey = applyHotKey
         self.suspendHotKey = suspendHotKey
-        let window = SettingsNSWindow(
+        // ⌘W closes it through File > Close, which the app delegate adds to the main menu
+        // for every window of the app.
+        let window = NSWindow(
             contentRect: CGRect(x: 0, y: 0, width: 510, height: 300),
             styleMask: [.titled, .closable],
             backing: .buffered,

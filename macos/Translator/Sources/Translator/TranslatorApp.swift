@@ -22,7 +22,14 @@ private struct MenuBarContent: View {
         Text(model.connectionSummary)
         Divider()
         translateItem
-        Button("History…") { delegate.showHistory() }
+        // A verb, and no ellipsis: it opens a list and asks nothing.
+        Button("Show History") { delegate.showHistory() }
+        Divider()
+        // An accessory app never shows its app menu, so About has to live here.
+        Button("About Translator") {
+            NSApp.activate()
+            NSApp.orderFrontStandardAboutPanel(nil)
+        }
         Button("Settings…") { delegate.showSettings() }
             .keyboardShortcut(",")
         Divider()
@@ -104,6 +111,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
 
     func applicationDidFinishLaunching(_ notification: Notification) {
         NSApp.setActivationPolicy(.accessory)   // menu-bar app: no Dock icon
+        installWindowCommands()
         // Snapshot runs must not claim the hot key or the Services entry: the installed
         // app may be running beside them, and a clash would put a banner in every image.
         if let dir = ProcessInfo.processInfo.environment["TRANSLATOR_DEBUG_SNAPSHOT"], !dir.isEmpty {
@@ -165,6 +173,45 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         }
     }
 
+    /// File > Close (⌘W) and Edit > Find (⌘F) for every window of the app.
+    ///
+    /// SwiftUI's main menu for a menu bar app has Edit and Window menus but no File menu,
+    /// so ⌘W reached no window: Settings answered it with an override of its own, History
+    /// and Add to Anki beeped. One menu item is the Mac's way and covers every window,
+    /// present and future. The menu is never on screen (an accessory app has no menu bar
+    /// of its own) but still answers key equivalents while one of our windows is key.
+    private func installWindowCommands() {
+        guard let mainMenu = NSApp.mainMenu else {
+            NSLog("[translator] no main menu to add File > Close to")
+            return
+        }
+        if !mainMenu.items.contains(where: { $0.submenu?.items.contains { $0.action == #selector(NSWindow.performClose(_:)) } == true }) {
+            let file = NSMenu(title: "File")
+            file.addItem(withTitle: "Close", action: #selector(NSWindow.performClose(_:)), keyEquivalent: "w")
+            let item = NSMenuItem(title: "File", action: nil, keyEquivalent: "")
+            item.submenu = file
+            // After the app menu, where File always is.
+            mainMenu.insertItem(item, at: min(1, mainMenu.items.count))
+        }
+        if let edit = mainMenu.items.first(where: { $0.submenu?.items.contains { $0.action == #selector(NSText.copy(_:)) } == true })?.submenu,
+           !edit.items.contains(where: { $0.keyEquivalent == "f" && $0.keyEquivalentModifierMask == .command }) {
+            edit.addItem(.separator())
+            let find = NSMenuItem(title: "Find…", action: #selector(focusSearch(_:)), keyEquivalent: "f")
+            find.target = self
+            edit.addItem(find)
+        }
+    }
+
+    /// Edit > Find: the key window's toolbar search field (History's), as ⌘F does in any
+    /// Mac window with one.
+    @objc func focusSearch(_ sender: Any?) {
+        searchItem(in: NSApp.keyWindow)?.beginSearchInteraction()
+    }
+
+    private func searchItem(in window: NSWindow?) -> NSSearchToolbarItem? {
+        window?.toolbar?.items.lazy.compactMap { $0 as? NSSearchToolbarItem }.first
+    }
+
     func applicationWillTerminate(_ notification: Notification) {
         hotKeys.unregister()
         model.stop()
@@ -174,6 +221,12 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
 
     /// Registers the shortcut, or with nil (the user cleared it) registers none.
     func applyHotKey(_ combo: KeyCombo?) {
+        // Snapshot runs must not claim a combination on the user's Mac; the harness
+        // records what would have been registered instead.
+        if let snapshotHotKeys {
+            snapshotHotKeys(combo)
+            return
+        }
         guard let combo else {
             hotKeys.unregister()
             model.shortcutRegistered = false
@@ -195,8 +248,9 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
                 announce("No text selected.", level: .info)
             } else {
                 SelectionCapture.requestTrust()
-                showSettings()
-                model.show(banner: "Grant Accessibility to read the selection.", level: .warning)
+                // The Setup checklist on General says what is missing and has the button;
+                // a popup banner raised here was never on screen.
+                showSettings(pane: .general)
             }
             return
         }
@@ -312,6 +366,10 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         // shortcut fire a lookup instead.
         suspendHotKey: { [weak self] suspended in
             guard let self else { return }
+            if let snapshotHotKeys {
+                if suspended { snapshotHotKeys(nil) } else { applyHotKey(model.hotKey) }
+                return
+            }
             if suspended { hotKeys.unregister() } else { applyHotKey(model.hotKey) }
         }
     )
@@ -472,6 +530,18 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     func snapshotWindow(id: String) -> NSWindow? { windows[id] }
     /// The Settings window's controller (made on first use): its window, and pane selection.
     var snapshotSettingsWindow: SettingsWindowController { settingsWindow }
+    /// Set by the harness: every registration the app would make (nil: none) goes here
+    /// instead of to Carbon, so a probe can see them and the user's Mac is left alone.
+    var snapshotHotKeys: ((KeyCombo?) -> Void)?
+}
+
+extension AppDelegate: NSMenuItemValidation {
+    func validateMenuItem(_ menuItem: NSMenuItem) -> Bool {
+        if menuItem.action == #selector(focusSearch(_:)) {
+            return searchItem(in: NSApp.keyWindow) != nil
+        }
+        return true
+    }
 }
 
 extension NSWindow {
