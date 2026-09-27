@@ -177,7 +177,7 @@ struct AnkiUpsertSheet: View {
             // The same pop-up as in Settings; a new note type has other fields, so the
             // preview is made again for it.
             if model.ankiNoteTypesSupported {
-                AnkiNoteTypePicker(model: model) { await prepare() }
+                AnkiNoteTypePicker(model: model) { prepare() }
             } else {
                 Text(model.settings.anki.model)
             }
