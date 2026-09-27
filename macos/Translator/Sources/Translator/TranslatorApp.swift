@@ -43,6 +43,8 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     private var announceDismissal: Task<Void, Never>?
     private lazy var popup = PopupPanelController(model: model)
     private var windows: [String: NSWindow] = [:]
+    /// Dialogs that follow their content's size (see `present(id:…)`).
+    private var contentSizeObservers: [String: NSKeyValueObservation] = [:]
     private var stateObserver: Task<Void, Never>?
 
     override init() {
@@ -341,9 +343,11 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
             return
         }
         let controller = NSHostingController(rootView: AnyView(view))
-        // One owner of the size: a dialog follows its content, a resizable window only
-        // takes its minimum from the content and is otherwise the user's to size.
-        controller.sizingOptions = chrome.fitsContent ? [.minSize, .intrinsicContentSize, .maxSize] : [.minSize]
+        // One owner of the size. A resizable window only takes its minimum from the
+        // content and is otherwise the user's to size. A dialog follows its content, but
+        // through `preferredContentSize` applied here rather than through constraints:
+        // AppKit would keep the bottom edge and push the title bar up as it grows.
+        controller.sizingOptions = chrome.fitsContent ? [.preferredContentSize] : [.minSize]
         if chrome.searchInToolbar { controller.sceneBridgingOptions = [.toolbars] }
 
         let window = NSWindow(
@@ -356,8 +360,18 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         window.title = title
         window.isReleasedWhenClosed = false
         window.tabbingMode = .disallowed
-        if !chrome.fitsContent { window.setContentSize(size) }
         if chrome.searchInToolbar { window.toolbarStyle = .unified }
+        if chrome.fitsContent {
+            let fitting = controller.view.fittingSize
+            window.setContentSize(fitting.width > 0 && fitting.height > 0 ? fitting : size)
+            contentSizeObservers[id] = controller.observe(\.preferredContentSize) { [weak window] controller, _ in
+                MainActor.assumeIsolated {
+                    window?.fitContent(to: controller.preferredContentSize)
+                }
+            }
+        } else {
+            window.setContentSize(size)
+        }
         window.center()
         if let name = chrome.autosaveName {
             window.setFrameUsingName(name)
@@ -377,4 +391,21 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     func snapshotHidePopup() { popup.hide() }
     var snapshotPopupWindow: NSWindow? { popup.window }
     func snapshotWindow(id: String) -> NSWindow? { windows[id] }
+}
+
+extension NSWindow {
+    /// Resizes the window to hold `size` of content with its title bar where it is, moving
+    /// up only as far as needed to stay above the bottom of the screen.
+    func fitContent(to size: CGSize) {
+        guard size.width > 0, size.height > 0 else { return }
+        let content = contentRect(forFrameRect: frame)
+        guard abs(content.width - size.width) >= 0.5 || abs(content.height - size.height) >= 0.5 else { return }
+        var target = frameRect(forContentRect: CGRect(origin: content.origin, size: size))
+        target.origin.y = frame.maxY - target.height
+        if let visible = screen?.visibleFrame {
+            target.origin.y = max(target.origin.y, visible.minY)
+            target.origin.y = min(target.origin.y, visible.maxY - target.height)
+        }
+        setFrame(target, display: true)
+    }
 }
