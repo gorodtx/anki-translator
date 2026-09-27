@@ -739,11 +739,65 @@ final class SnapshotRunner {
             } else {
                 NSLog("[snapshot] history search field not found in the toolbar")
             }
+            await probeHistoryCopy(window)
+            await historyLiveUpdate(window, appearance: appearance)
             await historyReopenAfterLookup(window, appearance: appearance)
             await historyFailures(window, appearance: appearance)
         }
         window.close()
         try? await Task.sleep(for: .milliseconds(300))
+    }
+
+    /// Edit > Copy (⌘C) with a row selected copies its word. The user's clipboard is put
+    /// back afterwards, every type of every item.
+    private func probeHistoryCopy(_ window: NSWindow) async {
+        guard let delegate, let table = Self.firstView(ofType: NSTableView.self, in: window.contentView),
+              table.numberOfRows > 0 else { return }
+        let pasteboard = NSPasteboard.general
+        let saved = (pasteboard.pasteboardItems ?? []).map { item in
+            item.types.compactMap { type in item.data(forType: type).map { (type, $0) } }
+        }
+        let expected = delegate.model.history[0].text
+        window.makeFirstResponder(table)
+        table.selectRowIndexes([0], byExtendingSelection: false)
+        try? await Task.sleep(for: .milliseconds(300))
+        pasteboard.clearContents()
+        // Up the responder chain from the list, as Edit > Copy sends it when the list has
+        // the keyboard; the window need not be key for that (the run takes no focus).
+        let handled = (window.firstResponder ?? table).tryToPerform(#selector(NSText.copy(_:)), with: nil)
+        try? await Task.sleep(for: .milliseconds(200))
+        let copied = pasteboard.string(forType: .string)
+        pasteboard.clearContents()
+        pasteboard.writeObjects(saved.map { types in
+            let item = NSPasteboardItem()
+            for (type, data) in types { item.setData(data, forType: type) }
+            return item
+        })
+        table.deselectAll(nil)
+        let ok = handled && copied == expected
+        NSLog("[snapshot] PROBE history-copy-command \(ok ? "PASS" : "FAIL") copy: \(handled ? "handled" : "not handled"), pasteboard “\(copied ?? "-")”, wanted “\(expected)”")
+    }
+
+    /// History left open beside the user's work: a word looked up meanwhile appears at the
+    /// top without the window being closed and opened again.
+    private func historyLiveUpdate(_ window: NSWindow, appearance: String) async {
+        guard let delegate else { return }
+        let model = delegate.model
+        let word = appearance == "dark" ? "ubiquitous" : "ephemeral"
+        let rows = model.history.count
+        let popup = delegate.snapshotPopup
+        popup.suspendsDismissal = true
+        delegate.snapshotPresent(text: word)
+        await waitUntil(timeout: 25) { !model.state.loading }
+        await waitUntil(timeout: 5) { model.history.first?.text == word }
+        popup.suspendsDismissal = false
+        delegate.snapshotHidePopup()
+        try? await Task.sleep(for: .milliseconds(500))
+        let table = Self.firstView(ofType: NSTableView.self, in: window.contentView)
+        let shown = table?.numberOfRows ?? 0
+        let ok = window.isVisible && model.history.first?.text == word && shown == model.history.count
+        NSLog("[snapshot] PROBE history-live-update \(ok ? "PASS" : "FAIL") window \(window.isVisible ? "open" : "closed"), first row “\(model.history.first?.text ?? "-")”, wanted “\(word)”, rows \(rows) -> \(model.history.count), list shows \(shown)")
+        write(window, "history-live-\(appearance)")
     }
 
     /// What a user does between two looks at History: close it, look a new word up, open
@@ -805,12 +859,30 @@ final class SnapshotRunner {
         }
         model.historyOpenFailure = nil
 
+        // The client's own failure for a backend that is away, in the words the app puts
+        // on it.
+        let away = IPCError(code: "disconnected", message: "Backend is not connected.")
+
+        // A reload that failed over rows already shown: they stay, marked out of date.
+        model.historyLoadFailed(away)
+        try? await Task.sleep(for: .milliseconds(500))
+        write(window, "history-stale-\(appearance)")
+        await waitForAccessibility(in: window) { Self.hasText("Can’t update History", in: window) }
+        let noticed = Self.hasText("Can’t update History", in: window)
+        let retried = Self.pressButton(titled: "Try Again", in: window)
+        await waitUntil(timeout: 5) { model.historyLoadError == nil }
+        try? await Task.sleep(for: .milliseconds(300))
+        let cleared = model.historyLoadError == nil && !Self.hasText("Can’t update History", in: window)
+        NSLog("[snapshot] PROBE history-stale-error \(noticed && retried && cleared ? "PASS" : "FAIL") notice \(noticed ? "shown" : "missing") over \(model.history.count) rows, Try Again \(retried ? "pressed" : "missing"), after it \(cleared ? "gone" : "still shown")")
+        if !cleared { await model.loadHistory() }
+
         // A load that failed with nothing to show: not "No History".
         let rows = model.history.count
         model.history = []
-        model.historyLoadError = "Backend is not connected."
+        model.historyLoadFailed(away)
         try? await Task.sleep(for: .milliseconds(500))
         write(window, "history-error-\(appearance)")
+        await waitForAccessibility(in: window) { Self.accessibilityButton(titled: "Try Again", in: window) != nil }
         // Pressed the way VoiceOver presses it: SwiftUI's button is no NSButton.
         let pressed = Self.pressButton(titled: "Try Again", in: window)
         await waitUntil(timeout: 5) { !model.history.isEmpty }
@@ -825,21 +897,66 @@ final class SnapshotRunner {
 
     /// Finds a button by its accessibility title and presses it through accessibility.
     private static func pressButton(titled title: String, in window: NSWindow) -> Bool {
-        // SwiftUI's own elements are not declared as NSAccessibility conformers, so they
-        // are asked by message rather than by protocol.
+        accessibilityButton(titled: title, in: window)?.accessibilityPerformPress?() ?? false
+    }
+
+    /// The first accessibility element of the window that `matches`.
+    ///
+    /// SwiftUI's own elements are not declared as NSAccessibility conformers, so they are
+    /// asked by message rather than by protocol.
+    private static func accessibilityElement(in window: NSWindow, _ matches: (AnyObject) -> Bool) -> AnyObject? {
         var stack: [AnyObject] = [window.contentView].compactMap { $0 }
         var visited = 0
         while let element = stack.popLast(), visited < 5000 {
             visited += 1
-            let role = element.accessibilityRole?() ?? nil
-            let names = [element.accessibilityTitle?() ?? nil, element.accessibilityLabel?() ?? nil]
-            if role == .button, names.contains(title) {
-                return element.accessibilityPerformPress?() ?? false
-            }
+            if matches(element) { return element }
             let children = element.accessibilityChildren?() ?? nil
             stack.append(contentsOf: (children ?? []).map { $0 as AnyObject })
         }
-        return false
+        return nil
+    }
+
+    private static func accessibilityButton(titled title: String, in window: NSWindow) -> AnyObject? {
+        accessibilityElement(in: window) { element in
+            let role = element.accessibilityRole?() ?? nil
+            let names = [element.accessibilityTitle?() ?? nil, element.accessibilityLabel?() ?? nil]
+            return role == .button && names.contains(title)
+        }
+    }
+
+    /// Whether any text of the window, as accessibility reads it, contains `text`.
+    private static func hasText(_ text: String, in window: NSWindow) -> Bool {
+        accessibilityElement(in: window) { element in
+            // `accessibilityValue` has overloads a message to AnyObject cannot choose from.
+            let selector = NSSelectorFromString("accessibilityValue")
+            let object = element as? NSObject
+            let value = object?.responds(to: selector) == true
+                ? object?.perform(selector)?.takeUnretainedValue() as? String
+                : nil
+            let names = [element.accessibilityTitle?() ?? nil, element.accessibilityLabel?() ?? nil, value]
+            return names.contains { $0?.contains(text) == true }
+        } != nil
+    }
+
+    /// Every button of the window as accessibility names it, in tree order. SwiftUI draws
+    /// its push buttons itself, so there is no NSButton (or key equivalent) to look at.
+    private static func buttonTitles(in window: NSWindow) -> [String] {
+        var titles: [String] = []
+        _ = accessibilityElement(in: window) { element in
+            let role = element.accessibilityRole?() ?? nil
+            if role == .button, let title = (element.accessibilityTitle?() ?? nil) ?? (element.accessibilityLabel?() ?? nil) {
+                titles.append(title)
+            }
+            return false
+        }
+        return titles
+    }
+
+    /// SwiftUI builds a window's accessibility tree when it is first asked for, so the
+    /// first look can come back with none of it: ask until `condition` holds or time is up.
+    private func waitForAccessibility(in window: NSWindow, _ condition: () -> Bool) async {
+        _ = window.contentView?.accessibilityChildren()
+        await waitUntil(timeout: 3, condition)
     }
 
     /// Whether the list's first row is fully visible below the toolbar with the list at its
@@ -896,6 +1013,8 @@ final class SnapshotRunner {
                 NSLog("[snapshot] PROBE anki-on-screen \(visible ? "PASS" : "FAIL") \(window.frame) in \(window.screen?.visibleFrame ?? .zero)")
             }
             write(window, "anki-\(appearance)")
+            logControls(in: window, name: "anki-\(appearance)")
+            if !ankiStandIn { await probeAnkiNotRunning(window) }
             // Esc is the Cancel button's key equivalent.
             window.sendEvent(Self.key(53, "\u{1b}", in: window))
             try? await Task.sleep(for: .milliseconds(300))
@@ -907,6 +1026,83 @@ final class SnapshotRunner {
         delegate.snapshotHidePopup()
         try? await Task.sleep(for: .milliseconds(300))
         await ankiFollowsNewLookup(appearance: appearance)
+        if ankiStandIn { await ankiFieldMismatch(appearance: appearance) }
+    }
+
+    /// With AnkiConnect not answering (the run points it at a closed port), the window
+    /// names that as the reason — not "not set up", which sent the user to a Settings
+    /// pane that cannot list decks either — and its default button tries again.
+    private func probeAnkiNotRunning(_ window: NSWindow) async {
+        guard let model = delegate?.model else { return }
+        await waitForAccessibility(in: window) { Self.hasText("Anki Isn’t Running", in: window) }
+        let named = Self.hasText("Anki Isn’t Running", in: window)
+        let notSetUp = Self.hasText("Anki Isn’t Set Up", in: window)
+        // Two buttons, Cancel and the default one; Try Again must be that one.
+        let buttons = Self.buttonTitles(in: window)
+        // Pressed the way VoiceOver presses it; Anki is still closed, so the window must
+        // come back to the same state after a real preparation.
+        let pressed = Self.pressButton(titled: "Try Again", in: window)
+        try? await Task.sleep(for: .milliseconds(300))
+        await waitUntil(timeout: 20) { Self.ankiSettled(model) }
+        await waitForAccessibility(in: window) { Self.hasText("Anki Isn’t Running", in: window) }
+        let again = Self.hasText("Anki Isn’t Running", in: window)
+        let ok = !model.ankiStatus.available && named && !notSetUp && Set(buttons) == ["Cancel", "Try Again"]
+            && pressed && again
+        NSLog("[snapshot] PROBE anki-not-running \(ok ? "PASS" : "FAIL") available \(model.ankiStatus.available), “Anki Isn’t Running” \(named ? "shown" : "missing"), “Anki Isn’t Set Up” \(notSetUp ? "shown" : "absent"), buttons \(buttons), Try Again \(pressed ? "pressed" : "missing"), after it \(again ? "same state" : "changed")")
+    }
+
+    /// A field mapping the note type does not have: Anki would drop those fields and
+    /// refuse the note as empty. The window says which names are wrong before Add, and
+    /// offers Settings instead of an Add that must fail. Needs the stand-in, whose note
+    /// type has capitalised fields.
+    private func ankiFieldMismatch(appearance: String) async {
+        guard let delegate else { return }
+        let model = delegate.model
+        let popup = delegate.snapshotPopup
+        let saved = model.settings.anki.fields
+        model.settings.anki.fields.word = saved.word.lowercased()
+        model.settings.anki.fields.translation = "Meaning"
+        popup.suspendsDismissal = true
+        delegate.snapshotPresent(text: ankiText)
+        await waitUntil(timeout: 25) { !model.state.loading }
+        popup.suspendsDismissal = false
+        delegate.showAnkiSheet()
+        try? await Task.sleep(for: .milliseconds(500))
+        await waitUntil(timeout: 20) { Self.ankiSettled(model) }
+        try? await Task.sleep(for: .milliseconds(1000))
+        guard let window = delegate.snapshotWindow(id: "anki"), window.isVisible else {
+            NSLog("[snapshot] PROBE anki-field-mismatch FAIL the window did not open")
+            model.settings.anki.fields = saved
+            return
+        }
+        write(window, "anki-fields-mismatch-\(appearance)")
+        let warning = { Self.hasText("isn’t a field of", in: window) || Self.hasText("aren’t fields of", in: window) }
+        await waitForAccessibility(in: window, warning)
+        let issues = model.ankiFieldIssues.map(\.configured)
+        let warned = warning()
+        let buttons = Self.buttonTitles(in: window)
+        // Return is the default button's key: it must open Settings, not add.
+        let settings = delegate.snapshotSettingsWindow.window
+        let settingsWasOpen = settings?.isVisible == true
+        window.sendEvent(Self.key(36, "\r", in: window))
+        await waitUntil(timeout: 3) { delegate.snapshotSettingsWindow.window?.isVisible == true }
+        let openedSettings = delegate.snapshotSettingsWindow.window?.isVisible == true
+        let added = model.banner?.level == .success
+        if !settingsWasOpen { delegate.snapshotSettingsWindow.window?.close() }
+        let blocked = warned && !buttons.contains("Add") && buttons.contains("Open Settings…") && openedSettings
+            && !added && window.isVisible
+        NSLog("[snapshot] PROBE anki-field-mismatch \(blocked ? "PASS" : "FAIL") issues \(issues), warning \(warned ? "shown" : "missing"), buttons \(buttons), Return \(openedSettings ? "opened Settings" : "did not open Settings")\(added ? ", added a note" : ""), window \(window.isVisible ? "open" : "closed")")
+
+        // Fixed while the window is open, as in Settings: Add comes back by itself.
+        model.settings.anki.fields = saved
+        await waitUntil(timeout: 20) { Self.ankiSettled(model) && Self.buttonTitles(in: window).contains("Add") }
+        try? await Task.sleep(for: .milliseconds(500))
+        let restored = Self.buttonTitles(in: window)
+        let cleared = !warning()
+        NSLog("[snapshot] PROBE anki-field-mismatch-fixed \(restored.contains("Add") && cleared ? "PASS" : "FAIL") buttons \(restored), warning \(cleared ? "gone" : "still shown")")
+        window.close()
+        delegate.snapshotHidePopup()
+        try? await Task.sleep(for: .milliseconds(300))
     }
 
     private var ankiText: String { environment["TRANSLATOR_DEBUG_ANKI_TEXT"] ?? "serendipity" }
@@ -923,6 +1119,11 @@ final class SnapshotRunner {
 
     private func configureAnkiStandIn() async {
         guard ankiStandIn, let model = delegate?.model else { return }
+        // The stand-in's note type spells its fields with capitals; the defaults do not.
+        let fields = AnkiFieldMapping(
+            word: "Word", translation: "Translation", exampleEn: "Example", definitionsEn: "Definitions", image: "Image"
+        )
+        if model.settings.anki.fields != fields { model.settings.anki.fields = fields }
         guard model.settings.anki.deck.isEmpty || model.settings.anki.model.isEmpty else { return }
         model.settings.anki.deck = "English::Vocabulary"
         model.settings.anki.model = "Translator"
