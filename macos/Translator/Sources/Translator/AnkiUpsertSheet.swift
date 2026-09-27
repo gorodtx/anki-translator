@@ -16,11 +16,16 @@ struct AnkiUpsertSheet: View {
     static let initialSize = CGSize(width: Self.width, height: 300)
     private static let width: CGFloat = 510
     private static let placeholderHeight: CGFloat = 230
+    /// `SettingsPane`'s horizontal padding, which the form sits in.
+    private static let sideMargin: CGFloat = 30
 
     private enum Phase: Equatable {
         case preparing
         case ready
-        /// Settings lack what the backend needs; the sentence says what.
+        /// AnkiConnect did not answer. Said before anything about settings: with Anki
+        /// closed, the decks and note types Settings would offer cannot be listed either.
+        case notRunning
+        /// Anki answers, but settings lack what the backend needs; the sentence says what.
         case notSetUp(String)
         case failed(String)
     }
@@ -53,7 +58,16 @@ struct AnkiUpsertSheet: View {
                         .truncationMode(.middle)
                 }
                 .frame(maxWidth: .infinity)
-                .padding(.horizontal, 20)
+                .padding(.horizontal, Self.sideMargin)
+                .frame(height: Self.placeholderHeight)
+            case .notRunning:
+                // Try Again, the default button below, is the way forward once Anki is
+                // open; the window also carries on by itself when Anki reports back.
+                ContentUnavailableView(
+                    "Anki Isn’t Running",
+                    systemImage: "rectangle.stack.slash",
+                    description: Text("Open Anki with the AnkiConnect add-on.")
+                )
                 .frame(height: Self.placeholderHeight)
             case let .notSetUp(instruction):
                 // Its one way forward is the default button below, as in an alert.
@@ -90,6 +104,15 @@ struct AnkiUpsertSheet: View {
             if case .notSetUp = phase, AnkiSetupGap.gaps(in: model.settings.anki).isEmpty {
                 prepare()
             }
+        }
+        // Anki opened while this window said it was not running.
+        .onChange(of: model.ankiStatus.available) { _, available in
+            if available, phase == .notRunning { prepare() }
+        }
+        // The field names fixed (in Settings, or by choosing another note type): prepare
+        // again, since the notes that match this word are found through the word field.
+        .onChange(of: model.ankiFieldIssues.isEmpty) { hadNone, hasNone in
+            if !hadNone, hasNone, phase == .ready { prepare() }
         }
         // Another lookup while this window is open — a new word, a history entry, the
         // popup dismissed — drops the note the backend prepared, and Add would fail.
@@ -226,7 +249,11 @@ struct AnkiUpsertSheet: View {
     /// in the new deck, since the matches found so far belong to the old one.
     private var deckPicker: some View {
         let current = model.settings.anki.deck
-        let decks = model.ankiDecks.contains(current) ? model.ankiDecks : [current] + model.ankiDecks
+        // The configured deck leads the list when Anki does not have it, so the pop-up says
+        // what is set; a blank one is no deck at all, not an empty item.
+        let decks = model.ankiDecks.contains(current) || current.isEmpty
+            ? model.ankiDecks
+            : [current] + model.ankiDecks
         return Picker("Deck", selection: Binding(
             get: { current },
             set: { deck in
@@ -238,6 +265,7 @@ struct AnkiUpsertSheet: View {
                 }
             }
         )) {
+            if current.isEmpty { Text("None").tag("") }
             ForEach(decks, id: \.self) { Text($0).tag($0) }
         }
         .labelsHidden()
@@ -358,7 +386,9 @@ struct AnkiUpsertSheet: View {
                 .disabled(!primary.enabled)
             }
         }
-        .padding(.horizontal, 20)
+        // The pane's own side margin, so the buttons end where the divider and the text
+        // above them end: one margin for the whole window.
+        .padding(.horizontal, Self.sideMargin)
         .padding(.bottom, 20)
         // The pane already ends in its own 20 pt margin; a scrolled form or a placeholder
         // does not.
@@ -382,7 +412,21 @@ struct AnkiUpsertSheet: View {
                 tint: .yellow
             )
         }
+        if let fieldWarning {
+            return Status(
+                text: fieldWarning + " Fix the field names in Settings to add the note.",
+                symbol: "exclamationmark.triangle.fill",
+                tint: .yellow
+            )
+        }
         return nil
+    }
+
+    /// Mapped names the note type does not have. Anki drops a field it does not know and
+    /// then refuses the note as empty, so Add is not offered until they are fixed.
+    private var fieldWarning: String? {
+        guard phase == .ready else { return nil }
+        return AnkiFieldCheck.warning(issues: model.ankiFieldIssues, noteType: model.settings.anki.model)
     }
 
     /// The default button: what moves this window forward in its current state.
@@ -390,11 +434,12 @@ struct AnkiUpsertSheet: View {
         switch phase {
         case .notSetUp:
             return ("Open Settings…", true, openSettings)
-        case .failed:
+        case .failed, .notRunning:
             return ("Try Again", true, { prepare() })
         case .preparing:
             return ("Add", false, {})
         case .ready:
+            if fieldWarning != nil { return ("Open Settings…", true, openSettings) }
             return (createNew ? "Add" : "Update", canApply, { Task { await apply() } })
         }
     }
@@ -434,6 +479,12 @@ struct AnkiUpsertSheet: View {
         // A newer lookup or a closed window took over while this one was out.
         guard token == preparation else { return }
         guard let preview = model.upsertPreview else {
+            // The status was asked alongside: an Anki that does not answer is the reason,
+            // whatever else is missing.
+            guard model.ankiStatus.available else {
+                phase = .notRunning
+                return
+            }
             let gaps = AnkiSetupGap.gaps(in: model.settings.anki)
             if let instruction = AnkiSetupGap.instruction(for: gaps) {
                 phase = .notSetUp(instruction)

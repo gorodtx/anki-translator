@@ -38,6 +38,32 @@ public enum AnkiFieldCheck {
         return "\(failure) The note type has \(plural) \(names).\(fix) Fix the field mapping in Settings."
     }
 
+    /// What Add to Anki says before a card is added with names the note type lacks, so
+    /// the user fixes the mapping instead of meeting Anki's "cannot create note because it
+    /// is empty" afterwards. Nil when nothing is wrong, or nothing is known.
+    ///
+    /// The suggestions are named only when every name has one: then the whole fix is a
+    /// matter of capitals, and saying so is quicker than a list of what is missing.
+    public static func warning(issues: [AnkiFieldIssue], noteType: String) -> String? {
+        guard !issues.isEmpty else { return nil }
+        let quoted = { (names: [String]) in listed(names.map { "“\($0)”" }) }
+        let target = noteType.trimmingCharacters(in: .whitespaces)
+        let of = target.isEmpty ? "the note type" : target
+        let verb = issues.count == 1 ? "isn’t a field" : "aren’t fields"
+        var text = "\(quoted(issues.map(\.configured))) \(verb) of \(of)."
+        let suggestions = issues.compactMap(\.suggestion)
+        if suggestions.count == issues.count {
+            text += " Anki has \(quoted(suggestions))."
+        }
+        return text
+    }
+
+    /// "a", "a and b", "a, b and c".
+    private static func listed(_ items: [String]) -> String {
+        guard let last = items.last else { return "" }
+        return items.count == 1 ? last : items.dropLast().joined(separator: ", ") + " and " + last
+    }
+
     /// Configured names the note type does not have. Empty when nothing can be concluded.
     public static func issues(configured: [String], modelFields: [String]) -> [AnkiFieldIssue] {
         // Nothing to compare against is not the same as everything being wrong.

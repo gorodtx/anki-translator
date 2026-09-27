@@ -127,7 +127,8 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     private var windows: [String: NSWindow] = [:]
     /// Dialogs that follow their content's size (see `present(id:…)`).
     private var contentSizeObservers: [String: NSKeyValueObservation] = [:]
-    /// Windows whose content is rebuilt on every open drop it on close.
+    /// Windows whose content is rebuilt on every open drop it on close; History tells the
+    /// model it is no longer on screen.
     private var closeObservers: [String: NSObjectProtocol] = [:]
 
     override init() {
@@ -372,6 +373,15 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
                 scrollToTop: { [weak self] in self?.scrollHistoryToTop() }
             )
         )
+        // While it is on screen the list follows new lookups (see `AppModel.lookupSettled`).
+        model.historyWindowOpen = true
+        if closeObservers["history"] == nil, let window = windows["history"] {
+            closeObservers["history"] = NotificationCenter.default.addObserver(
+                forName: NSWindow.willCloseNotification, object: window, queue: .main
+            ) { [weak self] _ in
+                MainActor.assumeIsolated { self?.model.historyWindowOpen = false }
+            }
+        }
         // The view is kept between opens, so its first-load task does not run again. The
         // count goes up once the list holds the new rows, which is when the view can put
         // the newest one at the top.

@@ -37,6 +37,9 @@ final class AppModel {
     var historyOpenFailure: HistoryOpenFailure?
     /// Counts the History window's reopenings, each after its list has been reloaded.
     var historyReopens = 0
+    /// Set by the History window's owner. While it is open, the list follows new lookups
+    /// and a reconnected backend; while it is closed, nobody would see a reload.
+    @ObservationIgnored var historyWindowOpen = false
     var ankiStatus = AnkiStatus()
     var ankiDecks: [String] = []
     /// The collection's note types, once Anki has listed them.
@@ -138,6 +141,8 @@ final class AppModel {
         connection = state
         guard state == .connected else { return }
         Task { await refreshAll() }
+        // "Can’t Load History" said while the backend was away is no longer true.
+        if historyWindowOpen { Task { await loadHistory() } }
     }
 
     func refreshAll() async {
@@ -237,6 +242,9 @@ final class AppModel {
     /// already on screen as a banner was said with the banner.
     private func lookupSettled(wasLoading: Bool) {
         guard wasLoading, !state.loading, !state.originalText.isEmpty else { return }
+        // The backend stores the lookup with its result; an open History window shows it
+        // at the top without being closed and opened again.
+        if historyWindowOpen { Task { await loadHistory() } }
         if let lastError, banner?.text == lastError { return }
         speak(PopupSpeech.summary(for: state, error: lastError))
     }
@@ -268,7 +276,7 @@ final class AppModel {
             IPCMethod.ankiModelFields, as: AnkiModelFields.self
         ) else {
             ankiModelFields = []
-            ankiModelFieldsError = "The backend did not answer."
+            ankiModelFieldsError = "The backend didn’t answer."
             return
         }
         ankiModelFields = answer.fields
@@ -374,6 +382,7 @@ final class AppModel {
         withAnimation(Motion.stateChange) {
             state = ViewState(original: trimmed, originalRaw: text, loading: true)
         }
+        refreshAnkiStatusForLookup()
         do {
             let response = try await client.send(IPCMethod.translate, params: ["text": text], as: TranslateResponse.self)
             activeRequestId = response.requestId
@@ -430,14 +439,21 @@ final class AppModel {
             historyLoadError = nil
             return true
         } catch {
-            historyLoadError = message(for: error)
+            historyLoadFailed(error)
             return false
         }
+    }
+
+    /// Records why the history could not be read, in the words the rest of the app uses
+    /// for that failure. Rows already shown stay; the window says they may be out of date.
+    func historyLoadFailed(_ error: Error) {
+        historyLoadError = message(for: error)
     }
 
     /// Makes a history entry the current lookup. False when the backend refused; the
     /// reason is in `historyOpenFailure` and the state still holds the previous lookup.
     func selectHistory(_ entryId: Int) async -> Bool {
+        refreshAnkiStatusForLookup()
         do {
             let response = try await client.send(
                 IPCMethod.historySelect, params: ["entry_id": entryId], as: TranslateResponse.self
@@ -457,6 +473,14 @@ final class AppModel {
     func refreshAnkiStatus() async {
         guard let status = try? await client.send(IPCMethod.ankiStatus, as: AnkiStatus.self) else { return }
         ankiStatus = status
+    }
+
+    /// Asked alongside every lookup. Anki is started and quit behind the app's back, and
+    /// the popup's Add to Anki row is enabled from this status: known only from launch,
+    /// Settings and the last add, it went on offering Anki after Anki had quit, or
+    /// refusing it after Anki had started.
+    private func refreshAnkiStatusForLookup() {
+        Task { await refreshAnkiStatus() }
     }
 
     func loadDecks() async {
@@ -539,12 +563,25 @@ final class AppModel {
         let preparation = upsertPreparation
         isPreparingUpsert = true
         defer { if preparation == upsertPreparation { isPreparingUpsert = false } }
+        // The backend prepares from the settings it holds: a deck or a field name changed
+        // a moment ago must be there, not still waiting out the save's pause.
+        await saveSettingsNow()
+        // The note type's real fields, read with the note: a mapping they do not match is
+        // then said before Add, not by Anki's "cannot create note because it is empty"
+        // after it.
+        async let fields: Void = loadModelFields()
+        let result: Result<UpsertPreviewResponse, Error>
         do {
-            let response = try await client.send(IPCMethod.ankiPrepareUpsert, as: UpsertPreviewResponse.self)
-            guard preparation == upsertPreparation else { return }
-            upsertPreview = response.preview
+            result = .success(try await client.send(IPCMethod.ankiPrepareUpsert, as: UpsertPreviewResponse.self))
         } catch {
-            guard preparation == upsertPreparation else { return }
+            result = .failure(error)
+        }
+        await fields
+        guard preparation == upsertPreparation else { return }
+        switch result {
+        case let .success(response):
+            upsertPreview = response.preview
+        case let .failure(error):
             upsertPreview = nil
             show(banner: message(for: error), level: .error)
         }

@@ -49,6 +49,18 @@ struct HistoryView: View {
             // Double-click and Return.
             if let id = ids.first { onOpen(id) }
         }
+        // Edit > Copy and ⌘C copy the selected word, as in any Mac list.
+        .onCopyCommand {
+            guard let id = selection, let item = model.history.first(where: { $0.entryId == id }) else { return [] }
+            return [NSItemProvider(object: item.text as NSString)]
+        }
+        // A reload that failed over rows already shown: they stay, and the window says
+        // they may be out of date rather than passing them off as current.
+        .safeAreaInset(edge: .top, spacing: 0) {
+            if let error = model.historyLoadError, !model.history.isEmpty {
+                staleNotice(error)
+            }
+        }
         // The list keeps its place between opens, and each row a lookup added at the top
         // meanwhile pushes that place further down: reopened, it would start part way down
         // with the newest word half under the toolbar. A reopened History starts at its
@@ -79,6 +91,27 @@ struct HistoryView: View {
     }
 
     private var needle: String { query.trimmingCharacters(in: .whitespaces) }
+
+    private func staleNotice(_ error: String) -> some View {
+        VStack(spacing: 0) {
+            HStack(alignment: .firstTextBaseline, spacing: 8) {
+                Label {
+                    Text("Can’t update History. \(error)")
+                        .lineLimit(2)
+                } icon: {
+                    Image(systemName: "exclamationmark.triangle.fill")
+                        .foregroundStyle(.yellow)
+                }
+                Spacer(minLength: 8)
+                Button("Try Again") { Task { await model.loadHistory() } }
+                    .controlSize(.small)
+            }
+            .padding(.horizontal, 12)
+            .padding(.vertical, 6)
+            Divider()
+        }
+        .background(.bar)
+    }
 
     @ViewBuilder
     private var emptyState: some View {

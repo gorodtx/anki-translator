@@ -231,3 +231,38 @@ import Testing
         #expect(after(AnkiNoteSource(text: "went", requestId: 5, closedSessions: 2), loading: true) == .close)
     }
 }
+
+/// What Add to Anki says before adding with names the note type lacks: it names them, and
+/// Anki's own spelling when the whole fix is a matter of capitals.
+@Suite struct AnkiFieldWarningTests {
+    private let model = ["Word", "Translation", "Example", "Definitions", "Image"]
+
+    @Test func nothingWrongSaysNothing() {
+        #expect(AnkiFieldCheck.warning(issues: [], noteType: "Basic") == nil)
+    }
+
+    @Test func oneNameWithItsSpelling() {
+        let issues = AnkiFieldCheck.issues(configured: ["word", "Image"], modelFields: model)
+        #expect(AnkiFieldCheck.warning(issues: issues, noteType: "Translator")
+            == "“word” isn’t a field of Translator. Anki has “Word”.")
+    }
+
+    @Test func severalNamesAreListed() {
+        let issues = AnkiFieldCheck.issues(configured: ["word", "translation", "image"], modelFields: model)
+        #expect(AnkiFieldCheck.warning(issues: issues, noteType: "Translator")
+            == "“word”, “translation” and “image” aren’t fields of Translator. Anki has “Word”, “Translation” and “Image”.")
+    }
+
+    /// A partial list of spellings would read as the whole fix.
+    @Test func spellingsOnlyWhenEveryNameHasOne() {
+        let issues = AnkiFieldCheck.issues(configured: ["word", "Meaning"], modelFields: model)
+        #expect(AnkiFieldCheck.warning(issues: issues, noteType: "Basic")
+            == "“word” and “Meaning” aren’t fields of Basic.")
+    }
+
+    @Test func aBlankNoteTypeIsNotQuoted() {
+        let issues = [AnkiFieldIssue(configured: "Meaning")]
+        #expect(AnkiFieldCheck.warning(issues: issues, noteType: " ")
+            == "“Meaning” isn’t a field of the note type.")
+    }
+}
