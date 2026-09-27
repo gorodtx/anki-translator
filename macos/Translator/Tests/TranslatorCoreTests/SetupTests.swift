@@ -254,8 +254,42 @@ private func step(_ plan: SetupPlan, _ id: SetupStepID) -> SetupStep {
             anki: AnkiStatus(modelStatus: "Model not found", deckStatus: "Not selected", deckName: "", available: true)
         )
         let step = step(halfSetUp, .anki)
-        #expect(step.detail.contains("model"))
+        // Anki's own word for it; "model" is what AnkiConnect's API calls it.
+        #expect(step.detail.contains("note type"))
+        #expect(!step.detail.contains("model"))
         #expect(step.detail.contains("deck"))
+    }
+
+    /// The Setup checklist lists only what blocks the app. Optional steps are shown in
+    /// their own panes, and listing them here too would show one state in two places.
+    @Test func theChecklistHoldsOnlyBlockingSteps() {
+        let result = plan(trusted: false, loginItem: .notRegistered, anki: AnkiStatus())
+        #expect(result.checklist.map(\.id) == [.accessibility])
+        #expect(result.checklist.allSatisfy { !$0.isOptional })
+    }
+
+    @Test func aReadyMacHasAnEmptyChecklist() {
+        #expect(plan().checklist.isEmpty)
+        #expect(plan(loginItem: .notRegistered, anki: AnkiStatus()).checklist.isEmpty)
+    }
+
+    /// With the backend down, the rest is unknown rather than wrong: one row, not two.
+    @Test func aSilentBackendIsTheOnlyChecklistRow() {
+        let result = plan(connected: false, ping: nil, trusted: false)
+        #expect(result.checklist.map(\.id) == [.backend])
+        #expect(result.checklist.first?.action == .startBackend)
+    }
+
+    /// Clearing the shortcut is a choice: Services still works, and the plan must not
+    /// nag about it or call the app unready.
+    @Test func aClearedShortcutIsSwitchedOffNotOutstanding() {
+        let result = plan(shortcutRegistered: false, shortcut: "")
+        let shortcut = step(result, .shortcut)
+        #expect(shortcut.state == .switchedOff)
+        #expect(shortcut.action == nil)
+        #expect(shortcut.detail.contains("Services"))
+        #expect(result.isReady)
+        #expect(result.checklist.isEmpty)
     }
 
     @Test func blockingStepsAreNamedInTheSummary() {

@@ -21,12 +21,61 @@ private struct MenuBarContent: View {
     var body: some View {
         Text(model.connectionSummary)
         Divider()
-        Button("Translate Selection  \(model.hotKey.displayString)") { delegate.translateSelection() }
+        translateItem
         Button("History…") { delegate.showHistory() }
         Button("Settings…") { delegate.showSettings() }
+            .keyboardShortcut(",")
         Divider()
         Button("Quit Translator") { NSApplication.shared.terminate(nil) }
             .keyboardShortcut("q")
+    }
+
+    /// The global shortcut in the menu's own shortcut column, where the menu can express
+    /// it; a key it cannot (a function key) goes after the title instead.
+    @ViewBuilder
+    private var translateItem: some View {
+        let action = { delegate.translateSelection() }
+        if let combo = model.hotKey, let shortcut = combo.menuShortcut {
+            Button("Translate Selection", action: action)
+                .keyboardShortcut(shortcut)
+        } else if let combo = model.hotKey {
+            Button("Translate Selection \(combo.displayString)", action: action)
+        } else {
+            Button("Translate Selection", action: action)
+        }
+    }
+}
+
+private extension KeyCombo {
+    /// The same combination as a SwiftUI shortcut, when the key has an equivalent there.
+    var menuShortcut: KeyboardShortcut? {
+        let key: KeyEquivalent
+        switch keyCode {
+        case 36: key = .return
+        case 48: key = .tab
+        case 49: key = .space
+        case 51: key = .delete
+        case 53: key = .escape
+        case 117: key = .deleteForward
+        case 115: key = .home
+        case 119: key = .end
+        case 116: key = .pageUp
+        case 121: key = .pageDown
+        case 123: key = .leftArrow
+        case 124: key = .rightArrow
+        case 125: key = .downArrow
+        case 126: key = .upArrow
+        default:
+            let name = KeyCombo.keyName(for: keyCode)
+            guard name.count == 1, let character = name.lowercased().first else { return nil }
+            key = KeyEquivalent(character)
+        }
+        var flags: EventModifiers = []
+        if modifiers & KeyCombo.commandMask != 0 { flags.insert(.command) }
+        if modifiers & KeyCombo.optionMask != 0 { flags.insert(.option) }
+        if modifiers & KeyCombo.controlMask != 0 { flags.insert(.control) }
+        if modifiers & KeyCombo.shiftMask != 0 { flags.insert(.shift) }
+        return KeyboardShortcut(key, modifiers: flags)
     }
 }
 
@@ -123,7 +172,13 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
 
     // MARK: - Hot key & selection
 
-    func applyHotKey(_ combo: KeyCombo) {
+    /// Registers the shortcut, or with nil (the user cleared it) registers none.
+    func applyHotKey(_ combo: KeyCombo?) {
+        guard let combo else {
+            hotKeys.unregister()
+            model.shortcutRegistered = false
+            return
+        }
         let registered = hotKeys.register(combo) { [weak self] in
             MainActor.assumeIsolated { self?.translateSelection() }
         }
@@ -161,20 +216,13 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
             // "unknown" for everything.
             try? await Task.sleep(for: .seconds(2))
             model.refreshAccessibilityTrust()
+            model.refreshLoginItem()
             await model.refreshAll()
-            let plan = SetupPlanner.plan(
-                connected: model.isConnected,
-                ping: model.ping,
-                accessibilityTrusted: model.accessibilityTrusted,
-                shortcutRegistered: model.shortcutRegistered,
-                shortcut: model.hotKey.displayString,
-            loginItem: LoginItem.state,
-                anki: model.ankiStatus
-            )
-            if plan.isReady {
+            if model.setupPlan.isReady {
                 UserDefaults.standard.set(true, forKey: Self.setupSeenKey)
             } else {
-                showSettings()
+                // The checklist is on the General pane.
+                showSettings(pane: .general)
             }
         }
     }
@@ -251,14 +299,22 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         if reopening { Task { await model.loadHistory() } }
     }
 
-    func showSettings() {
-        present(
-            id: "settings",
-            title: "Translator Settings",
-            size: CGSize(width: 520, height: 580),
-            view: SettingsView(model: model) { [weak self] combo in self?.applyHotKey(combo) }
-        )
+    /// Shows Settings on `pane`, or on the pane it was left on when nil. The window and
+    /// its panes are made once and kept, like any Mac settings window.
+    func showSettings(pane: SettingsPaneID? = nil) {
+        settingsWindow.show(pane: pane)
     }
+
+    private lazy var settingsWindow = SettingsWindowController(
+        model: model,
+        applyHotKey: { [weak self] combo in self?.applyHotKey(combo) },
+        // A recorder listening for a combination must hear it, not have the registered
+        // shortcut fire a lookup instead.
+        suspendHotKey: { [weak self] suspended in
+            guard let self else { return }
+            if suspended { hotKeys.unregister() } else { applyHotKey(model.hotKey) }
+        }
+    )
 
     func showAnkiSheet() {
         present(
@@ -414,6 +470,8 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         announce(message, level: level, at: snapshotPointer)
     }
     func snapshotWindow(id: String) -> NSWindow? { windows[id] }
+    /// The Settings window's controller (made on first use): its window, and pane selection.
+    var snapshotSettingsWindow: SettingsWindowController { settingsWindow }
 }
 
 extension NSWindow {

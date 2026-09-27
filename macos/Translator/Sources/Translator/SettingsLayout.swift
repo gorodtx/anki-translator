@@ -30,6 +30,8 @@ struct SettingsSection<Content: View>: View {
     var alignment: VerticalAlignment = .firstTextBaseline
     @ViewBuilder var content: Content
 
+    @Environment(\.settingsLabelWidth) private var labelWidth
+
     var body: some View {
         HStack(alignment: alignment) {
             Text(title.isEmpty ? "" : "\(title):")
@@ -40,6 +42,11 @@ struct SettingsSection<Content: View>: View {
                         Color.clear.preference(key: SettingsLabelWidthKey.self, value: proxy.size.width)
                     }
                 }
+                // Every label takes the widest label's width. Aligning on the guide alone
+                // shifts a row with a shorter label to the right after it was laid out at
+                // the full pane width, so wrapping text in it ran past the pane's edge by
+                // the difference between the two labels.
+                .frame(minWidth: labelWidth, alignment: .trailing)
                 .alignmentGuide(.settingsLabel) { $0[.trailing] }
             VStack(alignment: .leading, spacing: 6) {
                 content
@@ -64,23 +71,133 @@ struct SettingsDivider: View {
 ///
 /// The control leads and its text follows, so the control's position never depends on
 /// how long the text is. The style is chosen here and nowhere else.
-struct SettingsToggle: View {
+///
+/// The text is a sibling of the control rather than the Toggle's own label: a checkbox
+/// Toggle lays its label out at the label's ideal width, so a title or description that
+/// had to wrap ran a few points past the pane. As a sibling in an HStack it gets exactly
+/// the width that is left and wraps inside it; a click on it still flips the control.
+struct SettingsToggle<Detail: View>: View {
     let title: String
     var description: String?
     @Binding var isOn: Bool
+    /// Anything that belongs to this setting (a state, a button), under its text.
+    @ViewBuilder var detail: Detail
 
-    static let style = CheckboxToggleStyle()
+    @Environment(\.isEnabled) private var isEnabled
 
     var body: some View {
-        Toggle(isOn: $isOn) {
-            VStack(alignment: .leading, spacing: 2) {
-                Text(title)
-                if let description {
-                    SettingsNote(description)
+        HStack(alignment: .firstTextBaseline, spacing: 6) {
+            Toggle(title, isOn: $isOn)
+                .toggleStyle(SettingsToggleStyle.current)
+                .labelsHidden()
+                .accessibilityHint(description ?? "")
+            VStack(alignment: .leading, spacing: 6) {
+                VStack(alignment: .leading, spacing: 2) {
+                    Text(title)
+                        .foregroundStyle(isEnabled ? .primary : .tertiary)
+                        .fixedSize(horizontal: false, vertical: true)
+                    if let description {
+                        SettingsNote(description)
+                    }
                 }
+                .frame(maxWidth: .infinity, alignment: .leading)
+                .contentShape(.rect)
+                .onTapGesture { if isEnabled { isOn.toggle() } }
+                // The Toggle already carries the title; reading it twice helps nobody.
+                .accessibilityHidden(true)
+                detail
             }
         }
-        .toggleStyle(Self.style)
+    }
+}
+
+extension SettingsToggle where Detail == EmptyView {
+    init(title: String, description: String? = nil, isOn: Binding<Bool>) {
+        self.init(title: title, description: description, isOn: isOn) { EmptyView() }
+    }
+}
+
+/// The style of every on/off control in the app's settings-style windows.
+enum SettingsToggleStyle {
+    /// The one line to change for switches instead of checkboxes: `SwitchToggleStyle()`.
+    static let current = CheckboxToggleStyle()
+}
+
+/// How a status row reads: one system symbol per state, never colour alone.
+enum SettingsStatusLevel {
+    case ok
+    case warning
+    case error
+    case unknown
+    /// Work under way: a small spinner in the symbol's place.
+    case working
+
+    fileprivate var symbol: String {
+        switch self {
+        case .ok: return "checkmark.circle.fill"
+        case .warning: return "exclamationmark.triangle.fill"
+        case .error: return "xmark.circle.fill"
+        case .unknown, .working: return "circle.dashed"
+        }
+    }
+
+    fileprivate var tint: Color {
+        switch self {
+        case .ok: return .green
+        case .warning: return .yellow
+        case .error: return .red
+        case .unknown, .working: return .secondary
+        }
+    }
+}
+
+/// A state, said once: a status symbol, a title in the body style, and an optional note
+/// under the title (aligned with the title, not with the symbol).
+struct SettingsStatus: View {
+    let level: SettingsStatusLevel
+    let title: String
+    var note: String?
+
+    /// Wide enough for any of the symbols, so the titles of neighbouring rows line up.
+    static let symbolWidth: CGFloat = 16
+
+    var body: some View {
+        HStack(alignment: .firstTextBaseline, spacing: 6) {
+            Group {
+                if level == .working {
+                    ProgressView()
+                        .controlSize(.small)
+                        .frame(width: Self.symbolWidth, height: Self.symbolWidth)
+                        .alignmentGuide(.firstTextBaseline) { $0[.bottom] - 3 }
+                } else {
+                    Image(systemName: level.symbol)
+                        .foregroundStyle(level.tint)
+                        .frame(width: Self.symbolWidth)
+                }
+            }
+            .accessibilityHidden(true)
+            VStack(alignment: .leading, spacing: 2) {
+                Text(title)
+                    .fixedSize(horizontal: false, vertical: true)
+                if let note {
+                    SettingsNote(note)
+                }
+            }
+            .frame(maxWidth: .infinity, alignment: .leading)
+        }
+        .accessibilityElement(children: .combine)
+    }
+}
+
+/// Indents content under a `SettingsStatus` title, e.g. the one button of a status row.
+struct SettingsStatusDetail<Content: View>: View {
+    @ViewBuilder var content: Content
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 6) {
+            content
+        }
+        .padding(.leading, SettingsStatus.symbolWidth + 6)
     }
 }
 
