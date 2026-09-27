@@ -117,12 +117,14 @@ final class AppModel {
             guard payload.requestId >= activeRequestId else { return }  // stale request
             activeRequestId = payload.requestId
             phase = payload.phase
+            let wasLoading = state.loading
             withAnimation(Motion.stateChange) { state = payload.state }
             // The backend names the reason in a notification just before it reports the
             // error — "Every translation source is switched off." is not a failure to
             // retry, and calling it one sends the user looking for a fault.
             if payload.phase == .error { lastError = pendingNotice ?? "Translation failed." }
             pendingNotice = nil
+            lookupSettled(wasLoading: wasLoading)
         case IPCEventName.notification:
             guard let payload = try? event.decode(NotificationEvent.self) else { return }
             if payload.level != .info { pendingNotice = payload.message }
@@ -134,7 +136,12 @@ final class AppModel {
             guard let payload = try? event.decode(AnkiAvailabilityEvent.self) else { return }
             ankiStatus.available = payload.available
         case IPCEventName.disconnected:
+            // A lookup still waiting will never finish; saying "No translation" would
+            // blame the word.
+            guard state.loading else { return }
             state.loading = false
+            if lastError == nil { lastError = "The backend stopped responding." }
+            lookupSettled(wasLoading: true)
         default:
             break
         }
@@ -147,14 +154,52 @@ final class AppModel {
         lastError = nil
     }
 
-    func show(banner text: String, level: NotificationLevel) {
+    /// Shows a banner in the panel and says it to VoiceOver.
+    ///
+    /// - Parameter duration: how long it stays; by default 3 s, 6 s for errors. An
+    ///   announcement passes its own, so the banner and the panel holding it end together.
+    func show(banner text: String, level: NotificationLevel, duration: Duration? = nil) {
         bannerDismissTask?.cancel()
         withAnimation(Motion.stateChange) { banner = BannerMessage(text: text, level: level) }
+        speak(text)
+        let duration = duration ?? Self.bannerDuration(for: level)
         bannerDismissTask = Task { [weak self] in
-            try? await Task.sleep(for: .seconds(level == .error ? 6 : 3))
+            try? await Task.sleep(for: duration)
             guard !Task.isCancelled else { return }
             await MainActor.run { withAnimation(Motion.stateChange) { self?.banner = nil } }
         }
+    }
+
+    static func bannerDuration(for level: NotificationLevel) -> Duration {
+        level == .error ? .seconds(6) : .seconds(3)
+    }
+
+    // MARK: - VoiceOver
+
+    /// What was last said to VoiceOver, newest last; read by the snapshot probes.
+    @ObservationIgnored private(set) var spokenAnnouncements: [String] = []
+
+    /// The panel is non-activating, so VoiceOver's cursor stays in the user's app and
+    /// never reads it: results and banners are announced instead.
+    private func speak(_ text: String) {
+        guard !text.isEmpty else { return }
+        spokenAnnouncements = Array((spokenAnnouncements + [text]).suffix(20))
+        NSAccessibility.post(
+            element: NSApp.mainWindow ?? NSApp as Any,
+            notification: .announcementRequested,
+            userInfo: [
+                .announcement: text,
+                .priority: NSAccessibilityPriorityLevel.high.rawValue,
+            ]
+        )
+    }
+
+    /// A lookup stopped loading: say what it found, once. A failure whose reason is
+    /// already on screen as a banner was said with the banner.
+    private func lookupSettled(wasLoading: Bool) {
+        guard wasLoading, !state.loading, !state.originalText.isEmpty else { return }
+        if let lastError, banner?.text == lastError { return }
+        speak(PopupSpeech.summary(for: state, error: lastError))
     }
 
     // MARK: - Requests
@@ -290,11 +335,15 @@ final class AppModel {
         do {
             let response = try await client.send(IPCMethod.translate, params: ["text": text], as: TranslateResponse.self)
             activeRequestId = response.requestId
+            let wasLoading = state.loading
             withAnimation(Motion.stateChange) { state = response.state }
+            lookupSettled(wasLoading: wasLoading)
         } catch {
+            // Said once, as the body of the panel; a banner repeating it under the same
+            // words would only say it twice.
             state.loading = false
             lastError = message(for: error)
-            show(banner: message(for: error), level: .error)
+            lookupSettled(wasLoading: true)
         }
     }
 

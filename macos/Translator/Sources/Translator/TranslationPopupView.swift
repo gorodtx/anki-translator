@@ -12,7 +12,8 @@ struct TranslationPopupView: View {
     @Bindable var model: AppModel
     var chrome: PopupChrome
     var onNaturalHeight: (CGFloat) -> Void
-    var onOpenAnki: () -> Void
+    /// A footer row was clicked or its shortcut pressed; the panel controller runs it.
+    var onActivate: (PopupFooterRow) -> Void
 
     @State private var parts = HeightParts()
     /// The body is scrolled away from its top: a hairline separates it from the header,
@@ -141,14 +142,25 @@ struct TranslationPopupView: View {
             VStack(alignment: .leading, spacing: 0) {
                 if state.hasTranslation {
                     let paragraphs = PopupContent.translationParagraphs(state.translationText)
-                    VStack(alignment: .leading, spacing: 6) {
-                        ForEach(Array(paragraphs.enumerated()), id: \.offset) { index, paragraph in
-                            Text(paragraph)
-                                .font(index == 0 ? .title3 : .body)
-                                .foregroundStyle(index == 0 ? .primary : .secondary)
+                    if let main = paragraphs.first {
+                        Text(main)
+                            .font(.title3)
+                            .foregroundStyle(.primary)
+                            .frame(maxWidth: .infinity, alignment: .leading)
+                    }
+                    // A sentence's alternatives, labelled: unlabelled they read as the
+                    // source text again, or as the rest of the translation.
+                    if paragraphs.count > 1 {
+                        SectionHeader("Other Translations", first: false)
+                        VStack(alignment: .leading, spacing: PopupMetrics.rowGap) {
+                            ForEach(Array(paragraphs.dropFirst().enumerated()), id: \.offset) { _, paragraph in
+                                Text(paragraph)
+                                    .font(.body)
+                                    .foregroundStyle(.primary)
+                                    .frame(maxWidth: .infinity, alignment: .leading)
+                            }
                         }
                     }
-                    .frame(maxWidth: .infinity, alignment: .leading)
                 }
                 if let apple = state.apple, !apple.groupedEntries.isEmpty {
                     SectionHeader("Dictionary", first: !state.hasTranslation)
@@ -244,9 +256,17 @@ struct TranslationPopupView: View {
 
     // MARK: - Banner and footer
 
+    /// A failed lookup says why in the body; the banner with the same words would say it
+    /// a second time.
+    private var visibleBanner: AppModel.BannerMessage? {
+        guard let banner = model.banner else { return nil }
+        if isNoResult, banner.text == model.lastError { return nil }
+        return banner
+    }
+
     @ViewBuilder
     private var bottom: some View {
-        if let banner = model.banner {
+        if let banner = visibleBanner {
             BannerRow(banner: banner)
                 // Alone (an announcement) it gets the panel's own vertical rhythm.
                 .padding(.top, query.isEmpty ? 12 : 2)
@@ -265,49 +285,75 @@ struct TranslationPopupView: View {
             Divider()
                 .padding(.horizontal, PopupMetrics.separatorInset)
                 .padding(.bottom, PopupMetrics.separatorInset)
-            MenuRow(
-                title: "Add to Anki…",
-                chrome: chrome,
-                shortcut: KeyHint(key: "↩"),
-                keyboardShortcut: .defaultAction,
-                disabledReason: ankiUnavailableReason,
-                action: onOpenAnki
-            )
-            MenuRow(
-                title: "Copy Translation",
-                chrome: chrome,
-                shortcut: KeyHint(modifiers: "⇧⌘", key: "C"),
-                keyboardShortcut: KeyboardShortcut("c", modifiers: [.shift, .command]),
-                disabledReason: state.hasTranslation ? nil : "There is no translation to copy.",
-                action: copyTranslation
-            )
-            if state.canRefreshExamples {
-                MenuRow(
-                    title: "New Examples",
-                    chrome: chrome,
-                    shortcut: KeyHint(modifiers: "⌘", key: "R"),
-                    keyboardShortcut: KeyboardShortcut("r", modifiers: .command),
-                    busy: state.refreshingExamples,
-                    disabledReason: state.refreshingExamples ? "Looking for other examples." : nil
-                ) {
-                    Task { await model.refreshExamples() }
-                }
+            ForEach(PopupFooter.rows(for: model), id: \.row) { item in
+                MenuRow(item: item, chrome: chrome) { onActivate(item.row) }
             }
         }
         .padding(.horizontal, PopupMetrics.rowInset)
         .padding(.bottom, PopupMetrics.rowInset)
     }
+}
 
-    private var ankiUnavailableReason: String? {
-        if !model.ankiStatus.available { return "Anki isn't running, or AnkiConnect isn't installed." }
-        if !state.canAddAnki { return "This result can't be added to Anki." }
-        return nil
+// MARK: - Footer rows
+
+/// One footer row as it stands now.
+struct FooterRowState {
+    let row: PopupFooterRow
+    /// Non-nil disables the row and says why.
+    let disabledReason: String?
+    var busy = false
+
+    var enabled: Bool { disabledReason == nil }
+}
+
+/// Which footer rows show and which work: read by the view to draw them and by the
+/// panel controller to move the keyboard highlight through them.
+@MainActor
+enum PopupFooter {
+    /// Empty until there is a result: the footer shows only then.
+    static func rows(for model: AppModel) -> [FooterRowState] {
+        let state = model.state
+        guard PopupContent.hasResult(state) else { return [] }
+        var rows = [
+            FooterRowState(row: .addToAnki, disabledReason: ankiUnavailableReason(model)),
+            FooterRowState(
+                row: .copyTranslation,
+                disabledReason: state.hasTranslation ? nil : "There is no translation to copy."
+            ),
+        ]
+        if state.canRefreshExamples {
+            rows.append(FooterRowState(
+                row: .newExamples,
+                disabledReason: state.refreshingExamples ? "Looking for other examples." : nil,
+                busy: state.refreshingExamples
+            ))
+        }
+        return rows
     }
 
-    private func copyTranslation() {
-        guard state.hasTranslation else { return }
-        SelectionCapture.writeToPasteboard(state.translationText)
-        model.show(banner: "Translation copied.", level: .success)
+    private static func ankiUnavailableReason(_ model: AppModel) -> String? {
+        if !model.ankiStatus.available { return "Anki isn't running, or AnkiConnect isn't installed." }
+        if !model.state.canAddAnki { return "This result can't be added to Anki." }
+        return nil
+    }
+}
+
+extension PopupFooterRow {
+    var hint: KeyHint {
+        switch self {
+        case .addToAnki: return KeyHint(key: "↩")
+        case .copyTranslation: return KeyHint(modifiers: "⇧⌘", key: "C")
+        case .newExamples: return KeyHint(modifiers: "⌘", key: "R")
+        }
+    }
+
+    /// ⌘C stays free for copying a text selection, so copying the translation is ⇧⌘C.
+    var keyboardShortcut: KeyboardShortcut {
+        switch self {
+        case .addToAnki: return .defaultAction
+        case .copyTranslation: return KeyboardShortcut("c", modifiers: [.shift, .command])
+        case .newExamples: return KeyboardShortcut("r", modifiers: .command)
+        }
     }
 }
 
@@ -328,14 +374,15 @@ enum PopupMetrics {
     static let indicatorInset: CGFloat = 6
 }
 
-/// Set by the panel controller: whether the panel is capped, so the body scrolls.
+/// Set by the panel controller: whether the panel is capped, so the body scrolls, and
+/// which footer row is highlighted.
 @MainActor
 @Observable
 final class PopupChrome {
     var bodyScrolls = false
-    /// Snapshot runs only: the row drawn as if the pointer were on it, since a capture
-    /// has no pointer.
-    var highlightedRowForSnapshot: String?
+    /// The one highlighted footer row, as in a menu: the pointer puts it there, and so do
+    /// ↑/↓. Cleared on every show.
+    var highlightedRow: PopupFooterRow?
     /// Bumped on every show.
     var showCount = 0
 }
@@ -413,6 +460,9 @@ struct KeyHint: View {
     var modifiers: String = ""
     var key: String
 
+    /// The glyphs are hidden from VoiceOver; the row says this instead ("Shift-Command-C").
+    var spoken: String { KeyGlyphs.spoken(modifiers: modifiers, key: key) }
+
     var body: some View {
         HStack(spacing: 1) {
             ForEach(Array(modifiers.enumerated()), id: \.offset) { _, glyph in
@@ -428,21 +478,13 @@ struct KeyHint: View {
 
 /// A footer row that looks and highlights exactly like a menu item.
 private struct MenuRow: View {
-    let title: String
+    let item: FooterRowState
     let chrome: PopupChrome
-    let shortcut: KeyHint
-    let keyboardShortcut: KeyboardShortcut
-    var busy = false
-    /// Non-nil disables the row and says why.
-    var disabledReason: String?
     let action: () -> Void
 
-    @State private var hovering = false
-
-    private var enabled: Bool { disabledReason == nil }
-    private var highlighted: Bool {
-        (hovering || chrome.highlightedRowForSnapshot == title) && enabled
-    }
+    private var title: String { item.row.title }
+    private var enabled: Bool { item.enabled }
+    private var highlighted: Bool { chrome.highlightedRow == item.row && enabled }
 
     var body: some View {
         Button(action: action) {
@@ -451,13 +493,13 @@ private struct MenuRow: View {
                     .font(.body)
                     .lineLimit(1)
                 Spacer(minLength: 8)
-                if busy {
+                if item.busy {
                     ProgressView()
                         .controlSize(.small)
                         .scaleEffect(0.8)
                         .frame(height: 16)
                 } else {
-                    shortcut.font(.body)
+                    item.row.hint.font(.body)
                 }
             }
             .padding(.horizontal, PopupMetrics.textInset - PopupMetrics.rowInset)
@@ -471,12 +513,20 @@ private struct MenuRow: View {
             .contentShape(.rect(cornerRadius: PopupMetrics.rowRadius, style: .continuous))
         }
         .buttonStyle(.plain)
-        .keyboardShortcut(keyboardShortcut)
+        .keyboardShortcut(item.row.keyboardShortcut)
         .disabled(!enabled)
-        .onHover { hovering = $0 }
-        .help(disabledReason ?? "")
+        // The pointer and the arrow keys share one highlight, as in a menu.
+        .onHover { inside in
+            if inside {
+                chrome.highlightedRow = item.row
+            } else if chrome.highlightedRow == item.row {
+                chrome.highlightedRow = nil
+            }
+        }
+        .help(item.disabledReason ?? "")
         .accessibilityLabel(title)
-        .accessibilityHint(disabledReason ?? "")
+        // The shortcut glyphs are hidden from VoiceOver, so the hint says the shortcut.
+        .accessibilityHint(item.disabledReason ?? item.row.hint.spoken)
     }
 }
 

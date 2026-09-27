@@ -165,10 +165,17 @@ final class SnapshotRunner {
         // A footer row under the pointer.
         delegate.snapshotPresent(text: "look up")
         await waitUntil(timeout: 25) { !delegate.model.state.loading }
-        popup.highlightRowForSnapshot("Copy Translation")
+        popup.highlightedRow = .copyTranslation
         try? await Task.sleep(for: .milliseconds(450))
         await capturePopup("popup-hover-\(appearance)")
-        popup.highlightRowForSnapshot(nil)
+        popup.highlightedRow = nil
+        // A lookup that failed: its reason once, as the body, and no banner repeating it.
+        delegate.snapshotPresent(text: "qwzxv")
+        await waitUntil(timeout: 25) { !delegate.model.state.loading }
+        delegate.model.lastError = "The backend stopped responding."
+        delegate.model.show(banner: "The backend stopped responding.", level: .error)
+        try? await Task.sleep(for: .milliseconds(450))
+        await capturePopup("popup-error-\(appearance)")
         // The announcement path: a bare message, no lookup behind it.
         delegate.snapshotAnnounce("No text selected.", level: .info)
         try? await Task.sleep(for: .milliseconds(400))
@@ -627,6 +634,26 @@ final class SnapshotRunner {
             )
         }
 
+        await probe("second-hotkey-press-closes") { panel in
+            // The hot key pressed again over the open card. The capture stands in for the
+            // selection; it must not even be asked, since with the panel key the ⌘C
+            // fallback would copy from the panel and wipe the card.
+            let sessions = popup.sessionsEnded
+            let before = delegate.model.state.originalText
+            var captures = 0
+            delegate.snapshotHotKeyPress { captures += 1; return nil }
+            try? await Task.sleep(for: .milliseconds(200))
+            let ended = popup.sessionsEnded - sessions
+            let after = delegate.model.state.originalText
+            return (
+                captures == 0 && !panel.isVisible && popup.lastHideReason == .dismissed && ended == 1 && after == before,
+                "captures=\(captures) visible=\(panel.isVisible) reason=\(Self.name(popup.lastHideReason)) closeSession=+\(ended) card “\(before)”→“\(after)”"
+            )
+        }
+
+        await probeKeyboardScroll()
+        await probeFooterArrows()
+
         await probe("click-inside-keeps") { panel in
             // On the headword, in window coordinates (origin bottom-left).
             let point = NSPoint(x: 40, y: panel.frame.height - 24)
@@ -642,8 +669,14 @@ final class SnapshotRunner {
                 }
             }
             try? await Task.sleep(for: .milliseconds(300))
-            return (panel.isVisible, "visible=\(panel.isVisible) isKeyWindow=\(panel.isKeyWindow)")
+            let responder = panel.firstResponder.map { String(describing: Swift.type(of: $0)) } ?? "nil"
+            return (panel.isVisible, "visible=\(panel.isVisible) isKeyWindow=\(panel.isKeyWindow) firstResponder=\(responder)")
         }
+
+        await probeMonitorsLifecycle()
+        await probeAnnouncementsStayOffKey()
+        await probeNoEmptyGlass()
+        probeSpoken()
 
         // The announcement path closes itself (info: 2.5 s) and ends no session. This
         // probe is about that timer alone, so outside focus changes during the 3 s wait
@@ -668,6 +701,209 @@ final class SnapshotRunner {
         delegate.snapshotHidePopup()
     }
 
+    /// Page Down, End, Space and Home on a capped body, sent to the panel as the window
+    /// server would deliver them to the key window.
+    private func probeKeyboardScroll() async {
+        await probe("keyboard-scroll") { panel in
+            guard let delegate = self.delegate else { return (false, "no delegate") }
+            let popup = delegate.snapshotPopup
+            guard popup.bodyScrolls, let scroll = popup.bodyScrollView else {
+                return (false, "body not capped (bodyScrolls=\(popup.bodyScrolls)); nothing to scroll")
+            }
+            @MainActor func offset() -> CGFloat { scroll.contentView.bounds.minY }
+            @MainActor func press(_ code: UInt16, _ characters: String) async {
+                panel.sendEvent(Self.key(code, characters, in: panel))
+                try? await Task.sleep(for: .milliseconds(120))
+            }
+            let top = offset()
+            await press(121, "\u{F72D}")  // Page Down
+            let paged = offset()
+            await press(119, "\u{F72B}")  // End
+            let end = offset()
+            await press(115, "\u{F729}")  // Home
+            let home = offset()
+            await press(49, " ")  // Space
+            let spaced = offset()
+            await press(115, "\u{F729}")
+            let flipped = scroll.documentView?.isFlipped ?? true
+            let down: (CGFloat, CGFloat) -> Bool = { flipped ? $1 > $0 + 1 : $1 < $0 - 1 }
+            let passed = down(top, paged) && (down(paged, end) || abs(paged - end) < 1) && abs(home - top) < 1
+                && down(top, spaced) && panel.isVisible
+            return (
+                passed,
+                String(format: "top=%.0f pageDown=%.0f end=%.0f home=%.0f space=%.0f flipped=%@ visible=%@",
+                       top, paged, end, home, spaced, "\(flipped)", "\(panel.isVisible)")
+            )
+        }
+    }
+
+    /// ↑/↓ move the highlight through the enabled footer rows; Return runs the highlighted
+    /// one. Return is pressed only on New Examples: Copy Translation would write to the
+    /// user's real pasteboard.
+    private func probeFooterArrows() async {
+        await probe("footer-arrow-keys") { panel in
+            guard let delegate = self.delegate else { return (false, "no delegate") }
+            let popup = delegate.snapshotPopup
+            let rows = PopupFooter.rows(for: delegate.model).map { ($0.row, $0.enabled) }
+            @MainActor func press(_ code: UInt16, _ characters: String) async -> PopupFooterRow? {
+                panel.sendEvent(Self.key(code, characters, in: panel))
+                try? await Task.sleep(for: .milliseconds(80))
+                return popup.highlightedRow
+            }
+            var expected: PopupFooterRow? = nil
+            var trail: [String] = []
+            var passed = popup.highlightedRow == nil
+            for (code, chars, step) in [(125, "\u{F701}", 1), (125, "\u{F701}", 1), (126, "\u{F700}", -1), (125, "\u{F701}", 1)] {
+                expected = PopupFooterNavigation.move(from: expected, step: step, rows: rows)
+                let got = await press(UInt16(code), chars)
+                trail.append(got?.rawValue ?? "none")
+                passed = passed && got == expected
+            }
+            let skipsDisabled = rows.filter { !$0.1 }.allSatisfy { disabled in !trail.contains(disabled.0.rawValue) }
+            passed = passed && skipsDisabled && expected != nil
+            var activated = "not pressed"
+            if popup.highlightedRow == .newExamples {
+                panel.sendEvent(Self.key(36, "\r", in: panel))
+                try? await Task.sleep(for: .milliseconds(150))
+                activated = popup.lastActivatedRow?.rawValue ?? "none"
+                passed = passed && popup.lastActivatedRow == .newExamples
+            }
+            let enabled = rows.map { "\($0.0.rawValue)=\($0.1 ? "on" : "off")" }.joined(separator: ",")
+            return (passed, "rows[\(enabled)] highlight ↓↓↑↓ → \(trail.joined(separator: "→")) return→\(activated)")
+        }
+    }
+
+    /// The dismissal monitors exist exactly while the panel is on screen: installed on
+    /// show, kept (not replaced) by a new lookup while open, gone after every kind of hide.
+    private func probeMonitorsLifecycle() async {
+        guard let delegate else { return }
+        let popup = delegate.snapshotPopup
+        var lines: [String] = []
+        var passed = true
+        /// Shown and key; an outside focus change right after showing hides it again, so
+        /// up to three tries.
+        @MainActor func shown() async -> PopupPanelController.MonitorState {
+            for _ in 1...3 {
+                delegate.snapshotHidePopup()
+                delegate.snapshotReshowPopup()
+                try? await Task.sleep(for: .milliseconds(250))
+                if popup.isKey { break }
+            }
+            return popup.monitorState
+        }
+        let hides: [(String, (NSWindow) async -> Void)] = [
+            ("esc", { panel in panel.sendEvent(Self.escape(for: panel)) }),
+            ("own-window", { panel in
+                let other = ProbeKeyPanel()
+                other.setFrameOrigin(NSPoint(x: panel.frame.maxX + 40, y: panel.frame.maxY - 80))
+                other.makeKeyAndOrderFront(nil)
+                try? await Task.sleep(for: .milliseconds(250))
+                other.orderOut(nil)
+            }),
+            ("outside-click", { _ in popup.outsideMouseDown() }),
+            ("programmatic", { _ in delegate.snapshotHidePopup() }),
+        ]
+        for (name, hide) in hides {
+            let open = await shown()
+            let installs = open.installs
+            // A new lookup while the panel is open keeps the monitors it has.
+            delegate.snapshotReshowPopup()
+            try? await Task.sleep(for: .milliseconds(150))
+            let reshown = popup.monitorState
+            guard let panel = delegate.snapshotPopupWindow else { break }
+            await hide(panel)
+            try? await Task.sleep(for: .milliseconds(200))
+            let closed = popup.monitorState
+            let ok = open.all && reshown.all && reshown.installs == installs && !panel.isVisible && closed.none
+            passed = passed && ok
+            lines.append("\(name)\(ok ? "" : " ✗"): open[\(open)] reshown[\(reshown)] hidden(\(Self.name(popup.lastHideReason)))[\(closed)]")
+        }
+        // The announcement: installed although it never takes key, gone when its timer ends.
+        delegate.snapshotAnnounce("No text selected.", level: .info)
+        try? await Task.sleep(for: .milliseconds(250))
+        let announcing = popup.monitorState
+        await waitUntil(timeout: 4) { delegate.snapshotPopupWindow?.isVisible == false }
+        let ended = popup.monitorState
+        let ok = announcing.global && ended.none && popup.lastHideReason == .announcementEnded
+        passed = passed && ok
+        lines.append("announcement: open[\(announcing)] hidden(\(Self.name(popup.lastHideReason)))[\(ended)]")
+        NSLog("PROBE monitors-lifecycle \(passed ? "PASS" : "FAIL") \(lines.joined(separator: " | "))")
+    }
+
+    /// An announcement leaves keyboard focus where it was — even over a card that had it —
+    /// and a hot key press over it runs the capture (the user's app has focus again).
+    private func probeAnnouncementsStayOffKey() async {
+        await probe("announcement-not-key") { panel in
+            guard let delegate = self.delegate else { return (false, "no delegate") }
+            let wasKey = panel.isKeyWindow
+            delegate.snapshotAnnounce("No text selected.", level: .info)
+            try? await Task.sleep(for: .milliseconds(300))
+            let visible = panel.isVisible, key = panel.isKeyWindow
+            return (wasKey && visible && !key, "keyBefore=\(wasKey) visible=\(visible) isKeyWindow=\(key)")
+        }
+        await probe("hotkey-over-announcement-captures") { panel in
+            guard let delegate = self.delegate else { return (false, "no delegate") }
+            delegate.snapshotAnnounce("No text selected.", level: .info)
+            try? await Task.sleep(for: .milliseconds(250))
+            var captures = 0
+            delegate.snapshotHotKeyPress { captures += 1; return "bank" }
+            await self.waitUntil(timeout: 10) { !delegate.model.state.loading }
+            try? await Task.sleep(for: .milliseconds(200))
+            let text = delegate.model.state.originalText
+            return (
+                captures == 1 && panel.isVisible && panel.isKeyWindow && text == "bank",
+                "captures=\(captures) visible=\(panel.isVisible) isKeyWindow=\(panel.isKeyWindow) card=“\(text)”"
+            )
+        }
+    }
+
+    /// A warning announcement (4 s) never shows an empty panel: sampled every 100 ms, the
+    /// panel is never on screen without its banner. Then the guard itself: a banner that
+    /// goes away early takes the panel with it.
+    private func probeNoEmptyGlass() async {
+        guard let delegate else { return }
+        let popup = delegate.snapshotPopup
+        // Only the announcement's own timer and the empty-panel guard may end it here: a
+        // click anywhere on the screen (the user, a sibling run) would dismiss it early.
+        popup.suspendsDismissal = true
+        defer { popup.suspendsDismissal = false }
+        delegate.snapshotHidePopup()
+        delegate.snapshotAnnounce("⌥⌘T is already taken by another app.", level: .warning)
+        let start = Date()
+        var emptySamples = 0
+        var samples = 0
+        while Date().timeIntervalSince(start) < 5 {
+            try? await Task.sleep(for: .milliseconds(100))
+            let visible = delegate.snapshotPopupWindow?.isVisible ?? false
+            if !visible { break }
+            samples += 1
+            if delegate.model.banner == nil { emptySamples += 1 }
+        }
+        let lasted = Date().timeIntervalSince(start)
+        let timed = emptySamples == 0 && popup.lastHideReason == .announcementEnded && lasted > 3.5
+        NSLog("PROBE announcement-no-empty-glass \(timed ? "PASS" : "FAIL") warning shown %.1fs, samples=\(samples) emptySamples=\(emptySamples) reason=\(Self.name(popup.lastHideReason))", lasted)
+
+        delegate.snapshotAnnounce("No text selected.", level: .info)
+        try? await Task.sleep(for: .milliseconds(300))
+        delegate.model.banner = nil
+        try? await Task.sleep(for: .milliseconds(300))
+        let visible = delegate.snapshotPopupWindow?.isVisible ?? false
+        let guarded = !visible && popup.lastHideReason == .announcementEnded
+        NSLog("PROBE empty-panel-hides \(guarded ? "PASS" : "FAIL") banner cleared early → visible=\(visible) reason=\(Self.name(popup.lastHideReason))")
+        delegate.snapshotHidePopup()
+    }
+
+    /// Results and banners are posted to VoiceOver (whether it speaks them needs VoiceOver
+    /// running; the post is what the app controls).
+    private func probeSpoken() {
+        guard let delegate else { return }
+        let spoken = delegate.model.spokenAnnouncements
+        let lookup = spoken.contains { $0.hasPrefix("bank: ") }
+        let announced = spoken.contains("No text selected.")
+        let last = spoken.suffix(4).map { "“\($0.prefix(40))”" }.joined(separator: ", ")
+        NSLog("PROBE voiceover-announcements \(lookup && announced ? "PASS" : "FAIL") lookup=\(lookup) announcement=\(announced) last: \(last)")
+    }
+
     /// Show the panel again, wait for it to be key, run `check`; retry when an outside
     /// focus change got in the way.
     private func probe(_ name: String, _ check: (NSWindow) async -> (Bool, String)) async {
@@ -680,6 +916,7 @@ final class SnapshotRunner {
             guard let panel = delegate.snapshotPopupWindow else { break }
             guard panel.isKeyWindow else {
                 detail = "attempt=\(attempt) panel not key before the probe (focus taken from outside)"
+                NSLog("[snapshot] probe \(name) retry: \(detail)")
                 continue
             }
             let (passed, result) = await check(panel)
@@ -688,6 +925,7 @@ final class SnapshotRunner {
                 NSLog("PROBE \(name) PASS \(detail)")
                 return
             }
+            NSLog("[snapshot] probe \(name) retry: \(detail)")
         }
         NSLog("PROBE \(name) FAIL \(detail)")
     }

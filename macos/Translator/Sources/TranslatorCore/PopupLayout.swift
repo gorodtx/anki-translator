@@ -89,7 +89,7 @@ public enum PopupHideReason: String, Equatable, Sendable {
     case dismissed
     /// Another window of this app became key (Add to Anki, History, Settings).
     case ownWindowFocused
-    /// A short announcement ran its course.
+    /// A short announcement ran its course, or was clicked away: there was no lookup to end.
     case announcementEnded
     /// Replaced or hidden by the app itself (a new lookup, the snapshot harness).
     case programmatic
@@ -149,5 +149,107 @@ public enum PopupContent {
 
     private static func normalized(_ text: String) -> String {
         text.trimmingCharacters(in: .whitespacesAndNewlines.union(.punctuationCharacters)).lowercased()
+    }
+}
+
+// MARK: - Footer
+
+/// The menu-like rows at the bottom of the panel, in display order.
+public enum PopupFooterRow: String, CaseIterable, Equatable, Sendable {
+    case addToAnki
+    case copyTranslation
+    case newExamples
+
+    public var title: String {
+        switch self {
+        case .addToAnki: return "Add to Anki…"
+        case .copyTranslation: return "Copy Translation"
+        case .newExamples: return "New Examples"
+        }
+    }
+
+    /// The row Return activates when no row is highlighted (`.defaultAction`).
+    public static let defaultRow: PopupFooterRow = .addToAnki
+}
+
+/// Keyboard selection through the footer rows, as ↑/↓ move through a menu.
+public enum PopupFooterNavigation {
+    public typealias Rows = [(row: PopupFooterRow, enabled: Bool)]
+
+    /// The row highlighted after one arrow press. Disabled rows are skipped; with nothing
+    /// highlighted, ↓ starts at the first enabled row and ↑ at the last. At either end the
+    /// highlight stays where it is.
+    ///
+    /// - Parameters:
+    ///   - rows: the rows on screen, in order, each with whether it is enabled.
+    ///   - step: positive for ↓, negative for ↑.
+    public static func move(from current: PopupFooterRow?, step: Int, rows: Rows) -> PopupFooterRow? {
+        let enabled = rows.filter(\.enabled).map(\.row)
+        guard !enabled.isEmpty else { return nil }
+        guard let current, let index = enabled.firstIndex(of: current) else {
+            return step >= 0 ? enabled.first : enabled.last
+        }
+        let next = min(max(index + (step >= 0 ? 1 : -1), 0), enabled.count - 1)
+        return enabled[next]
+    }
+
+    /// What Return activates: the highlighted row when it is enabled, else the default
+    /// row when that one is on screen and enabled, else nothing.
+    public static func activation(highlighted: PopupFooterRow?, rows: Rows) -> PopupFooterRow? {
+        let enabled = Set(rows.filter(\.enabled).map(\.row))
+        if let highlighted, enabled.contains(highlighted) { return highlighted }
+        return enabled.contains(PopupFooterRow.defaultRow) ? PopupFooterRow.defaultRow : nil
+    }
+}
+
+/// Shortcut glyphs as VoiceOver should say them.
+public enum KeyGlyphs {
+    /// "⇧⌘" + "C" → "Shift-Command-C", "" + "↩" → "Return".
+    public static func spoken(modifiers: String, key: String) -> String {
+        (modifiers.map { name(for: String($0)) } + [name(for: key)]).joined(separator: "-")
+    }
+
+    private static func name(for glyph: String) -> String {
+        switch glyph {
+        case "⌃": return "Control"
+        case "⌥": return "Option"
+        case "⇧": return "Shift"
+        case "⌘": return "Command"
+        case "↩": return "Return"
+        case "⌤": return "Enter"
+        case "⎋": return "Escape"
+        case "⇥": return "Tab"
+        case "⌫": return "Delete"
+        default: return glyph
+        }
+    }
+}
+
+// MARK: - Speech
+
+/// What VoiceOver announces when a lookup settles. The panel never takes VoiceOver's
+/// cursor (the user's app stays active), so a result nobody announces is never heard.
+public enum PopupSpeech {
+    /// The headword and its first translation, a sentence's translation, the reason the
+    /// lookup failed, or that nothing was found.
+    public static func summary(for state: ViewState, error: String?) -> String {
+        let query = state.originalText.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard PopupContent.hasResult(state) else {
+            if let error, !error.isEmpty { return error }
+            return "No translation for “\(query)”."
+        }
+        let translation = PopupContent.translationParagraphs(state.translationText).first
+            ?? firstSense(state)
+            ?? state.definitionsItems.first
+            ?? ""
+        if translation.isEmpty { return query }
+        return PopupLayout.isSentence(query) ? translation : "\(query): \(translation)"
+    }
+
+    private static func firstSense(_ state: ViewState) -> String? {
+        for entry in state.apple?.groupedEntries ?? [] {
+            if let sense = entry.senses.first(where: { !$0.translation.isEmpty }) { return sense.translation }
+        }
+        return nil
     }
 }

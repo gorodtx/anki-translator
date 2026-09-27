@@ -194,6 +194,79 @@ import Testing
     }
 }
 
+@Suite struct PopupFooterNavigationTests {
+    private let all: PopupFooterNavigation.Rows = [
+        (.addToAnki, true), (.copyTranslation, true), (.newExamples, true),
+    ]
+    /// Anki not running: its row is disabled and the keyboard steps over it.
+    private let noAnki: PopupFooterNavigation.Rows = [
+        (.addToAnki, false), (.copyTranslation, true), (.newExamples, true),
+    ]
+
+    @Test func downStartsAtTheFirstEnabledRowAndUpAtTheLast() {
+        #expect(PopupFooterNavigation.move(from: nil, step: 1, rows: all) == .addToAnki)
+        #expect(PopupFooterNavigation.move(from: nil, step: -1, rows: all) == .newExamples)
+        #expect(PopupFooterNavigation.move(from: nil, step: 1, rows: noAnki) == .copyTranslation)
+    }
+
+    @Test func arrowsSkipDisabledRowsAndStopAtTheEnds() {
+        #expect(PopupFooterNavigation.move(from: .copyTranslation, step: 1, rows: noAnki) == .newExamples)
+        #expect(PopupFooterNavigation.move(from: .newExamples, step: 1, rows: noAnki) == .newExamples)
+        #expect(PopupFooterNavigation.move(from: .copyTranslation, step: -1, rows: noAnki) == .copyTranslation)
+        #expect(PopupFooterNavigation.move(from: .newExamples, step: -1, rows: all) == .copyTranslation)
+    }
+
+    @Test func noEnabledRowsMeansNoHighlight() {
+        let none: PopupFooterNavigation.Rows = [(.addToAnki, false), (.copyTranslation, false)]
+        #expect(PopupFooterNavigation.move(from: nil, step: 1, rows: none) == nil)
+        #expect(PopupFooterNavigation.move(from: nil, step: 1, rows: []) == nil)
+    }
+
+    /// Return activates the highlighted row, and Add to Anki… when nothing is highlighted.
+    @Test func returnActivatesTheHighlightOrTheDefaultRow() {
+        #expect(PopupFooterNavigation.activation(highlighted: .newExamples, rows: all) == .newExamples)
+        #expect(PopupFooterNavigation.activation(highlighted: nil, rows: all) == .addToAnki)
+        #expect(PopupFooterNavigation.activation(highlighted: nil, rows: noAnki) == nil)
+        #expect(PopupFooterNavigation.activation(highlighted: .addToAnki, rows: noAnki) == nil)
+    }
+}
+
+@Suite struct PopupSpeechTests {
+    @Test func shortcutsAreSpokenAsWords() {
+        #expect(KeyGlyphs.spoken(modifiers: "⇧⌘", key: "C") == "Shift-Command-C")
+        #expect(KeyGlyphs.spoken(modifiers: "⌘", key: "R") == "Command-R")
+        #expect(KeyGlyphs.spoken(modifiers: "", key: "↩") == "Return")
+    }
+
+    @Test func aWordIsSpokenWithItsFirstTranslation() {
+        let state = ViewState(original: "bank", translation: "банк; берег")
+        #expect(PopupSpeech.summary(for: state, error: nil) == "bank: банк; берег")
+    }
+
+    @Test func aDictionaryOnlyResultSpeaksItsFirstSense() {
+        let apple = AppleLexical(entries: [
+            AppleEntry(pos: "noun", senses: [AppleSense(index: 1, label: "luck", translation: "")]),
+            AppleEntry(pos: "verb", senses: [AppleSense(index: 1, translation: "ставить")]),
+        ])
+        let state = ViewState(original: "set", apple: apple)
+        #expect(PopupSpeech.summary(for: state, error: nil) == "set: ставить")
+    }
+
+    @Test func aSentenceIsSpokenAsItsTranslation() {
+        let state = ViewState(
+            original: "The committee postponed its decision.",
+            translation: "Комитет отложил решение.; Комитет отложил своё решение."
+        )
+        #expect(PopupSpeech.summary(for: state, error: nil) == "Комитет отложил решение.")
+    }
+
+    @Test func nothingFoundOrAFailureIsSaidSo() {
+        let empty = ViewState(original: "qwzxv", translation: "qwzxv")
+        #expect(PopupSpeech.summary(for: empty, error: nil) == "No translation for “qwzxv”.")
+        #expect(PopupSpeech.summary(for: empty, error: "Backend is not connected.") == "Backend is not connected.")
+    }
+}
+
 @Suite struct ReconnectPolicyTests {
     /// The burst has to stay short so an already-running backend appears instantly.
     @Test func firstRoundStartsImmediately() {

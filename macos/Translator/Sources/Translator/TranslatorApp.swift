@@ -189,8 +189,22 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     }
 
     func translateSelection() {
-        model.refreshAccessibilityTrust()
-        guard let text = SelectionCapture.currentSelection(), !text.isEmpty else {
+        translateSelection(capture: SelectionCapture.currentSelection)
+    }
+
+    /// The hot key's work, with the capture passed in so the snapshot probes can press
+    /// the key without reading (or copying from) the user's real selection.
+    ///
+    /// A press while the panel has keyboard focus closes it, as a second press closes
+    /// Maccy. It must not capture: the panel is key, so the ⌘C fallback would copy from
+    /// the panel itself, find nothing, and replace the card with "No text selected."
+    private func translateSelection(capture: () -> String?, refreshTrust: Bool = true) {
+        if popup.isVisible, popup.isKey {
+            popup.dismiss()
+            return
+        }
+        if refreshTrust { model.refreshAccessibilityTrust() }
+        guard let text = capture(), !text.isEmpty else {
             if model.accessibilityTrusted {
                 announce("No text selected.", level: .info)
             } else {
@@ -235,13 +249,19 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     /// selected, or a combination another app already owns — used to set state that
     /// nobody displayed: the key did nothing and said nothing. The panel comes up with
     /// the message and closes itself, since there is no translation to keep it open for.
+    ///
+    /// It never takes keyboard focus: the user is typing somewhere, and a message must not
+    /// swallow the next keystrokes. A click anywhere or its timer closes it. The banner
+    /// and the panel share one duration, so the panel never outlives its only content
+    /// (and if the banner goes first anyway, the panel closes on becoming empty).
     private func announce(_ message: String, level: NotificationLevel, at pointer: CGPoint? = nil) {
+        let duration: Duration = level == .info ? .seconds(2.5) : .seconds(4)
         model.clearForAnnouncement()
-        model.show(banner: message, level: level)
-        showPopup(width: PopupLayout.announcementWidth, at: pointer)
+        model.show(banner: message, level: level, duration: duration)
+        showPopup(width: PopupLayout.announcementWidth, at: pointer, takesKey: false)
         announceDismissal?.cancel()
         announceDismissal = Task { [weak self] in
-            try? await Task.sleep(for: .seconds(level == .info ? 2.5 : 4))
+            try? await Task.sleep(for: duration)
             guard !Task.isCancelled else { return }
             await MainActor.run { self?.popup.hide(reason: .announcementEnded) }
         }
@@ -274,10 +294,11 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         Task { await model.translate(text) }
     }
 
-    private func showPopup(width: CGFloat, at pointer: CGPoint? = nil) {
+    private func showPopup(width: CGFloat, at pointer: CGPoint? = nil, takesKey: Bool = true) {
         popup.show(
             width: width,
             at: pointer ?? NSEvent.mouseLocation,
+            takesKey: takesKey,
             openAnki: { [weak self] in self?.showAnkiSheet() },
             onDismiss: { [weak self] in Task { await self?.model.closeSession() } }
         )
@@ -468,6 +489,11 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     /// Show an announcement, as the hot key does when nothing is selected.
     func snapshotAnnounce(_ message: String, level: NotificationLevel) {
         announce(message, level: level, at: snapshotPointer)
+    }
+    /// Press the hot key with `capture` standing in for the selection: the probes must
+    /// neither read the user's selection nor post ⌘C into the user's apps.
+    func snapshotHotKeyPress(capture: () -> String?) {
+        translateSelection(capture: capture, refreshTrust: false)
     }
     func snapshotWindow(id: String) -> NSWindow? { windows[id] }
     /// The Settings window's controller (made on first use): its window, and pane selection.

@@ -14,6 +14,8 @@ final class TranslationPanel: NSPanel {
     var onResignKey: (() -> Void)?
     /// Called for Esc, however it arrives.
     var onCancel: (() -> Void)?
+    /// Offered every other key press first; true when it was handled.
+    var onKeyDown: ((NSEvent) -> Bool)?
 
     init() {
         super.init(
@@ -66,6 +68,7 @@ final class TranslationPanel: NSPanel {
             onCancel?()
             return
         }
+        if event.type == .keyDown, onKeyDown?(event) == true { return }
         super.sendEvent(event)
     }
 
@@ -105,6 +108,10 @@ final class PopupPanelController: NSObject {
     private var globalMonitor: Any?
     private var localMonitor: Any?
     private var keyObserver: NSObjectProtocol?
+    private var monitorInstalls = 0
+    /// The panel holds an announcement: it was shown without taking key, and going away
+    /// ends no lookup.
+    private var showingAnnouncement = false
 
     /// Snapshot capture runs: other apps (or sibling test runs) may take focus while a
     /// frame is captured, and that must not dismiss the panel mid-scene.
@@ -120,6 +127,30 @@ final class PopupPanelController: NSObject {
     }
 
     var isVisible: Bool { panel?.isVisible ?? false }
+    /// The panel has keyboard focus (a lookup; an announcement never takes it).
+    var isKey: Bool { panel?.isKeyWindow ?? false }
+
+    /// What is listening for dismissal, for the behaviour probes. `installs` counts every
+    /// monitor ever added, so a show that replaced one instead of keeping it shows up.
+    struct MonitorState: Equatable, CustomStringConvertible {
+        var global: Bool
+        var local: Bool
+        var observer: Bool
+        var installs: Int
+        var all: Bool { global && local && observer }
+        var none: Bool { !global && !local && !observer }
+        var description: String { "global=\(global) local=\(local) observer=\(observer) installs=\(installs)" }
+    }
+
+    var monitorState: MonitorState {
+        MonitorState(
+            global: globalMonitor != nil, local: localMonitor != nil, observer: keyObserver != nil,
+            installs: monitorInstalls
+        )
+    }
+
+    /// The last footer row the keyboard or a click activated, for the behaviour probes.
+    private(set) var lastActivatedRow: PopupFooterRow?
 
     /// The window itself, for the snapshot harness.
     var window: NSWindow? { panel }
@@ -129,17 +160,22 @@ final class PopupPanelController: NSObject {
         panel.map { CGPoint(x: $0.frame.minX, y: $0.frame.maxY) }
     }
 
-    /// Snapshot runs only: draw this footer row highlighted, as under the pointer.
-    func highlightRowForSnapshot(_ title: String?) {
-        chrome.highlightedRowForSnapshot = title
+    /// The footer row drawn highlighted, by the pointer or the arrow keys.
+    var highlightedRow: PopupFooterRow? {
+        get { chrome.highlightedRow }
+        set { chrome.highlightedRow = newValue }
     }
 
     /// Show the panel with its top-left corner at `pointer`.
     ///
-    /// - Parameter width: decided by the caller from the query and kept for the lookup.
+    /// - Parameters:
+    ///   - width: decided by the caller from the query and kept for the lookup.
+    ///   - takesKey: a lookup takes keyboard focus (Esc, Return, the arrows); an
+    ///     announcement does not, so the keys the user is typing stay in their app.
     func show(
         width: CGFloat,
         at pointer: CGPoint,
+        takesKey: Bool = true,
         openAnki: @escaping () -> Void,
         onDismiss: @escaping () -> Void
     ) {
@@ -147,10 +183,16 @@ final class PopupPanelController: NSObject {
         self.openAnki = openAnki
         discardPanelIfAppearanceChanged()
         let panel = ensurePanel()
+        // Only ordering out gives keyboard focus back to the user's app; its resignKey
+        // belongs to the showing that ends here (see `panelResignedKey`).
+        if !takesKey, panel.isKeyWindow { panel.orderOut(nil) }
+        showingAnnouncement = !takesKey
         self.width = width
         sizedSinceShow = false
         holdsHeightWhileLoading = panel.isVisible
         chrome.showCount &+= 1
+        // A new showing starts with no row highlighted.
+        chrome.highlightedRow = nil
 
         let visible = screen(containing: pointer).visibleFrame
         // The previous lookup's height animation may still be running (a second lookup
@@ -186,7 +228,7 @@ final class PopupPanelController: NSObject {
         CATransaction.flush()
         panel.invalidateShadow()
         panel.orderFrontRegardless()
-        panel.makeKey()
+        if takesKey { panel.makeKey() }
         shownAppearance = Self.currentAppearance
         installMonitors()
         scheduleResize()
@@ -208,10 +250,11 @@ final class PopupPanelController: NSObject {
         }
     }
 
-    /// The user dismissed the panel: Esc or a click outside it.
+    /// The user dismissed the panel: Esc, a click outside it, a second hot key press.
+    /// An announcement has no lookup to end.
     func dismiss() {
         guard !suspendsDismissal else { return }
-        hide(reason: .dismissed)
+        hide(reason: showingAnnouncement ? .announcementEnded : .dismissed)
     }
 
     // MARK: - Size
@@ -222,6 +265,16 @@ final class PopupPanelController: NSObject {
         naturalHeightWidth = width
         heightReports &+= 1
         scheduleResize()
+        if height < 0.5 {
+            DispatchQueue.main.async { [weak self] in self?.hideIfEmpty() }
+        }
+    }
+
+    /// Nothing left to show — an announcement whose banner ended — leaves no empty glass
+    /// on screen.
+    private func hideIfEmpty() {
+        guard isVisible, naturalHeight < 0.5, model.state.originalText.isEmpty, model.banner == nil else { return }
+        hide(reason: .announcementEnded)
     }
 
     private func frame(height natural: CGFloat, pointer: CGPoint, visible: CGRect) -> CGRect {
@@ -292,12 +345,131 @@ final class PopupPanelController: NSObject {
             model: model,
             chrome: chrome,
             onNaturalHeight: { [weak self] height in self?.naturalHeightChanged(height) },
-            onOpenAnki: { [weak self] in
-                // Our own window is about to take focus: hide quietly, keep the session.
-                self?.hide(reason: .ownWindowFocused)
-                self?.openAnki?()
-            }
+            onActivate: { [weak self] row in self?.perform(row) }
         )
+    }
+
+    // MARK: - Footer and keyboard
+
+    /// Runs a footer row, whether it was clicked, chosen with Return, or its shortcut.
+    private func perform(_ row: PopupFooterRow) {
+        lastActivatedRow = row
+        switch row {
+        case .addToAnki:
+            // Our own window is about to take focus: hide quietly, keep the session.
+            hide(reason: .ownWindowFocused)
+            openAnki?()
+        case .copyTranslation:
+            guard model.state.hasTranslation else { return }
+            SelectionCapture.writeToPasteboard(model.state.translationText)
+            model.show(banner: "Translation copied.", level: .success)
+        case .newExamples:
+            Task { await model.refreshExamples() }
+        }
+    }
+
+    private var footerRows: PopupFooterNavigation.Rows {
+        PopupFooter.rows(for: model).map { ($0.row, $0.enabled) }
+    }
+
+    /// Keys the panel handles itself, since nothing inside it takes keyboard focus:
+    /// Page Up/Down, Space, Home/End scroll a capped body; ↑/↓ move through the footer
+    /// rows as through a menu (or scroll, when there is no footer); Return activates the
+    /// highlighted row, or Add to Anki… when none is.
+    private func handleKeyDown(_ event: NSEvent) -> Bool {
+        let flags = event.modifierFlags.intersection([.command, .option, .control, .shift])
+        switch event.keyCode {
+        case KeyCode.pageDown where flags.isEmpty: return scrollBody(.page(1))
+        case KeyCode.pageUp where flags.isEmpty: return scrollBody(.page(-1))
+        case KeyCode.home where flags.isEmpty: return scrollBody(.top)
+        case KeyCode.end where flags.isEmpty: return scrollBody(.bottom)
+        case KeyCode.space where flags.isEmpty || flags == .shift:
+            return scrollBody(.page(flags == .shift ? -1 : 1))
+        case KeyCode.downArrow where flags.isEmpty, KeyCode.upArrow where flags.isEmpty:
+            let step = event.keyCode == KeyCode.downArrow ? 1 : -1
+            // A text selection in progress keeps the arrows for itself.
+            if textHasFocus { return false }
+            let rows = footerRows
+            if rows.contains(where: \.enabled) {
+                chrome.highlightedRow = PopupFooterNavigation.move(from: chrome.highlightedRow, step: step, rows: rows)
+                return true
+            }
+            return scrollBody(.line(step))
+        case KeyCode.returnKey where flags.isEmpty, KeyCode.enter where flags.isEmpty:
+            guard let row = PopupFooterNavigation.activation(highlighted: chrome.highlightedRow, rows: footerRows)
+            else { return false }
+            perform(row)
+            return true
+        default:
+            return false
+        }
+    }
+
+    /// Whether a text view holds the keyboard (the user is selecting text).
+    private var textHasFocus: Bool {
+        guard let responder = panel?.firstResponder, responder !== panel else { return false }
+        return responder is NSText
+    }
+
+    private enum BodyScroll {
+        case page(Int)
+        case line(Int)
+        case top
+        case bottom
+    }
+
+    /// Scrolls the body the way a key scrolls any Mac scroll view. False when the body
+    /// is not capped, so there is nothing to scroll.
+    private func scrollBody(_ how: BodyScroll) -> Bool {
+        guard chrome.bodyScrolls, let scroll = bodyScrollView, let document = scroll.documentView else { return false }
+        let clip = scroll.contentView
+        let visible = clip.bounds.height
+        // Offsets from the top of the content, whichever way the document is flipped.
+        let lowest = -clip.contentInsets.top
+        let highest = max(lowest, document.frame.height - visible + clip.contentInsets.bottom)
+        var offset = document.isFlipped ? clip.bounds.minY : highest - (clip.bounds.minY - lowest)
+        switch how {
+        case let .page(direction): offset += CGFloat(direction) * max(visible - Self.lineScroll, Self.lineScroll)
+        case let .line(direction): offset += CGFloat(direction) * Self.lineScroll
+        case .top: offset = lowest
+        case .bottom: offset = highest
+        }
+        offset = min(max(offset, lowest), highest)
+        let y = document.isFlipped ? offset : highest - (offset - lowest)
+        clip.scroll(to: NSPoint(x: clip.bounds.minX, y: y))
+        scroll.reflectScrolledClipView(clip)
+        return true
+    }
+
+    private static let lineScroll: CGFloat = 32
+
+    /// The body's scroll view: the one with the tallest document in the panel.
+    var bodyScrollView: NSScrollView? {
+        var best: NSScrollView?
+        var stack = [panel?.contentView].compactMap { $0 }
+        while let next = stack.popLast() {
+            if let scroll = next as? NSScrollView,
+               (scroll.documentView?.frame.height ?? 0) > (best?.documentView?.frame.height ?? 0) {
+                best = scroll
+            }
+            stack.append(contentsOf: next.subviews)
+        }
+        return best
+    }
+
+    /// Whether the body is capped and scrolls, for the behaviour probes.
+    var bodyScrolls: Bool { chrome.bodyScrolls }
+
+    private enum KeyCode {
+        static let returnKey: UInt16 = 36
+        static let enter: UInt16 = 76
+        static let space: UInt16 = 49
+        static let pageUp: UInt16 = 116
+        static let pageDown: UInt16 = 121
+        static let home: UInt16 = 115
+        static let end: UInt16 = 119
+        static let downArrow: UInt16 = 125
+        static let upArrow: UInt16 = 126
     }
 
     /// A hidden window does not redraw, and after a switch between light and dark it
@@ -307,6 +479,7 @@ final class PopupPanelController: NSObject {
         guard let panel, !panel.isVisible, let shownAppearance, shownAppearance != Self.currentAppearance else { return }
         panel.onResignKey = nil
         panel.onCancel = nil
+        panel.onKeyDown = nil
         panel.close()
         self.panel = nil
         hosting = nil
@@ -331,18 +504,25 @@ final class PopupPanelController: NSObject {
         hosting.sizingOptions = []
         hosting.autoresizingMask = [.width, .height]
 
-        // The one glass surface of the panel; the content sits inside it, not beside it.
-        let glass = NSGlassEffectView(frame: NSRect(origin: .zero, size: panel.frame.size))
+        // The one glass surface of the panel, with the content above it as a sibling —
+        // Maccy's ZStack order. Not as the glass's `contentView`: there, selectable text
+        // loses its hierarchy and `.secondary` and `.tertiary` draw exactly like
+        // `.primary`.
+        let bounds = NSRect(origin: .zero, size: panel.frame.size)
+        let container = NSView(frame: bounds)
+        container.autoresizingMask = [.width, .height]
+        let glass = NSGlassEffectView(frame: bounds)
         glass.style = .regular
         glass.cornerRadius = Self.cornerRadius
         glass.autoresizingMask = [.width, .height]
-        hosting.frame = glass.bounds
-        glass.contentView = hosting
-        panel.contentView = glass
+        hosting.frame = bounds
+        container.addSubview(glass)
+        container.addSubview(hosting, positioned: .above, relativeTo: glass)
+        panel.contentView = container
         // The window server takes the window's shape — and so its shadow and edge — from
         // the root layer; without a corner radius there it draws a square shadow edge
         // around the rounded glass.
-        for view in [glass, glass.superview].compactMap({ $0 }) {
+        for view in [container, container.superview].compactMap({ $0 }) {
             view.wantsLayer = true
             view.layer?.cornerRadius = Self.cornerRadius
             view.layer?.cornerCurve = .continuous
@@ -351,6 +531,7 @@ final class PopupPanelController: NSObject {
 
         panel.onResignKey = { [weak self] in self?.panelResignedKey() }
         panel.onCancel = { [weak self] in self?.dismiss() }
+        panel.onKeyDown = { [weak self] event in self?.handleKeyDown(event) ?? false }
         self.panel = panel
         self.hosting = hosting
         return panel
@@ -369,8 +550,12 @@ final class PopupPanelController: NSObject {
     /// Focus left the panel. Which window has it now decides what that means, and focus
     /// settles only after this call returns, so the decision waits one turn.
     private func panelResignedKey() {
+        // Focus left the showing on screen now. A new showing may replace it before this
+        // runs (an announcement orders the panel out to give key back); that one is not
+        // what lost focus.
+        let showing = chrome.showCount
         DispatchQueue.main.async { [weak self] in
-            guard let self, let panel = self.panel, panel.isVisible else { return }
+            guard let self, let panel = self.panel, panel.isVisible, self.chrome.showCount == showing else { return }
             let otherKey = NSApp.keyWindow.map { $0 !== panel } ?? false
             guard let reason = PopupFocusRule.reasonAfterResigningKey(
                 panelStillKey: panel.isKeyWindow,
@@ -395,6 +580,12 @@ final class PopupPanelController: NSObject {
     }
 
     private func installMonitors() {
+        let before = monitorState
+        defer {
+            let after = monitorState
+            let added = [after.global && !before.global, after.local && !before.local, after.observer && !before.observer]
+            monitorInstalls += added.filter { $0 }.count
+        }
         if globalMonitor == nil {
             globalMonitor = NSEvent.addGlobalMonitorForEvents(
                 matching: [.leftMouseDown, .rightMouseDown, .otherMouseDown]
