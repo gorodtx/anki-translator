@@ -145,6 +145,7 @@ final class PopupPanelController: NSObject {
         self.width = width
         sizedSinceShow = false
         holdsHeightWhileLoading = panel.isVisible
+        chrome.showCount &+= 1
 
         let visible = screen(containing: pointer).visibleFrame
         // Size from the content as it is now. A hidden window keeps its last drawing, so

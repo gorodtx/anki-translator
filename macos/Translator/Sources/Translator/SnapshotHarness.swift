@@ -222,7 +222,14 @@ final class SnapshotRunner {
         if let state = delegate?.model.state {
             NSLog("[snapshot] state for \(name): original='\(state.originalText.prefix(20))' loading=\(state.loading) translation=\(state.hasTranslation) canAnki=\(state.canAddAnki) banner=\(delegate?.model.banner?.text ?? "-")")
         }
-        backdrop.write(panel: window, to: output.appendingPathComponent("\(name).png"))
+        let url = output.appendingPathComponent("\(name).png")
+        // The window server now and then answers a composite with a blank image (neither
+        // window in it); that is the capture failing, so it is taken again.
+        for attempt in 1...3 {
+            if backdrop.write(panel: window, to: url) != .blank { return }
+            NSLog("[snapshot] blank composite for \(name), attempt \(attempt)")
+            try? await Task.sleep(for: .milliseconds(150))
+        }
     }
 
     // MARK: - Behaviour probes
@@ -498,11 +505,13 @@ final class PopupBackdrop {
         window?.orderOut(nil)
     }
 
+    enum WriteResult { case written, blank, failed }
+
     @discardableResult
-    func write(panel: NSWindow, to url: URL) -> Bool {
+    func write(panel: NSWindow, to url: URL) -> WriteResult {
         guard let window, let capture = Self.capture else {
             NSLog("[snapshot] no composited capture for \(url.lastPathComponent); panel alone")
-            return WindowSnapshot.write(panel, to: url)
+            return WindowSnapshot.write(panel, to: url) ? .written : .failed
         }
         // Global display coordinates: origin at the top-left of the primary screen.
         let primaryHeight = NSScreen.screens.first?.frame.height ?? 0
@@ -513,20 +522,35 @@ final class PopupBackdrop {
             UnsafeRawPointer(bitPattern: UInt($0))
         }
         guard let array = CFArrayCreate(nil, &ids, ids.count, nil),
-              let image = capture(rect, array, 0)?.takeRetainedValue(),
-              let data = NSBitmapImageRep(cgImage: image).representation(using: .png, properties: [:])
+              let image = capture(rect, array, 0)?.takeRetainedValue()
         else {
             NSLog("[snapshot] could not capture \(url.lastPathComponent)")
-            return false
+            return .failed
+        }
+        let bitmap = NSBitmapImageRep(cgImage: image)
+        if Self.isBlank(bitmap) { return .blank }
+        guard let data = bitmap.representation(using: .png, properties: [:]) else {
+            NSLog("[snapshot] could not encode \(url.lastPathComponent)")
+            return .failed
         }
         do {
             try data.write(to: url)
             NSLog("[snapshot] wrote \(url.lastPathComponent) \(image.width)x\(image.height) panel \(Int(panel.frame.width))x\(Int(panel.frame.height))")
-            return true
+            return .written
         } catch {
             NSLog("[snapshot] write failed: \(error)")
-            return false
+            return .failed
         }
+    }
+
+    /// One colour at the centre, the corners and the text column: nothing was composited.
+    private static func isBlank(_ bitmap: NSBitmapImageRep) -> Bool {
+        let w = bitmap.pixelsWide, h = bitmap.pixelsHigh
+        guard w > 4, h > 4 else { return true }
+        let points = [(w / 2, h / 2), (2, 2), (w - 3, h - 3), (w / 4, h / 2), (w / 2, h / 4), (3 * w / 4, 3 * h / 4)]
+        let colors = points.compactMap { bitmap.colorAt(x: $0.0, y: $0.1) }
+        guard let first = colors.first else { return true }
+        return colors.allSatisfy { $0 == first }
     }
 
     private func makeWindow() -> NSWindow {

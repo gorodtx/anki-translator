@@ -249,6 +249,9 @@ struct TranslationPopupView: View {
         }
         if hasResult {
             footer
+                // A new showing starts with no row under the pointer: a row hovered when
+                // the panel was last hidden never heard the pointer leave.
+                .id(chrome.showCount)
         }
     }
 
@@ -328,6 +331,8 @@ final class PopupChrome {
     /// Snapshot runs only: the row drawn as if the pointer were on it, since a capture
     /// has no pointer.
     var highlightedRowForSnapshot: String?
+    /// Bumped on every show.
+    var showCount = 0
 }
 
 /// Natural heights of the parts, kept outside SwiftUI's state so writing one does not
