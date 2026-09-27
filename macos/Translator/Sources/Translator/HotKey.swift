@@ -87,6 +87,60 @@ final class HotKeyManager {
     }
 }
 
+/// What already answers to a combination on this Mac: this app's own menus (Edit > Copy,
+/// File > Close, Quit…) and the system's shortcuts. The matching itself is
+/// `KeyCombo.conflict`, under test; this only reads the two lists.
+@MainActor
+enum ShortcutAvailability {
+    static func conflict(for combo: KeyCombo) -> ShortcutConflict? {
+        combo.conflict(menuItems: menuItems(in: NSApp.mainMenu), systemHotKeys: systemHotKeys())
+    }
+
+    /// Every key equivalent of `menu` and its submenus, as KeyboardShortcuts'
+    /// `isTakenByMainMenu` walks them.
+    static func menuItems(in menu: NSMenu?) -> [MenuKeyEquivalent] {
+        guard let menu else { return [] }
+        var found: [MenuKeyEquivalent] = []
+        for item in menu.items {
+            if let submenu = item.submenu { found += menuItems(in: submenu) }
+            guard !item.keyEquivalent.isEmpty else { continue }
+            found.append(MenuKeyEquivalent(
+                title: item.title,
+                key: item.keyEquivalent,
+                modifiers: carbonModifiers(item.keyEquivalentModifierMask)
+            ))
+        }
+        return found
+    }
+
+    /// The system-wide shortcuts of System Settings > Keyboard > Keyboard Shortcuts.
+    static func systemHotKeys() -> [SystemHotKey] {
+        var list: Unmanaged<CFArray>?
+        guard CopySymbolicHotKeys(&list) == noErr,
+              let entries = list?.takeRetainedValue() as? [[String: Any]]
+        else { return [] }
+        return entries.compactMap { entry in
+            guard let code = entry[kHISymbolicHotKeyCode] as? Int,
+                  let modifiers = entry[kHISymbolicHotKeyModifiers] as? Int
+            else { return nil }
+            return SystemHotKey(
+                keyCode: UInt32(truncatingIfNeeded: code),
+                modifiers: UInt32(truncatingIfNeeded: modifiers),
+                enabled: entry[kHISymbolicHotKeyEnabled] as? Bool ?? false
+            )
+        }
+    }
+
+    private static func carbonModifiers(_ flags: NSEvent.ModifierFlags) -> UInt32 {
+        var modifiers: UInt32 = 0
+        if flags.contains(.command) { modifiers |= KeyCombo.commandMask }
+        if flags.contains(.option) { modifiers |= KeyCombo.optionMask }
+        if flags.contains(.control) { modifiers |= KeyCombo.controlMask }
+        if flags.contains(.shift) { modifiers |= KeyCombo.shiftMask }
+        return modifiers
+    }
+}
+
 /// Translates an `NSEvent` key-down into a `KeyCombo` for the shortcut recorder.
 enum KeyComboRecorder {
     static func combo(from event: NSEvent) -> KeyCombo? {

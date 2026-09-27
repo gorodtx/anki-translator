@@ -63,6 +63,7 @@ class SettingsFlow:
         self._create_model_future: Future[AnkiCreateModelResult] | None = None
         self._deck_names_future: Future[AnkiListResult] | None = None
         self._model_fields_future: Future[AnkiListResult] | None = None
+        self._note_types_future: Future[AnkiListResult] | None = None
         self._status_waiters: list[Callable[[AnkiStatus], None]] = []
         self._refresh_model_status()
 
@@ -115,6 +116,45 @@ class SettingsFlow:
         self._deck_names_future.add_done_callback(
             lambda done: self._dispatch(lambda: self._on_deck_names_ready(done, reply))
         )
+
+    def list_model_names(self, reply: Callable[[AnkiListResult], None]) -> None:
+        """The collection's note types, so a client can offer them as a choice.
+
+        A second caller while the first question is still out shares its
+        answer instead of being told to wait: a settings pane and the Add to
+        Anki window may well ask at the same moment.
+        """
+        if not self._runtime_ready():
+            reply(AnkiListResult(items=[], error="Anki runtime is not ready."))
+            return
+        future = self._note_types_future
+        if future is None or future.done():
+            try:
+                future = self._anki_flow.model_names()
+            except Exception:
+                reply(AnkiListResult(items=[], error="Failed to load Anki note types."))
+                return
+            self._note_types_future = future
+        future.add_done_callback(
+            lambda done: self._dispatch(lambda: self._on_note_types_ready(done, reply))
+        )
+
+    def _on_note_types_ready(
+        self,
+        future: Future[AnkiListResult],
+        reply: Callable[[AnkiListResult], None],
+    ) -> None:
+        if future.cancelled():
+            reply(AnkiListResult(items=[], error="Note type list was cancelled."))
+            return
+        try:
+            result = future.result()
+        except Exception:
+            self._report_reachability(False)
+            reply(AnkiListResult(items=[], error="Failed to load Anki note types."))
+            return
+        self._report_reachability(result.error is None)
+        reply(result)
 
     def list_model_fields(self, reply: Callable[[AnkiListResult], None]) -> None:
         """The field names Anki really has, so a typo is visible where it is made.
@@ -391,7 +431,18 @@ class SettingsFlow:
             item.casefold().startswith(f"{default_key} ") for item in result.items
         )
         self._model_ready = has_default and not has_legacy
-        if self._model_ready and self._config.anki.model != DEFAULT_MODEL_NAME:
+        # The app's own note type is adopted only when nothing usable is chosen:
+        # a note type the user picked from the collection is a decision, and
+        # replacing it with ours on every status check would undo it.
+        current = self._current_model().casefold()
+        chosen = bool(current) and any(
+            item.casefold() == current for item in result.items
+        )
+        if (
+            self._model_ready
+            and self._config.anki.model != DEFAULT_MODEL_NAME
+            and not chosen
+        ):
             self._apply_created_model(self._current_deck())
         self._flush_status_waiters()
 

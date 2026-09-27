@@ -39,6 +39,14 @@ final class AppModel {
     var historyReopens = 0
     var ankiStatus = AnkiStatus()
     var ankiDecks: [String] = []
+    /// The collection's note types, once Anki has listed them.
+    var ankiNoteTypes: [String] = []
+    /// False against a backend that predates `anki.model_names`: Settings then shows the
+    /// note type as text, as it did before there was a list to choose from.
+    var ankiNoteTypesSupported = true
+    /// What went wrong in Settings, by where it is shown. Settings has no popup banner to
+    /// say it in, so each pane shows its own; a success clears the entry.
+    var settingsProblems: [SettingsProblem: String] = [:]
     /// What the backend runs with. Settings apply as they change, as a Mac settings window
     /// does: every change schedules a save (see `scheduleSettingsSave`), whoever made it —
     /// a Settings pane, or the deck pop-up of Add to Anki.
@@ -63,10 +71,21 @@ final class AppModel {
     /// The newest preparation; an older one answering late must not replace its preview.
     @ObservationIgnored private var upsertPreparation = 0
 
+    /// Where a Settings failure is shown.
+    enum SettingsProblem: Hashable {
+        /// General > Startup.
+        case loginItem
+        /// The Sources and Anki panes: a change the backend did not take.
+        case save
+        /// Advanced > Databases and the Setup row for them.
+        case databases
+        /// Anki > Connection: decks, note types, the deck or note type chosen.
+        case anki
+    }
+
     private let client: IPCClient
-    /// The settings the backend is known to hold: loaded from it, or saved to it. Nil
-    /// until the first load.
-    @ObservationIgnored private var syncedSettings: BackendSettings?
+    /// What the backend is known to hold, and whether the last save of a change failed.
+    private(set) var settingsSync = SettingsSync<BackendSettings>()
     /// The debounced save of a change, while it waits.
     @ObservationIgnored private var pendingSettingsSave: Task<Void, Never>?
     /// Saves sent and not answered yet; a load meanwhile would bring back the old values.
@@ -270,6 +289,10 @@ final class AppModel {
         )
     }
 
+    /// Whether the backend's settings have been read. Until then the panes hold defaults,
+    /// and a change made to them could not be saved.
+    var settingsLoaded: Bool { settingsSync.isLoaded }
+
     // MARK: - Open at login
 
     func refreshLoginItem() {
@@ -281,13 +304,11 @@ final class AppModel {
     func setLoginItem(_ on: Bool) {
         do {
             if on { try LoginItem.enable() } else { try LoginItem.disable() }
+            settingsProblems[.loginItem] = nil
         } catch {
-            show(
-                banner: on
-                    ? "Could not turn on opening at login: \(error.localizedDescription)"
-                    : "Could not turn off opening at login: \(error.localizedDescription)",
-                level: .error
-            )
+            settingsProblems[.loginItem] = on
+                ? "Could not turn on opening at login: \(error.localizedDescription)"
+                : "Could not turn off opening at login: \(error.localizedDescription)"
         }
         // Ask the system what it now thinks rather than assuming the call decided it.
         refreshLoginItem()
@@ -298,17 +319,18 @@ final class AppModel {
     /// Only the app can ask for the 1.8 GB the offline sources need; until now the answer
     /// was "run a shell script", which is not something a setup stage can offer.
     func downloadDatabases() async {
-        guard let start = try? await client.send(
-            IPCMethod.dbDownload, as: DatabaseDownloadStart.self
-        ) else {
-            show(banner: "Could not start the download.", level: .error)
+        let start: DatabaseDownloadStart
+        do {
+            start = try await client.send(IPCMethod.dbDownload, as: DatabaseDownloadStart.self)
+        } catch {
+            settingsProblems[.databases] = "Could not start the download: \(message(for: error))"
             return
         }
+        settingsProblems[.databases] = nil
         guard start.started else {
-            // Nothing missing: the button is safe to press and says so rather than
-            // pretending to work.
+            // Nothing missing: the ping was stale. Once it is fresh the row that offered
+            // the download reads complete, which says it better than a message would.
             await refreshPing()
-            show(banner: "The offline databases are already complete.", level: .info)
             return
         }
         databaseDownloads = start.files.reduce(into: [:]) { out, file in
@@ -324,14 +346,14 @@ final class AppModel {
         guard !payload.file.isEmpty else {
             // An empty file name is the whole operation ending, not one download.
             databaseDownloads = [:]
-            if let error = payload.error { show(banner: error, level: .error) }
+            if let error = payload.error { settingsProblems[.databases] = error }
             Task { await refreshPing() }
             return
         }
         databaseDownloads[payload.file] = payload
         switch payload.state {
         case .failed:
-            show(banner: payload.error ?? "\(payload.file) failed to download.", level: .error)
+            settingsProblems[.databases] = payload.error ?? "\(payload.file) failed to download."
         case .done, .present:
             // Ask what the backend now sees rather than assuming the store is complete:
             // the other two files may still be arriving.
@@ -441,27 +463,64 @@ final class AppModel {
         do {
             let response = try await client.send(IPCMethod.ankiDecks, as: AnkiDecksResponse.self)
             ankiDecks = response.decks
-            if let error = response.error, !error.isEmpty { show(banner: error, level: .warning) }
+            // "Anki isn't running" is said by the Connection row already.
+            let error = response.error.flatMap { $0.isEmpty ? nil : $0 }
+            settingsProblems[.anki] = ankiStatus.available ? error : nil
         } catch {
-            show(banner: message(for: error), level: .error)
+            settingsProblems[.anki] = message(for: error)
         }
     }
 
+    /// Asks Anki for its note types. A backend without the method leaves the list empty
+    /// and says so through `ankiNoteTypesSupported`.
+    func loadNoteTypes() async {
+        do {
+            let response = try await client.send(IPCMethod.ankiModelNames, as: AnkiModelNames.self)
+            ankiNoteTypesSupported = true
+            ankiNoteTypes = response.models
+        } catch let error as IPCError where error.code == "unknown_method" {
+            ankiNoteTypesSupported = false
+            ankiNoteTypes = []
+        } catch {
+            ankiNoteTypes = []
+        }
+    }
+
+    /// Makes `name` the note type cards are added with: saved at once rather than after the
+    /// usual pause, because the field list that follows is the backend's for its saved
+    /// note type.
+    func selectNoteType(_ name: String) async {
+        // A pop-up sets it already, so its title changes with the click.
+        if settings.anki.model != name { settings.anki.model = name }
+        await saveSettingsNow()
+        async let fields: Void = loadModelFields()
+        async let status: Void = refreshAnkiStatus()
+        _ = await (fields, status)
+    }
+
     func selectDeck(_ deck: String) async {
-        await runAction(IPCMethod.ankiSelectDeck, params: ["deck": deck])
+        guard let result = await runAction(IPCMethod.ankiSelectDeck, params: ["deck": deck]) else { return }
+        // The backend answers with a message whatever happened; the deck it reports says
+        // whether the choice took.
+        settingsProblems[.anki] = result.deckName == deck || result.message.isEmpty ? nil : result.message
     }
 
     func createModel() async {
-        await runAction(IPCMethod.ankiCreateModel)
+        guard let result = await runAction(IPCMethod.ankiCreateModel) else { return }
+        let ready = result.modelStatus?.localizedCaseInsensitiveContains("ready") ?? false
+        settingsProblems[.anki] = ready || result.message.isEmpty ? nil : result.message
     }
 
-    private func runAction(_ method: String, params: [String: Any] = [:]) async {
+    /// Nil when the request itself failed; that failure is already recorded for the Anki
+    /// pane.
+    private func runAction(_ method: String, params: [String: Any] = [:]) async -> ActionResult? {
         do {
             let result = try await client.send(method, params: params, as: ActionResult.self)
             apply(result)
-            if !result.message.isEmpty { show(banner: result.message, level: .success) }
+            return result
         } catch {
-            show(banner: message(for: error), level: .error)
+            settingsProblems[.anki] = message(for: error)
+            return nil
         }
     }
 
@@ -539,24 +598,43 @@ final class AppModel {
         guard let data = try? await client.send(IPCMethod.settingsGet),
               let loaded = try? BackendSettings.decode(from: data)
         else { return }
-        // A change still waiting to be saved is newer than what the backend has; it wins,
-        // and the save that is about to run brings the backend up to date.
-        guard pendingSettingsSave == nil, settingsSavesInFlight == 0 else { return }
-        // What the backend holds is by definition saved, so taking it must not schedule a
-        // save of its own.
-        syncedSettings = loaded
-        if settings != loaded { settings = loaded }
+        // A change still waiting to be saved, or one the backend refused, is newer than
+        // what the backend has; it wins. A refused one is sent again now.
+        let saving = pendingSettingsSave != nil || settingsSavesInFlight > 0
+        switch settingsSync.loaded(loaded, local: settings, saveInProgress: saving) {
+        case .adopt:
+            // What the backend holds is by definition saved, so taking it must not
+            // schedule a save of its own.
+            if settings != loaded { settings = loaded }
+        case .keepLocal:
+            break
+        case .retrySave:
+            await saveSettings()
+        }
+    }
+
+    /// Sends a waiting change now instead of after the pause.
+    func saveSettingsNow() async {
+        pendingSettingsSave?.cancel()
+        pendingSettingsSave = nil
+        guard settingsSync.needsSave(settings) else { return }
+        await saveSettings()
     }
 
     /// Called on every change to `settings`. Loading from the backend does not count as a
-    /// change: `syncedSettings` is what the backend has, and equal values are not sent.
+    /// change: `settingsSync` knows what the backend has, and equal values are not sent.
     private func scheduleSettingsSave() {
         // Before the first load `settings` holds defaults, and saving them would overwrite
-        // the user's real configuration.
-        guard let synced = syncedSettings else { return }
-        guard settings != synced else {
+        // the user's real configuration. The panes are disabled until then.
+        guard settingsSync.isLoaded else { return }
+        guard settingsSync.needsSave(settings) else {
             pendingSettingsSave?.cancel()
             pendingSettingsSave = nil
+            // Changed back to what the backend holds: nothing is unsaved any more.
+            if let synced = settingsSync.synced, settingsSync.saveFailed {
+                settingsSync.saved(synced)
+                settingsProblems[.save] = nil
+            }
             return
         }
         pendingSettingsSave?.cancel()
@@ -577,12 +655,14 @@ final class AppModel {
         do {
             let payload = try sent.jsonObject()
             let result = try await client.send(IPCMethod.settingsSave, params: ["config": payload], as: ActionResult.self)
-            syncedSettings = sent
+            settingsSync.saved(sent)
+            settingsProblems[.save] = nil
             apply(result)
             // The engines report which sources are on; setup reads it from there.
             await refreshPing()
         } catch {
-            show(banner: "Settings weren’t saved: \(message(for: error))", level: .error)
+            settingsSync.saveDidFail()
+            settingsProblems[.save] = "Changes weren’t saved: \(message(for: error)) They are sent again when the backend is back."
         }
     }
 

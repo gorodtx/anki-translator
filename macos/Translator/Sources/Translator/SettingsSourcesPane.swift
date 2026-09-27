@@ -13,43 +13,72 @@ struct SourcesSettingsPane: View {
     var body: some View {
         SettingsPane {
             SettingsSection(title: "Sources") {
-                SettingsToggle(
-                    title: "Apple Dictionary",
-                    description: "Senses, pronunciation and examples, offline.",
-                    isOn: $model.settings.sources.appleDictionary
-                )
-                SettingsToggle(
-                    title: "Apple Translation",
-                    description: "Phrases and sentences, offline once the language pair is here.",
-                    isOn: $model.settings.sources.appleTranslation
-                )
-                SettingsToggle(
-                    title: "Google",
-                    description: "Over the network; the fallback for rarer phrasing.",
-                    isOn: $model.settings.sources.google
-                )
-                SettingsToggle(
-                    title: "Cambridge",
-                    description: "Over the network; the slowest source.",
-                    isOn: $model.settings.sources.cambridge
-                )
-                SettingsToggle(
-                    title: "Offline examples",
-                    description: "The example sentence corpus on this Mac.",
-                    isOn: $model.settings.sources.offlineExamples
-                )
-                SettingsToggle(
-                    title: "Definitions pack",
-                    description: "English definitions, offline.",
-                    isOn: $model.settings.sources.definitionsPack
-                )
+                SettingsUnsavedState(model: model)
+                toggles
+                    // Defaults until the backend's values are read: a change made to them
+                    // could not be saved, and the load would put the checkbox back.
+                    .disabled(!model.settingsLoaded)
             }
 
             SettingsDivider()
 
             SettingsSection(title: "Translation") {
                 LanguagePairControl(model: model)
+                    .disabled(!model.settingsLoaded)
             }
+        }
+    }
+
+    @ViewBuilder
+    private var toggles: some View {
+        SettingsToggle(
+            title: "Apple Dictionary",
+            description: "Senses, pronunciation and examples, offline.",
+            isOn: $model.settings.sources.appleDictionary
+        )
+        SettingsToggle(
+            title: "Apple Translation",
+            description: "Phrases and sentences, offline once the language pair is here.",
+            isOn: $model.settings.sources.appleTranslation
+        )
+        SettingsToggle(
+            title: "Google",
+            description: "Over the network; the fallback for rarer phrasing.",
+            isOn: $model.settings.sources.google
+        )
+        SettingsToggle(
+            title: "Cambridge",
+            description: "Over the network; the slowest source.",
+            isOn: $model.settings.sources.cambridge
+        )
+        SettingsToggle(
+            title: "Offline examples",
+            description: "The example sentence corpus on this Mac.",
+            isOn: $model.settings.sources.offlineExamples
+        )
+        SettingsToggle(
+            title: "Definitions pack",
+            description: "English definitions, offline.",
+            isOn: $model.settings.sources.definitionsPack
+        )
+    }
+}
+
+/// Why changes in this pane cannot be made or were not kept, said where they are made:
+/// before the backend's settings are read, and after a save the backend did not take.
+struct SettingsUnsavedState: View {
+    @Bindable var model: AppModel
+
+    var body: some View {
+        if !model.settingsLoaded {
+            SettingsStatus(
+                level: model.isConnected ? .working : .warning,
+                title: model.isConnected
+                    ? "Reading the settings…"
+                    : "Settings are unavailable until the backend is running."
+            )
+        } else if let problem = model.settingsProblems[.save] {
+            SettingsStatus(level: .error, title: problem)
         }
     }
 }
@@ -81,8 +110,10 @@ private struct LanguagePairControl: View {
     var body: some View {
         VStack(alignment: .leading, spacing: 6) {
             SettingsStatus(level: level, title: pairName, note: note)
-            SettingsStatusDetail {
-                if step?.action == .downloadLanguagePair {
+            // Outside the detail: an empty detail still takes a slot of the stack, and
+            // its spacing, under an installed pair.
+            if step?.action == .downloadLanguagePair {
+                SettingsStatusDetail {
                     HStack(spacing: 8) {
                         Button("Download…", action: download)
                             .disabled(isDownloading)

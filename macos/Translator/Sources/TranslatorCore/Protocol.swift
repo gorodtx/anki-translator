@@ -16,6 +16,7 @@ public enum IPCMethod {
     public static let ankiStatus = "anki.status"
     public static let ankiDecks = "anki.decks"
     public static let ankiModelFields = "anki.model_fields"
+    public static let ankiModelNames = "anki.model_names"
     public static let ankiSelectDeck = "anki.select_deck"
     public static let ankiCreateModel = "anki.create_model"
     public static let ankiPrepareUpsert = "anki.prepare_upsert"
@@ -974,6 +975,18 @@ public struct AnkiModelFields: Codable, Equatable, Sendable {
 
     public init(fields: [String] = [], error: String? = nil) {
         self.fields = fields
+        self.error = error
+    }
+}
+
+/// The answer to `anki.model_names`: the collection's note types. `error` set means Anki
+/// could not be asked, and the empty list then says nothing about the collection.
+public struct AnkiModelNames: Codable, Equatable, Sendable {
+    public var models: [String]
+    public var error: String?
+
+    public init(models: [String] = [], error: String? = nil) {
+        self.models = models
         self.error = error
     }
 }

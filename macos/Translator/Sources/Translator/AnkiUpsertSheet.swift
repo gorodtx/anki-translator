@@ -174,7 +174,13 @@ struct AnkiUpsertSheet: View {
         }
         SettingsSection(title: "Deck") { deckPicker }
         SettingsSection(title: "Note Type") {
-            Text(model.settings.anki.model)
+            // The same pop-up as in Settings; a new note type has other fields, so the
+            // preview is made again for it.
+            if model.ankiNoteTypesSupported {
+                AnkiNoteTypePicker(model: model) { await prepare() }
+            } else {
+                Text(model.settings.anki.model)
+            }
         }
 
         SettingsDivider()
