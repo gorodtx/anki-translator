@@ -10,6 +10,10 @@ import TranslatorCore
 struct HistoryView: View {
     @Bindable var model: AppModel
     var onOpen: (Int) -> Void
+    /// Puts the list at its very top, top margin included. Neither `scrollTo(id, anchor:
+    /// .top)`, which leaves the first row flush under the toolbar, nor `ScrollPosition`,
+    /// which a `List` ignores, does that; the window's scroll view does.
+    var scrollToTop: () -> Void
 
     /// Wide enough that the toolbar's search field has its full width beside the title,
     /// so focusing it does not push the title into an overflow menu.
@@ -30,31 +34,28 @@ struct HistoryView: View {
     }
 
     var body: some View {
-        ScrollViewReader { proxy in
-            List(filtered, selection: $selection) { item in
-                HistoryRow(item: item)
+        List(filtered, selection: $selection) { item in
+            HistoryRow(item: item)
+        }
+        .contextMenu(forSelectionType: Int.self) { ids in
+            if let id = ids.first, let item = model.history.first(where: { $0.entryId == id }) {
+                Button("Open") { onOpen(id) }
+                Divider()
+                Button("Copy Word") { Self.copy(item.text) }
+                Button("Copy Translation") { Self.copy(item.translation) }
+                    .disabled(!item.hasTranslation)
             }
-            .contextMenu(forSelectionType: Int.self) { ids in
-                if let id = ids.first, let item = model.history.first(where: { $0.entryId == id }) {
-                    Button("Open") { onOpen(id) }
-                    Divider()
-                    Button("Copy Word") { Self.copy(item.text) }
-                    Button("Copy Translation") { Self.copy(item.translation) }
-                        .disabled(!item.hasTranslation)
-                }
-            } primaryAction: { ids in
-                // Double-click and Return.
-                if let id = ids.first { onOpen(id) }
-            }
-            // The list keeps its place between opens, and each row a lookup added at the
-            // top meanwhile pushes that place further down: reopened, it would start part
-            // way down with the newest word half under the toolbar. A reopened History
-            // starts at the newest word, unless the user left a selection or a search to
-            // come back to.
-            .onChange(of: model.historyReopens) {
-                guard selection == nil, needle.isEmpty, let first = filtered.first?.entryId else { return }
-                proxy.scrollTo(first, anchor: .top)
-            }
+        } primaryAction: { ids in
+            // Double-click and Return.
+            if let id = ids.first { onOpen(id) }
+        }
+        // The list keeps its place between opens, and each row a lookup added at the top
+        // meanwhile pushes that place further down: reopened, it would start part way down
+        // with the newest word half under the toolbar. A reopened History starts at its
+        // top edge, unless the user left a selection or a search to come back to.
+        .onChange(of: model.historyReopens) {
+            guard selection == nil, needle.isEmpty else { return }
+            scrollToTop()
         }
         .overlay { emptyState }
         .searchable(text: $query, placement: .toolbar)

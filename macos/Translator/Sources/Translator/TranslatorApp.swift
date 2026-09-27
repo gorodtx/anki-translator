@@ -295,7 +295,11 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
             size: HistoryView.defaultSize,
             chrome: .document(autosaveName: "History", searchInToolbar: true),
             onReopen: .keepContent,
-            view: HistoryView(model: model) { [weak self] entryId in self?.showHistoryEntry(entryId) }
+            view: HistoryView(
+                model: model,
+                onOpen: { [weak self] entryId in self?.showHistoryEntry(entryId) },
+                scrollToTop: { [weak self] in self?.scrollHistoryToTop() }
+            )
         )
         // The view is kept between opens, so its first-load task does not run again. The
         // count goes up once the list holds the new rows, which is when the view can put
@@ -304,6 +308,24 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
             Task {
                 await model.loadHistory()
                 model.historyReopens += 1
+            }
+        }
+    }
+
+    /// Scrolls History's list to its top edge once the rows the reload just brought in are
+    /// laid out (the list moves itself when they are inserted, so this waits for that).
+    private func scrollHistoryToTop() {
+        DispatchQueue.main.async { [weak self] in
+            guard let root = self?.windows["history"]?.contentView else { return }
+            var stack = [root]
+            while let view = stack.popLast() {
+                if let table = view as? NSTableView, let scroll = table.enclosingScrollView {
+                    let clip = scroll.contentView
+                    clip.scroll(to: NSPoint(x: clip.bounds.origin.x, y: -scroll.contentInsets.top))
+                    scroll.reflectScrolledClipView(clip)
+                    return
+                }
+                stack.append(contentsOf: view.subviews)
             }
         }
     }
