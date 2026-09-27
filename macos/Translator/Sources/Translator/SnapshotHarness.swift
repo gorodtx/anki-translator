@@ -234,8 +234,10 @@ final class SnapshotRunner {
         try? await Task.sleep(for: .milliseconds(500))
 
         await captureProblems(in: settings, window: window, appearance: appearance)
+        // The focus probes need the app active with the window key; a sibling run may hold
+        // the focus, so one that could not run (SKIP) is tried again in the next appearance.
+        if unsettled.contains("recorder"), await probeRecorder(in: window) { unsettled.remove("recorder") }
         if appearance == appearances.first?.0 {
-            await probeRecorder(in: window)
             await probeErrorsStayInSettings()
         }
         await captureUnloaded(appearance: appearance)
@@ -243,10 +245,8 @@ final class SnapshotRunner {
         // Closed the way a user closes it from the keyboard, through the main menu. History
         // and Add to Anki first, while the app is still active with Settings open: an
         // accessory app with no window left is deactivated, and cannot take focus back.
-        if appearance == appearances.first?.0 {
-            await probeHistoryKeys()
-            await probeAnkiCommandW()
-        }
+        if unsettled.contains("history"), await probeHistoryKeys() { unsettled.remove("history") }
+        if unsettled.contains("anki"), await probeAnkiCommandW() { unsettled.remove("anki") }
         await probeCommandW("settings", window: window)
         logMainMenu("end")
         window.close()
@@ -256,6 +256,8 @@ final class SnapshotRunner {
     /// Every combination the app asked to register while the settings scene ran; nil is
     /// "none" (a suspension, or a cleared shortcut).
     private var hotKeyLog: [KeyCombo?] = []
+    /// Focus probes that have not reached a verdict yet.
+    private var unsettled: Set<String> = ["recorder", "history", "anki"]
 
     private func logMainMenu(_ when: String = "start") {
         NSLog("[snapshot] main menu (\(when)): \(Self.menuSummary())")
@@ -300,14 +302,16 @@ final class SnapshotRunner {
         return false
     }
 
-    private func probeCommandW(_ name: String, window: NSWindow) async {
+    /// Whether it reached a verdict (PASS or FAIL) rather than SKIP.
+    @discardableResult
+    private func probeCommandW(_ name: String, window: NSWindow) async -> Bool {
         guard window.isVisible else {
             NSLog("PROBE \(name)-close-command-w FAIL window not visible before ⌘W")
-            return
+            return true
         }
         guard await makeKey(window) else {
             NSLog("PROBE \(name)-close-command-w SKIP window never became key (another app holds focus)")
-            return
+            return false
         }
         Self.post(command: "w", keyCode: 13, to: window)
         await waitUntil(timeout: 2) { !window.isVisible }
@@ -319,21 +323,23 @@ final class SnapshotRunner {
         }
         if window.isVisible, !NSApp.isActive {
             NSLog("PROBE \(name)-close-command-w SKIP the app lost activation before the key arrived (\(state))")
-        } else {
-            NSLog("PROBE \(name)-close-command-w \(window.isVisible ? "FAIL still visible" : "PASS closed through File > Close") \(state)")
+            return false
         }
+        NSLog("PROBE \(name)-close-command-w \(window.isVisible ? "FAIL still visible" : "PASS closed through File > Close") \(state)")
+        return true
     }
 
     /// ⌘F in History reaches the toolbar's search field, and ⌘W closes the window.
-    private func probeHistoryKeys() async {
-        guard let delegate else { return }
+    private func probeHistoryKeys() async -> Bool {
+        guard let delegate else { return true }
         delegate.showHistory()
         try? await Task.sleep(for: .seconds(1))
         guard let window = delegate.snapshotWindow(id: "history") else {
             NSLog("PROBE history-command-f FAIL no history window")
-            return
+            return true
         }
-        if await makeKey(window) {
+        let keyed = await makeKey(window)
+        if keyed {
             window.makeFirstResponder(nil)
             Self.post(command: "f", keyCode: 3, to: window)
             try? await Task.sleep(for: .milliseconds(600))
@@ -347,32 +353,35 @@ final class SnapshotRunner {
         } else {
             NSLog("PROBE history-command-f SKIP window never became key")
         }
-        await probeCommandW("history", window: window)
+        let closed = await probeCommandW("history", window: window)
+        window.close()
+        return keyed && closed
     }
 
-    private func probeAnkiCommandW() async {
-        guard let delegate else { return }
+    private func probeAnkiCommandW() async -> Bool {
+        guard let delegate else { return true }
         delegate.showAnkiSheet()
         try? await Task.sleep(for: .milliseconds(1500))
         logMainMenu("anki-open")
         guard let window = delegate.snapshotWindow(id: "anki") else {
             NSLog("PROBE anki-close-command-w FAIL no Add to Anki window")
-            return
+            return true
         }
-        await probeCommandW("anki", window: window)
+        let settled = await probeCommandW("anki", window: window)
         window.close()
         await waitUntil(timeout: 10) { !delegate.model.isPreparingUpsert }
+        return settled
     }
 
     /// The recorder refuses ⌘C (Edit > Copy) with an alert naming it, and a new
     /// combination is registered once, without the old one coming back in between.
-    private func probeRecorder(in window: NSWindow) async {
-        guard let delegate else { return }
+    private func probeRecorder(in window: NSWindow) async -> Bool {
+        guard let delegate else { return true }
         settingsSelect(.general)
         try? await Task.sleep(for: .milliseconds(700))
         guard let field = ShortcutRecorderField.current, field.window === window else {
             NSLog("PROBE recorder-refuses-menu-shortcut FAIL no recorder in the window")
-            return
+            return true
         }
         let storedRaw = UserDefaults.standard.string(forKey: "hotKey")
         let before = delegate.model.hotKey
@@ -388,7 +397,7 @@ final class SnapshotRunner {
         // Keys reach the recorder only in the key window, as for a user.
         guard await makeKey(window) else {
             NSLog("PROBE recorder-explicit-focus SKIP window never became key")
-            return
+            return false
         }
         // An explicit request (the Setup button, VoiceOver's press) starts listening even
         // though the last event was no click in the field.
@@ -396,7 +405,7 @@ final class SnapshotRunner {
         field.beginRecording()
         let responder = window.firstResponder.map { String(describing: Swift.type(of: $0)) } ?? "nil"
         NSLog("PROBE recorder-explicit-focus \(field.isRecording ? "PASS" : "FAIL") listening=\(field.isRecording) responder=\(responder) currentEvent=\(NSApp.currentEvent.map { String(describing: $0.type) } ?? "nil")")
-        guard field.isRecording else { return }
+        guard field.isRecording else { return true }
 
         Self.post(command: "c", keyCode: 8, to: window)
         await waitUntil(timeout: 2) { window.attachedSheet != nil }
@@ -404,8 +413,9 @@ final class SnapshotRunner {
         let refused = delegate.model.hotKey == before && refusal?.conflict == .menuItem("Copy") && window.attachedSheet != nil
         NSLog("PROBE recorder-refuses-menu-shortcut \(refused ? "PASS" : "FAIL") hotKey=\(delegate.model.hotKey?.displayString ?? "none") refusal=\(refusal.map { "\($0.combo.displayString) \($0.conflict)" } ?? "none") sheet=\(window.attachedSheet != nil)")
         try? await Task.sleep(for: .milliseconds(300))
-        write(window, "settings-general-refused-light")
-        if let sheet = window.attachedSheet { write(sheet, "settings-general-refused-alert-light") }
+        let appearanceName = NSApp.effectiveAppearance.bestMatch(from: [.aqua, .darkAqua]) == .darkAqua ? "dark" : "light"
+        write(window, "settings-general-refused-\(appearanceName)")
+        if let sheet = window.attachedSheet { write(sheet, "settings-general-refused-alert-\(appearanceName)") }
         if let sheet = window.attachedSheet { window.endSheet(sheet) }
         try? await Task.sleep(for: .milliseconds(400))
 
@@ -425,13 +435,14 @@ final class SnapshotRunner {
             with: .keyDown, location: .zero, modifierFlags: [.control, .option],
             timestamp: ProcessInfo.processInfo.systemUptime, windowNumber: window.windowNumber,
             context: nil, characters: "k", charactersIgnoringModifiers: "k", isARepeat: false, keyCode: 40
-        ) else { return }
+        ) else { return true }
         NSApp.postEvent(event, atStart: false)
         try? await Task.sleep(for: .milliseconds(600))
         let wanted = KeyCombo(keyCode: 40, modifiers: KeyCombo.controlMask | KeyCombo.optionMask)
         let log = hotKeyLog.map { $0?.displayString ?? "none" }
         let once = hotKeyLog == [nil, wanted] && delegate.model.hotKey == wanted
         NSLog("PROBE recorder-registers-once \(once ? "PASS" : "FAIL") registrations=\(log) hotKey=\(delegate.model.hotKey?.displayString ?? "none")")
+        return true
     }
 
     private func settingsSelect(_ pane: SettingsPaneID) {
@@ -521,6 +532,41 @@ final class SnapshotRunner {
         await waitUntil(timeout: 5) { !model.ankiDecks.isEmpty && model.ankiStatus.available }
         let passed = model.ankiStatus.available && !model.ankiDecks.isEmpty
         NSLog("PROBE anki-decks-follow-connection \(passed ? "PASS" : "FAIL") available=\(model.ankiStatus.available) decks=\(model.ankiDecks.count) noteTypes=\(model.ankiNoteTypes.count)")
+        await probeNoteTypeChoice()
+    }
+
+    /// A note type picked from the pop-up is saved and survives the backend's next status
+    /// check, which used to put the app's own note type back; and a field the note type
+    /// does not have stays visible in its pop-up, marked.
+    private func probeNoteTypeChoice() async {
+        guard let delegate, let window = delegate.snapshotSettingsWindow.window else { return }
+        let model = delegate.model
+        guard model.ankiNoteTypesSupported, let other = model.ankiNoteTypes.first(where: { $0 != model.settings.anki.model }) else {
+            NSLog("PROBE anki-note-type-choice-kept SKIP supported=\(model.ankiNoteTypesSupported) noteTypes=\(model.ankiNoteTypes)")
+            return
+        }
+        let original = model.settings.anki.model
+        await model.selectNoteType(other)
+        // What the backend does next: a status check, then the settings read back.
+        await model.refreshAnkiStatus()
+        try? await Task.sleep(for: .milliseconds(800))
+        await model.refreshSettings()
+        let config = output.appendingPathComponent(".backend/cfg/desktop_config.json")
+        let stored = (try? Data(contentsOf: config))
+            .flatMap { try? JSONSerialization.jsonObject(with: $0) as? [String: Any] }
+            .flatMap { $0["anki"] as? [String: Any] }?["model"] as? String
+        let kept = model.settings.anki.model == other && stored == other
+        NSLog("PROBE anki-note-type-choice-kept \(kept ? "PASS" : "FAIL") chose=\(other) model=\(model.settings.anki.model) file=\(stored ?? "nil")")
+        write(window, "settings-anki-other-note-type-light")
+
+        let word = model.settings.anki.fields.word
+        model.settings.anki.fields.word = "Woord"
+        try? await Task.sleep(for: .milliseconds(700))
+        write(window, "settings-anki-field-missing-light")
+        model.settings.anki.fields.word = word
+        await model.selectNoteType(original)
+        await model.refreshSettings()
+        NSLog("[snapshot] note type restored to \(model.settings.anki.model), word field \(model.settings.anki.fields.word)")
     }
 
     /// A click on a source's checkbox reaches the backend's config file with no Save
