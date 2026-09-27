@@ -10,18 +10,35 @@ import TranslatorCore
 /// its own clipped region and nothing can draw over the header or the footer.
 struct TranslationPopupView: View {
     @Bindable var model: AppModel
+    var chrome: PopupChrome
     var onNaturalHeight: (CGFloat) -> Void
     var onOpenAnki: () -> Void
 
     @State private var parts = HeightParts()
+    /// The body is scrolled away from its top: a hairline separates it from the header,
+    /// as a title bar gains its separator once content moves under it.
+    @State private var scrolled = false
 
     var body: some View {
         VStack(alignment: .leading, spacing: 0) {
             measured(\.header) { header }
+                .overlay(alignment: .bottom) {
+                    if scrolled {
+                        Divider().padding(.horizontal, PopupMetrics.rowInset + PopupMetrics.separatorInset)
+                    }
+                }
             ScrollView(.vertical) {
                 measured(\.body) { content }
             }
             .scrollBounceBehavior(.basedOnSize)
+            // Only a capped body scrolls; otherwise an indicator would flash while the
+            // panel grows into its height.
+            .scrollIndicators(chrome.bodyScrolls ? .automatic : .never)
+            .onScrollGeometryChange(for: Bool.self) { geometry in
+                geometry.contentOffset.y + geometry.contentInsets.top > 0.5
+            } action: { _, isScrolled in
+                scrolled = isScrolled
+            }
             .contentMargins(.vertical, PopupMetrics.indicatorInset, for: .scrollIndicators)
             measured(\.bottom) { bottom }
         }
@@ -57,10 +74,7 @@ struct TranslationPopupView: View {
     private var query: String { state.originalText.trimmingCharacters(in: .whitespacesAndNewlines) }
     private var isSentence: Bool { PopupLayout.isSentence(query) }
 
-    private var hasResult: Bool {
-        state.hasTranslation || !state.definitionsItems.isEmpty || !state.examples.isEmpty
-            || !(state.apple?.groupedEntries.isEmpty ?? true)
-    }
+    private var hasResult: Bool { PopupContent.hasResult(state) }
 
     /// A finished lookup that found nothing (as opposed to an announcement, which has no query).
     private var isNoResult: Bool { !query.isEmpty && !state.loading && !hasResult }
@@ -295,6 +309,13 @@ enum PopupMetrics {
     static let numberColumn: CGFloat = 18
     static let numberSpacing: CGFloat = 6
     static let indicatorInset: CGFloat = 6
+}
+
+/// Set by the panel controller: whether the panel is capped, so the body scrolls.
+@MainActor
+@Observable
+final class PopupChrome {
+    var bodyScrolls = false
 }
 
 /// Natural heights of the parts, kept outside SwiftUI's state so writing one does not

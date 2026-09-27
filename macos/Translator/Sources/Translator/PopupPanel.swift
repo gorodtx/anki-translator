@@ -18,7 +18,7 @@ final class TranslationPanel: NSPanel {
     init() {
         super.init(
             contentRect: NSRect(x: 0, y: 0, width: PopupLayout.narrowWidth, height: 120),
-            styleMask: [.nonactivatingPanel, .fullSizeContentView],
+            styleMask: [.nonactivatingPanel],
             backing: .buffered,
             defer: false
         )
@@ -75,6 +75,8 @@ final class PopupPanelController: NSObject {
     private var panel: TranslationPanel?
     private var hosting: NSHostingView<TranslationPopupView>?
     private let model: AppModel
+    /// What the content needs to know about the frame it was given.
+    private let chrome = PopupChrome()
 
     private var onDismiss: (() -> Void)?
     private var openAnki: (() -> Void)?
@@ -82,6 +84,7 @@ final class PopupPanelController: NSObject {
     private var width: CGFloat = PopupLayout.narrowWidth
     private var naturalHeight: CGFloat = 0
     private var naturalHeightWidth: CGFloat = 0
+    private var heightReports = 0
     private var resizeScheduled = false
     /// The first height after showing is applied without animation: there is no open
     /// animation, so the panel must not visibly grow into its first size.
@@ -120,19 +123,37 @@ final class PopupPanelController: NSObject {
     ) {
         self.onDismiss = onDismiss
         self.openAnki = openAnki
+        discardPanelIfAppearanceChanged()
         let panel = ensurePanel()
         self.width = width
         sizedSinceShow = false
 
         let visible = screen(containing: pointer).visibleFrame
-        // Re-showing the same content knows its height already; anything else starts at
-        // one header line and takes its real height on the next turn, before it is seen.
-        let natural = naturalHeightWidth == width && naturalHeight > 0 ? naturalHeight : 48
-        let height = PopupLayout.height(forNatural: natural, visibleHeight: visible.height)
-        let frame = PopupLayout.frame(for: CGSize(width: width, height: height), pointer: pointer, visible: visible)
-        panel.setFrame(frame, display: false)
+        // Size from the content as it is now. A hidden window keeps its last drawing, so
+        // the content is laid out and drawn before the panel is ordered front: otherwise
+        // the first frame on screen is the previous lookup. The content reports its
+        // height during the layout the first frame change triggers, and the panel takes
+        // that height before it is ever on screen.
+        let reports = heightReports
+        panel.setFrame(frame(height: Self.headerOnlyHeight, pointer: pointer, visible: visible), display: false)
+        hosting?.layoutSubtreeIfNeeded()
+        if heightReports != reports || naturalHeightWidth == width {
+            panel.setFrame(frame(height: naturalHeight, pointer: pointer, visible: visible), display: false)
+            hosting?.layoutSubtreeIfNeeded()
+        }
+        let scrolls = naturalHeightWidth == width && naturalHeight.rounded(.up) > panel.frame.height
+        if chrome.bodyScrolls != scrolls {
+            chrome.bodyScrolls = scrolls
+            hosting?.layoutSubtreeIfNeeded()
+        }
+        panel.displayIfNeeded()
+        // SwiftUI draws through layers, which reach the window server when the current
+        // transaction commits; commit now, so ordering front cannot show the old tree.
+        CATransaction.flush()
+        panel.invalidateShadow()
         panel.orderFrontRegardless()
         panel.makeKey()
+        shownAppearance = Self.currentAppearance
         installMonitors()
         scheduleResize()
     }
@@ -165,7 +186,13 @@ final class PopupPanelController: NSObject {
     fileprivate func naturalHeightChanged(_ height: CGFloat) {
         naturalHeight = height
         naturalHeightWidth = width
+        heightReports &+= 1
         scheduleResize()
+    }
+
+    private func frame(height natural: CGFloat, pointer: CGPoint, visible: CGRect) -> CGRect {
+        let height = PopupLayout.height(forNatural: natural, visibleHeight: visible.height)
+        return PopupLayout.frame(for: CGSize(width: width, height: height), pointer: pointer, visible: visible)
     }
 
     /// Frame changes wait for the next run-loop turn, so they never land inside the
@@ -185,6 +212,8 @@ final class PopupPanelController: NSObject {
         let visible = (panel.screen ?? screen(containing: panel.frame.origin)).visibleFrame
         let height = PopupLayout.height(forNatural: naturalHeight, visibleHeight: visible.height)
         let target = PopupLayout.resized(panel.frame, toHeight: height, visible: visible)
+        let scrolls = naturalHeight.rounded(.up) > height
+        if chrome.bodyScrolls != scrolls { chrome.bodyScrolls = scrolls }
         guard abs(target.height - panel.frame.height) > 0.5 || abs(target.minY - panel.frame.minY) > 0.5 else {
             sizedSinceShow = true
             return
@@ -192,6 +221,7 @@ final class PopupPanelController: NSObject {
         if !sizedSinceShow || Motion.reduceMotion {
             sizedSinceShow = true
             panel.setFrame(target, display: true)
+            panel.invalidateShadow()
             return
         }
         // Maccy's verticallyResize: 0.2 s, top edge fixed.
@@ -199,6 +229,9 @@ final class PopupPanelController: NSObject {
             context.duration = 0.2
             context.allowsImplicitAnimation = false
             panel.animator().setFrame(target, display: true)
+        } completionHandler: { [weak panel] in
+            // A clear window's shadow follows its drawn shape only when told to.
+            panel?.invalidateShadow()
         }
     }
 
@@ -207,6 +240,7 @@ final class PopupPanelController: NSObject {
     private func makeRootView() -> TranslationPopupView {
         TranslationPopupView(
             model: model,
+            chrome: chrome,
             onNaturalHeight: { [weak self] height in self?.naturalHeightChanged(height) },
             onOpenAnki: { [weak self] in
                 // Our own window is about to take focus: hide quietly, keep the session.
@@ -214,6 +248,27 @@ final class PopupPanelController: NSObject {
                 self?.openAnki?()
             }
         )
+    }
+
+    /// A hidden window does not redraw, and after a switch between light and dark it
+    /// shows its old surface for a good part of a second once ordered front. A new window
+    /// draws correctly from its first frame, so the panel is rebuilt instead.
+    private func discardPanelIfAppearanceChanged() {
+        guard let panel, !panel.isVisible, let shownAppearance, shownAppearance != Self.currentAppearance else { return }
+        panel.onResignKey = nil
+        panel.onCancel = nil
+        panel.close()
+        self.panel = nil
+        hosting = nil
+        naturalHeightWidth = 0
+    }
+
+    private var shownAppearance: NSAppearance.Name?
+
+    private static var currentAppearance: NSAppearance.Name? {
+        NSApp.effectiveAppearance.bestMatch(from: [
+            .aqua, .darkAqua, .accessibilityHighContrastAqua, .accessibilityHighContrastDarkAqua,
+        ])
     }
 
     private func ensurePanel() -> TranslationPanel {
@@ -233,6 +288,15 @@ final class PopupPanelController: NSObject {
         hosting.frame = glass.bounds
         glass.contentView = hosting
         panel.contentView = glass
+        // The window server takes the window's shape — and so its shadow and edge — from
+        // the root layer; without a corner radius there it draws a square shadow edge
+        // around the rounded glass.
+        for view in [glass, glass.superview].compactMap({ $0 }) {
+            view.wantsLayer = true
+            view.layer?.cornerRadius = Self.cornerRadius
+            view.layer?.cornerCurve = .continuous
+            view.layer?.masksToBounds = true
+        }
 
         panel.onResignKey = { [weak self] in self?.panelResignedKey() }
         panel.onCancel = { [weak self] in self?.dismiss() }
@@ -242,6 +306,8 @@ final class PopupPanelController: NSObject {
     }
 
     static let cornerRadius: CGFloat = 12
+    /// A one-line headword with its paddings: the loading state, the usual first frame.
+    static let headerOnlyHeight: CGFloat = 41
 
     private func screen(containing point: CGPoint) -> NSScreen {
         NSScreen.screens.first { NSMouseInRect(point, $0.frame, false) } ?? NSScreen.main ?? NSScreen.screens[0]

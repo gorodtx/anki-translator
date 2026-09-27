@@ -118,6 +118,9 @@ final class SnapshotRunner {
         // not lose its panel to that. The probes scene runs with real dismissal.
         popup.suspendsDismissal = true
         defer { popup.suspendsDismissal = false }
+        // The backdrop goes up before the first panel, so the glass adapts to it from its
+        // first frame instead of to whatever happened to be on screen.
+        backdrop.cover(topLeft: delegate.snapshotPointer)
         var texts = self.texts
         if environment["TRANSLATOR_DEBUG_SNAPSHOT_TEXTS"]?.isEmpty ?? true {
             texts += Self.popupExtraTexts
@@ -127,8 +130,8 @@ final class SnapshotRunner {
             delegate.snapshotPresent(text: text)
             // The first frame, before any answer: what the user sees while waiting.
             if index == 0 {
-                try? await Task.sleep(for: .milliseconds(60))
-                await capturePopup("popup-\(index)-\(slug)-loading-\(appearance)")
+                try? await Task.sleep(for: .milliseconds(16))
+                await capturePopup("popup-\(index)-\(slug)-loading-\(appearance)", settle: false)
             }
             await waitUntil(timeout: 25) { !delegate.model.state.loading }
             // The resize is event-driven: one turn to measure, 0.2 s of animation.
@@ -191,14 +194,18 @@ final class SnapshotRunner {
 
     /// The panel composited over a backdrop of our own, so its glass has something to
     /// show: what a user sees over a real document.
-    private func capturePopup(_ name: String) async {
+    private func capturePopup(_ name: String, settle: Bool = true) async {
         guard let window = delegate?.snapshotPopupWindow, window.isVisible else {
             NSLog("[snapshot] popup not visible for \(name)")
             return
         }
-        backdrop.place(around: window)
-        // Give the window server a frame to sample the new backdrop through the glass.
-        try? await Task.sleep(for: .milliseconds(200))
+        if !backdrop.covers(window.frame) {
+            backdrop.place(around: window)
+            // Let the glass sample (and adapt to) the new backdrop.
+            try? await Task.sleep(for: .milliseconds(400))
+        } else if settle {
+            try? await Task.sleep(for: .milliseconds(100))
+        }
         guard window.isVisible else {
             NSLog("[snapshot] popup not visible for \(name)")
             return
@@ -280,13 +287,15 @@ final class SnapshotRunner {
         await probe("click-inside-keeps") { panel in
             // On the headword, in window coordinates (origin bottom-left).
             let point = NSPoint(x: 40, y: panel.frame.height - 24)
+            // Both through the event queue: a mouse-down on selectable text starts a
+            // tracking loop that waits for its mouse-up.
             for type in [NSEvent.EventType.leftMouseDown, .leftMouseUp] {
                 if let event = NSEvent.mouseEvent(
                     with: type, location: point, modifierFlags: [],
                     timestamp: ProcessInfo.processInfo.systemUptime,
                     windowNumber: panel.windowNumber, context: nil, eventNumber: 0, clickCount: 1, pressure: 1
                 ) {
-                    panel.sendEvent(event)
+                    NSApp.postEvent(event, atStart: false)
                 }
             }
             try? await Task.sleep(for: .milliseconds(300))
@@ -432,15 +441,34 @@ final class PopupBackdrop {
         return unsafeBitCast(symbol, to: ArrayCapture.self)
     }()
 
+    /// Cover the largest panel that can open with its top-left corner at `topLeft`.
+    func cover(topLeft: CGPoint) {
+        let size = CGSize(width: PopupLayout.wideWidth, height: PopupLayout.maxHeight)
+        let panelArea = CGRect(x: topLeft.x, y: topLeft.y - size.height, width: size.width, height: size.height)
+        show(frame: panelArea.insetBy(dx: -Self.margin, dy: -Self.margin), panel: nil)
+    }
+
     func place(around panel: NSWindow) {
-        let frame = panel.frame.insetBy(dx: -Self.margin, dy: -Self.margin)
+        show(frame: panel.frame.insetBy(dx: -Self.margin, dy: -Self.margin), panel: panel)
+    }
+
+    func covers(_ frame: CGRect) -> Bool {
+        guard let window, window.isVisible else { return false }
+        return window.frame.contains(frame.insetBy(dx: -Self.captureMargin, dy: -Self.captureMargin))
+    }
+
+    private func show(frame: CGRect, panel: NSWindow?) {
         let window = self.window ?? makeWindow()
         window.appearance = NSApp.appearance
         window.setFrame(frame, display: true)
         window.contentView = NSHostingView(
-            rootView: BackdropView(documentWidth: Self.margin + panel.frame.width * 0.62)
+            rootView: BackdropView(documentWidth: Self.margin + PopupLayout.narrowWidth * 0.62)
         )
-        window.order(.below, relativeTo: panel.windowNumber)
+        if let panel {
+            window.order(.below, relativeTo: panel.windowNumber)
+        } else {
+            window.orderFrontRegardless()
+        }
     }
 
     func close() {

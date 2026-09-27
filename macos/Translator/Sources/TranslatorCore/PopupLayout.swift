@@ -113,3 +113,21 @@ public enum PopupFocusRule {
         return newKeyWindowIsOurs ? .ownWindowFocused : .dismissed
     }
 }
+
+/// What the panel has to show for a state.
+public enum PopupContent {
+    /// Whether the lookup produced anything worth reading.
+    ///
+    /// An engine that knows nothing about the text echoes it back as the "translation";
+    /// that is no result, and the panel says so instead of repeating the query.
+    public static func hasResult(_ state: ViewState) -> Bool {
+        let hasEntries = !(state.apple?.groupedEntries.isEmpty ?? true)
+        if hasEntries || !state.definitionsItems.isEmpty || !state.examples.isEmpty { return true }
+        guard state.hasTranslation else { return false }
+        return normalized(state.translationText) != normalized(state.originalText)
+    }
+
+    private static func normalized(_ text: String) -> String {
+        text.trimmingCharacters(in: .whitespacesAndNewlines.union(.punctuationCharacters)).lowercased()
+    }
+}

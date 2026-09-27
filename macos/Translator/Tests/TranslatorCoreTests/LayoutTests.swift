@@ -130,6 +130,25 @@ import Testing
     }
 }
 
+@Suite struct PopupContentTests {
+    @Test func aTranslationIsAResult() {
+        #expect(PopupContent.hasResult(ViewState(original: "bank", translationRaw: "банк")))
+    }
+
+    /// Unknown text comes back unchanged; that is not a translation.
+    @Test func anEchoedQueryIsNoResult() {
+        #expect(!PopupContent.hasResult(ViewState(original: "qwzxv", translationRaw: "qwzxv")))
+        #expect(!PopupContent.hasResult(ViewState(original: "Qwzxv", translationRaw: "qwzxv.")))
+        #expect(!PopupContent.hasResult(ViewState(original: "qwzxv", loading: true)))
+    }
+
+    @Test func dictionaryContentAloneIsAResult() {
+        var state = ViewState(original: "set", translationRaw: "set")
+        state.definitionsItems = ["to put something somewhere"]
+        #expect(PopupContent.hasResult(state))
+    }
+}
+
 @Suite struct PopupFocusRuleTests {
     /// Esc and outside clicks end the lookup; nothing else does.
     @Test func onlyDismissalEndsTheSession() {

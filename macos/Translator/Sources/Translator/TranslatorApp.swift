@@ -187,8 +187,8 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     /// the message and closes itself, since there is no translation to keep it open for.
     private func announce(_ message: String, level: NotificationLevel, at pointer: CGPoint? = nil) {
         model.clearForAnnouncement()
-        showPopup(width: PopupLayout.announcementWidth, at: pointer)
         model.show(banner: message, level: level)
+        showPopup(width: PopupLayout.announcementWidth, at: pointer)
         announceDismissal?.cancel()
         announceDismissal = Task { [weak self] in
             try? await Task.sleep(for: .seconds(level == .info ? 2.5 : 4))
@@ -211,13 +211,17 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     }
 
     private func present(text: String, at pointer: CGPoint? = nil) {
+        let query = text.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !query.isEmpty else { return }
         announceDismissal?.cancel()
-        // One task, so the panel is ordered front in the same turn in which `translate`
-        // puts the query into the state: the first frame already shows the headword.
-        Task { @MainActor in
-            showPopup(width: PopupLayout.width(forQuery: text), at: pointer)
-            await model.translate(text)
-        }
+        // The panel draws its first frame from the state it is shown with, so the query
+        // is in the state before it appears: the headword is there from the first frame,
+        // never the previous lookup. `translate` sets the same state and goes on from it.
+        model.lastError = nil
+        model.banner = nil
+        model.state = ViewState(original: query, originalRaw: text, loading: true)
+        showPopup(width: PopupLayout.width(forQuery: query), at: pointer)
+        Task { await model.translate(text) }
     }
 
     private func showPopup(width: CGFloat, at pointer: CGPoint? = nil) {
@@ -261,8 +265,13 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     func showHistoryEntry(_ entryId: Int) {
         announceDismissal?.cancel()
         let text = model.history.first { $0.entryId == entryId }?.text ?? ""
-        showPopup(width: PopupLayout.width(forQuery: text))
-        Task { await model.selectHistory(entryId) }
+        let pointer = NSEvent.mouseLocation
+        // The entry comes from the local history, so it is quick: show the panel once the
+        // state holds it, not over the previous lookup.
+        Task {
+            await model.selectHistory(entryId)
+            showPopup(width: PopupLayout.width(forQuery: text.isEmpty ? model.state.originalText : text), at: pointer)
+        }
     }
 
     private func present(id: String, title: String, size: CGSize, view: some View) {
