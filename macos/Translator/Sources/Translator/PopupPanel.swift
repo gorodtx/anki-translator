@@ -22,6 +22,9 @@ final class PopupPanelController: NSObject, NSWindowDelegate {
 
     var isVisible: Bool { panel?.isVisible ?? false }
 
+    /// The window itself, for the snapshot harness.
+    var window: NSWindow? { panel }
+
     func show(at pointer: CGPoint? = nil, openAnki: @escaping () -> Void, onClose: @escaping () -> Void) {
         self.onClose = onClose
         self.openAnki = openAnki

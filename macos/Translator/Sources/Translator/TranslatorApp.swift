@@ -54,6 +54,14 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
 
     func applicationDidFinishLaunching(_ notification: Notification) {
         NSApp.setActivationPolicy(.accessory)   // menu-bar app: no Dock icon
+        // Snapshot runs must not claim the hot key or the Services entry: the installed
+        // app may be running beside them, and a clash would put a banner in every image.
+        if let dir = ProcessInfo.processInfo.environment["TRANSLATOR_DEBUG_SNAPSHOT"], !dir.isEmpty {
+            model.start()
+            observePopupResize()
+            SnapshotRunner(delegate: self, output: URL(fileURLWithPath: dir)).run()
+            return
+        }
         NSApp.servicesProvider = self
         NSUpdateDynamicServices()
 
@@ -290,4 +298,11 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     private func close(id: String) {
         windows[id]?.close()
     }
+
+    // MARK: - Snapshot hooks (see SnapshotHarness.swift)
+
+    func snapshotPresent(text: String) { present(text: text) }
+    func snapshotHidePopup() { popup.hide() }
+    var snapshotPopupWindow: NSWindow? { popup.window }
+    func snapshotWindow(id: String) -> NSWindow? { windows[id] }
 }
