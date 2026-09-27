@@ -326,7 +326,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
             onReopen: .rebuildContent,
             view: AnkiUpsertSheet(
                 model: model,
-                openSettings: { [weak self] in self?.showSettings() },
+                openSettings: { [weak self] in self?.showSettings(pane: .anki) },
                 onFinished: { [weak self] added in
                     self?.close(id: "anki")
                     if added { self?.reshowPopupWithOutcome() }
@@ -364,7 +364,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         /// The window takes the content's own size and the user cannot resize it.
         var fitsContent = false
 
-        /// A resizable document-style window: History, and Settings until it has its own.
+        /// A resizable document-style window, such as History.
         static func document(autosaveName: String? = nil, searchInToolbar: Bool = false) -> WindowChrome {
             WindowChrome(
                 styleMask: [.titled, .closable, .miniaturizable, .resizable],

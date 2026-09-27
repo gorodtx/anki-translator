@@ -703,30 +703,6 @@ final class SnapshotRunner {
 
     private static func name(_ reason: PopupHideReason?) -> String { reason?.rawValue ?? "none" }
 
-    /// A settings window is taller than any screen once every section is open, so it is
-    /// captured a page at a time by scrolling whatever scroll view holds its content.
-    private func captureScrollingPages(_ window: NSWindow, prefix: String) async {
-        guard let scroll = Self.largestScrollView(in: window.contentView),
-              let document = scroll.documentView
-        else {
-            write(window, "\(prefix)-0")
-            return
-        }
-        let visible = scroll.contentView.bounds.height
-        let total = document.frame.height
-        var offset: CGFloat = 0
-        var page = 0
-        repeat {
-            let y = document.isFlipped ? offset : max(0, total - visible - offset)
-            scroll.contentView.scroll(to: NSPoint(x: 0, y: y))
-            scroll.reflectScrolledClipView(scroll.contentView)
-            try? await Task.sleep(for: .milliseconds(350))
-            write(window, "\(prefix)-\(page)")
-            offset += max(visible - 60, 120)
-            page += 1
-        } while offset < total - visible + 1 && page < 12
-    }
-
     private func write(_ window: NSWindow, _ name: String) {
         WindowSnapshot.write(window, to: output.appendingPathComponent("\(name).png"))
     }
