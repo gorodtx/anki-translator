@@ -133,3 +133,47 @@ import Testing
         #expect(text.contains("“A”, “B”"))
     }
 }
+
+/// The Add to Anki window names what is missing instead of repeating the backend's
+/// generic "not configured". The rule must match `is_config_ready` exactly, or the window
+/// would offer to add a note the backend then refuses.
+@Suite struct AnkiSetupGapTests {
+    private func settings(
+        deck: String = "English",
+        model: String = "Translator",
+        fields: AnkiFieldMapping = AnkiFieldMapping()
+    ) -> AnkiSettings {
+        AnkiSettings(deck: deck, model: model, fields: fields)
+    }
+
+    @Test func aCompleteConfigurationHasNoGaps() {
+        #expect(AnkiSetupGap.gaps(in: settings()).isEmpty)
+        #expect(AnkiSetupGap.instruction(for: []) == nil)
+    }
+
+    /// What a first run looks like: the backend's defaults leave both empty.
+    @Test func aFreshConfigurationMissesDeckAndNoteType() {
+        let gaps = AnkiSetupGap.gaps(in: settings(deck: "", model: ""))
+        #expect(gaps == [.deck, .noteType])
+        #expect(AnkiSetupGap.instruction(for: gaps) == "Choose a deck and a note type in Settings.")
+    }
+
+    @Test func whitespaceCountsAsMissing() {
+        #expect(AnkiSetupGap.gaps(in: settings(deck: "  ")) == [.deck])
+    }
+
+    /// All five field names are required, the image field included.
+    @Test func anyEmptyFieldNameIsAGap() {
+        var fields = AnkiFieldMapping()
+        fields.image = ""
+        let gaps = AnkiSetupGap.gaps(in: settings(fields: fields))
+        #expect(gaps == [.fieldNames])
+        #expect(AnkiSetupGap.instruction(for: gaps) == "Fill in the field names in Settings.")
+    }
+
+    @Test func everyGapReadsAsOneSentence() {
+        let gaps = AnkiSetupGap.gaps(in: settings(deck: "", model: "", fields: AnkiFieldMapping(word: "")))
+        #expect(gaps == [.deck, .noteType, .fieldNames])
+        #expect(AnkiSetupGap.instruction(for: gaps) == "Choose a deck, a note type and field names in Settings.")
+    }
+}

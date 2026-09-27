@@ -62,3 +62,42 @@ public enum AnkiFieldCheck {
         }
     }
 }
+
+/// What is still missing before a note can be added at all.
+///
+/// The backend refuses `anki.prepare_upsert` with one generic "not configured" error
+/// unless the deck, the note type and all five field names are set (`is_config_ready` in
+/// `anki_flow.py`). The Add to Anki window has to say which of those is missing and where
+/// to fix it, so the same rule is stated here, where it is tested.
+public enum AnkiSetupGap: Equatable, Sendable {
+    case deck
+    case noteType
+    case fieldNames
+
+    public static func gaps(in settings: AnkiSettings) -> [AnkiSetupGap] {
+        let blank = { (value: String) in value.trimmingCharacters(in: .whitespaces).isEmpty }
+        var gaps: [AnkiSetupGap] = []
+        if blank(settings.deck) { gaps.append(.deck) }
+        if blank(settings.model) { gaps.append(.noteType) }
+        let fields = settings.fields
+        if [fields.word, fields.translation, fields.exampleEn, fields.definitionsEn, fields.image].contains(where: blank) {
+            gaps.append(.fieldNames)
+        }
+        return gaps
+    }
+
+    /// One sentence saying what to do in Settings, or nil when nothing is missing.
+    public static func instruction(for gaps: [AnkiSetupGap]) -> String? {
+        if gaps == [.fieldNames] { return "Fill in the field names in Settings." }
+        let items = gaps.map { gap in
+            switch gap {
+            case .deck: return "a deck"
+            case .noteType: return "a note type"
+            case .fieldNames: return "field names"
+            }
+        }
+        guard let last = items.last else { return nil }
+        let list = items.count == 1 ? last : items.dropLast().joined(separator: ", ") + " and " + last
+        return "Choose \(list) in Settings."
+    }
+}
