@@ -192,6 +192,80 @@ import Testing
             panelStillKey: false, newKeyWindowIsOurs: false, dismissalSuspended: true
         ) == nil)
     }
+
+    /// A clicked announcement is key; losing key again ends no session, wherever focus went.
+    @Test func announcementLosingKeyEndsNoSession() {
+        for ours in [false, true] {
+            let reason = PopupFocusRule.reasonAfterResigningKey(
+                panelStillKey: false, newKeyWindowIsOurs: ours, dismissalSuspended: false,
+                showingAnnouncement: true
+            )
+            #expect(reason == .announcementEnded)
+            #expect(reason?.endsSession == false)
+        }
+        #expect(PopupFocusRule.reasonAfterResigningKey(
+            panelStillKey: true, newKeyWindowIsOurs: false, dismissalSuspended: false,
+            showingAnnouncement: true
+        ) == nil)
+    }
+
+    /// Esc over one of our windows belongs to that window while an announcement that never
+    /// took key is up; a lookup, or an announcement the user clicked, takes it.
+    @Test func escapeGoesToTheAnnouncementOnlyWhenKey() {
+        #expect(!PopupFocusRule.takesEscape(panelIsKey: false, showingAnnouncement: true))
+        #expect(PopupFocusRule.takesEscape(panelIsKey: true, showingAnnouncement: true))
+        #expect(PopupFocusRule.takesEscape(panelIsKey: false, showingAnnouncement: false))
+        #expect(PopupFocusRule.takesEscape(panelIsKey: true, showingAnnouncement: false))
+    }
+}
+
+@Suite struct PopupExamplesRowTests {
+    @Test func newOnlyWhenThereAreExamplesToReplace() {
+        #expect(PopupFooterRow.examplesTitle(canRefresh: true, isSentence: false, hasExamples: true) == "New Examples")
+        #expect(PopupFooterRow.examplesTitle(canRefresh: true, isSentence: false, hasExamples: false) == "Find Examples")
+    }
+
+    @Test func noRowForSentencesOrWhenTheBackendCannot() {
+        #expect(PopupFooterRow.examplesTitle(canRefresh: true, isSentence: true, hasExamples: false) == nil)
+        #expect(PopupFooterRow.examplesTitle(canRefresh: false, isSentence: false, hasExamples: true) == nil)
+    }
+}
+
+@Suite struct ErrorWordingTests {
+    @Test func aMissingBackendReadsTheSameWhateverTheClientSaid() {
+        let sentences = [
+            ErrorWording.sentence(code: "disconnected", message: "Backend is not connected."),
+            ErrorWording.sentence(code: "disconnected", message: "Backend connection closed."),
+            ErrorWording.sentence(code: "write_failed", message: "Failed to write to backend."),
+        ]
+        #expect(Set(sentences) == [ErrorWording.backendNotRunning])
+        #expect(ErrorWording.backendNotRunning == "Translator’s backend isn’t running.")
+    }
+
+    @Test func internalIdsNeverReachTheUser() {
+        let gone = ErrorWording.sentence(code: "no_active_entry", message: "No history entry -1.")
+        #expect(gone == "This entry is no longer in History.")
+        #expect(!gone.contains("-1"))
+        #expect(!ErrorWording.sentence(code: "timeout", message: "translate timed out.").contains("translate"))
+        #expect(!ErrorWording.sentence(code: "invalid_params", message: "'text' must be a string").contains("'text'"))
+    }
+
+    @Test func ankisOwnWordsAreKept() {
+        #expect(ErrorWording.sentence(code: "anki_error", message: "deck was not found") == "deck was not found")
+        #expect(ErrorWording.sentence(code: "anki_error", message: "") == "Anki didn’t answer.")
+    }
+
+    /// Typographic apostrophes, contractions, and a full stop, like every other string.
+    @Test func everySentenceIsWrittenInTheAppsVoice() {
+        let codes = ["disconnected", "write_failed", "timeout", "no_active_entry", "not_ready",
+                     "unknown_method", "bad_request", "invalid_params", "internal", "anything"]
+        for code in codes {
+            let sentence = ErrorWording.sentence(code: code, message: "")
+            #expect(!sentence.contains("'"), "\(code): \(sentence)")
+            #expect(!sentence.contains("Could not") && !sentence.contains("not connected"), "\(code): \(sentence)")
+            #expect(sentence.hasSuffix("."), "\(code): \(sentence)")
+        }
+    }
 }
 
 @Suite struct PopupFooterNavigationTests {

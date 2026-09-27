@@ -16,7 +16,11 @@ final class AppModel {
     var state = ViewState()
     var activeRequestId: Int = 0
     var phase: TranslationPhase = .final
+    /// Why the current lookup failed, said as the body of the panel.
     var lastError: String?
+    /// How serious `lastError` is: an error, or a warning the backend gave as the reason
+    /// ("Every translation source is switched off." is a setting, not a fault).
+    var lastErrorLevel: NotificationLevel = .error
 
     // Ambient
     var banner: BannerMessage?
@@ -93,7 +97,7 @@ final class AppModel {
     private var bannerDismissTask: Task<Void, Never>?
     /// The last warning the backend sent, so an error phase can say why instead of
     /// "Translation failed."
-    private var pendingNotice: String?
+    private var pendingNotice: (text: String, level: NotificationLevel)?
 
     struct BannerMessage: Equatable, Identifiable {
         let id = UUID()
@@ -161,12 +165,15 @@ final class AppModel {
             // The backend names the reason in a notification just before it reports the
             // error — "Every translation source is switched off." is not a failure to
             // retry, and calling it one sends the user looking for a fault.
-            if payload.phase == .error { lastError = pendingNotice ?? "Translation failed." }
+            if payload.phase == .error {
+                lastError = pendingNotice?.text ?? "Translation failed."
+                lastErrorLevel = pendingNotice?.level ?? .error
+            }
             pendingNotice = nil
             lookupSettled(wasLoading: wasLoading)
         case IPCEventName.notification:
             guard let payload = try? event.decode(NotificationEvent.self) else { return }
-            if payload.level != .info { pendingNotice = payload.message }
+            if payload.level != .info { pendingNotice = (payload.message, payload.level) }
             show(banner: payload.message, level: payload.level)
         case IPCEventName.dbProgress:
             guard let payload = try? event.decode(DatabaseProgressEvent.self) else { return }
@@ -179,29 +186,24 @@ final class AppModel {
             // blame the word.
             guard state.loading else { return }
             state.loading = false
-            if lastError == nil { lastError = "The backend stopped responding." }
+            if lastError == nil {
+                lastError = ErrorWording.backendStopped
+                lastErrorLevel = .error
+            }
             lookupSettled(wasLoading: true)
         default:
             break
         }
     }
 
-    /// Drop whatever the popup was showing, so a bare message is not read as a result
-    /// belonging to the previous lookup.
-    func clearForAnnouncement() {
-        state = ViewState()
-        lastError = nil
-    }
-
-    /// Shows a banner in the panel and says it to VoiceOver.
-    ///
-    /// - Parameter duration: how long it stays; by default 3 s, 6 s for errors. An
-    ///   announcement passes its own, so the banner and the panel holding it end together.
-    func show(banner text: String, level: NotificationLevel, duration: Duration? = nil) {
+    /// Shows a banner under the lookup in the panel and says it to VoiceOver: 3 s, 6 s
+    /// for errors. (An announcement is not a banner: it is the panel's own message, and
+    /// leaves the lookup and its banner alone; see `AppDelegate.announce`.)
+    func show(banner text: String, level: NotificationLevel) {
         bannerDismissTask?.cancel()
         withAnimation(Motion.stateChange) { banner = BannerMessage(text: text, level: level) }
         speak(text)
-        let duration = duration ?? Self.bannerDuration(for: level)
+        let duration = Self.bannerDuration(for: level)
         bannerDismissTask = Task { [weak self] in
             try? await Task.sleep(for: duration)
             guard !Task.isCancelled else { return }
@@ -219,8 +221,8 @@ final class AppModel {
     @ObservationIgnored private(set) var spokenAnnouncements: [String] = []
 
     /// The panel is non-activating, so VoiceOver's cursor stays in the user's app and
-    /// never reads it: results and banners are announced instead.
-    private func speak(_ text: String) {
+    /// never reads it: results, banners and announcements are said instead.
+    func speak(_ text: String) {
         guard !text.isEmpty else { return }
         spokenAnnouncements = Array((spokenAnnouncements + [text]).suffix(20))
         NSAccessibility.post(
@@ -268,7 +270,7 @@ final class AppModel {
             IPCMethod.ankiModelFields, as: AnkiModelFields.self
         ) else {
             ankiModelFields = []
-            ankiModelFieldsError = "The backend did not answer."
+            ankiModelFieldsError = ErrorWording.backendNoAnswer
             return
         }
         ankiModelFields = answer.fields
@@ -307,8 +309,8 @@ final class AppModel {
             settingsProblems[.loginItem] = nil
         } catch {
             settingsProblems[.loginItem] = on
-                ? "Could not turn on opening at login: \(error.localizedDescription)"
-                : "Could not turn off opening at login: \(error.localizedDescription)"
+                ? "Couldn’t turn on opening at login: \(error.localizedDescription)"
+                : "Couldn’t turn off opening at login: \(error.localizedDescription)"
         }
         // Ask the system what it now thinks rather than assuming the call decided it.
         refreshLoginItem()
@@ -323,7 +325,7 @@ final class AppModel {
         do {
             start = try await client.send(IPCMethod.dbDownload, as: DatabaseDownloadStart.self)
         } catch {
-            settingsProblems[.databases] = "Could not start the download: \(message(for: error))"
+            settingsProblems[.databases] = "Couldn’t start the download. \(message(for: error))"
             return
         }
         settingsProblems[.databases] = nil
@@ -370,6 +372,7 @@ final class AppModel {
         let trimmed = text.trimmingCharacters(in: .whitespacesAndNewlines)
         guard !trimmed.isEmpty else { return }
         lastError = nil
+        lastErrorLevel = .error
         phase = .begin
         withAnimation(Motion.stateChange) {
             state = ViewState(original: trimmed, originalRaw: text, loading: true)
@@ -385,6 +388,7 @@ final class AppModel {
             // words would only say it twice.
             state.loading = false
             lastError = message(for: error)
+            lastErrorLevel = .error
             lookupSettled(wasLoading: true)
         }
     }
@@ -404,7 +408,11 @@ final class AppModel {
         do {
             let response = try await client.send(IPCMethod.examplesRefresh, as: ExamplesRefreshResponse.self)
             withAnimation(Motion.stateChange) { state = response.state }
-            if !response.changed { show(banner: "No other examples found.", level: .info) }
+            if !response.changed {
+                // "Other" only when there were examples on screen to replace.
+                let found = response.state.examples.isEmpty ? "No examples found." : "No other examples found."
+                show(banner: found, level: .info)
+            }
         } catch {
             state.refreshingExamples = false
             show(banner: message(for: error), level: .error)
@@ -691,8 +699,15 @@ final class AppModel {
         UserDefaults.standard.set(accessibilityTrusted, forKey: "accessibilityTrusted")
     }
 
-    private func message(for error: Error) -> String {
-        if let ipc = error as? IPCError { return ipc.message.isEmpty ? ipc.code : ipc.message }
+    /// The one place a failed request becomes a sentence for the user (see
+    /// `ErrorWording`). The raw error goes to the log, where it is useful.
+    func message(for error: Error) -> String {
+        if let ipc = error as? IPCError {
+            NSLog("[translator] request failed: %@ %@", ipc.code, ipc.message)
+            return ErrorWording.sentence(code: ipc.code, message: ipc.message)
+        }
+        NSLog("[translator] request failed: %@", String(describing: error))
+        if error is DecodingError { return "Translator’s backend sent an answer the app couldn’t read." }
         return error.localizedDescription
     }
 }

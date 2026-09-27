@@ -111,7 +111,7 @@ final class PopupPanelController: NSObject {
     private var monitorInstalls = 0
     /// The panel holds an announcement: it was shown without taking key, and going away
     /// ends no lookup.
-    private var showingAnnouncement = false
+    private(set) var showingAnnouncement = false
 
     /// Snapshot capture runs: other apps (or sibling test runs) may take focus while a
     /// frame is captured, and that must not dismiss the panel mid-scene.
@@ -166,27 +166,38 @@ final class PopupPanelController: NSObject {
         set { chrome.highlightedRow = newValue }
     }
 
+    /// The announcement on screen; nil ends it (the panel then hides, see `hideIfEmpty`).
+    var announcement: AppModel.BannerMessage? {
+        get { chrome.announcement }
+        set { chrome.announcement = newValue }
+    }
+
     /// Show the panel with its top-left corner at `pointer`.
     ///
     /// - Parameters:
     ///   - width: decided by the caller from the query and kept for the lookup.
-    ///   - takesKey: a lookup takes keyboard focus (Esc, Return, the arrows); an
-    ///     announcement does not, so the keys the user is typing stay in their app.
+    ///   - announcement: shown instead of the lookup, which stays in the model untouched
+    ///     (Add to Anki may be preparing a note from it). A lookup takes keyboard focus
+    ///     (Esc, Return, the arrows); an announcement does not, so the keys the user is
+    ///     typing stay in their app.
     func show(
         width: CGFloat,
         at pointer: CGPoint,
-        takesKey: Bool = true,
+        announcement: AppModel.BannerMessage? = nil,
         openAnki: @escaping () -> Void,
         onDismiss: @escaping () -> Void
     ) {
         self.onDismiss = onDismiss
         self.openAnki = openAnki
+        let takesKey = announcement == nil
         discardPanelIfAppearanceChanged()
         let panel = ensurePanel()
         // Only ordering out gives keyboard focus back to the user's app; its resignKey
         // belongs to the showing that ends here (see `panelResignedKey`).
         if !takesKey, panel.isKeyWindow { panel.orderOut(nil) }
         showingAnnouncement = !takesKey
+        chrome.announcing = !takesKey
+        chrome.announcement = announcement
         self.width = width
         sizedSinceShow = false
         holdsHeightWhileLoading = panel.isVisible
@@ -275,10 +286,14 @@ final class PopupPanelController: NSObject {
         }
     }
 
-    /// Nothing left to show — an announcement whose banner ended — leaves no empty glass
-    /// on screen.
+    /// Nothing left to show — an announcement that ended before its panel — leaves no
+    /// empty glass on screen.
     private func hideIfEmpty() {
-        guard isVisible, naturalHeight < 0.5, model.state.originalText.isEmpty, model.banner == nil else { return }
+        guard isVisible, naturalHeight < 0.5 else { return }
+        let empty = showingAnnouncement
+            ? chrome.announcement == nil
+            : model.state.originalText.isEmpty && model.banner == nil
+        guard empty else { return }
         hide(reason: .announcementEnded)
     }
 
@@ -565,7 +580,8 @@ final class PopupPanelController: NSObject {
             guard let reason = PopupFocusRule.reasonAfterResigningKey(
                 panelStillKey: panel.isKeyWindow,
                 newKeyWindowIsOurs: otherKey,
-                dismissalSuspended: self.suspendsDismissal
+                dismissalSuspended: self.suspendsDismissal,
+                showingAnnouncement: self.showingAnnouncement
             ) else { return }
             self.hide(reason: reason)
         }
@@ -588,6 +604,16 @@ final class PopupPanelController: NSObject {
         dismiss()
     }
 
+    /// Esc as the app's local key monitor sees it, wherever in the app it was pressed.
+    /// True when the panel took it; false leaves it to the window it was meant for.
+    func localEscape() -> Bool {
+        guard isVisible,
+              PopupFocusRule.takesEscape(panelIsKey: isKey, showingAnnouncement: showingAnnouncement)
+        else { return false }
+        dismiss()
+        return true
+    }
+
     private func installMonitors() {
         let before = monitorState
         defer {
@@ -604,13 +630,10 @@ final class PopupPanelController: NSObject {
         }
         if localMonitor == nil {
             // Belt and braces for Esc: the panel's sendEvent sees it first when it is key.
+            // An announcement over one of our windows leaves Esc to that window.
             localMonitor = NSEvent.addLocalMonitorForEvents(matching: .keyDown) { [weak self] event in
                 guard event.keyCode == TranslationPanel.escapeKeyCode else { return event }
-                let handled = MainActor.assumeIsolated { () -> Bool in
-                    guard let self, self.isVisible else { return false }
-                    self.dismiss()
-                    return true
-                }
+                let handled = MainActor.assumeIsolated { self?.localEscape() ?? false }
                 return handled ? nil : event
             }
         }

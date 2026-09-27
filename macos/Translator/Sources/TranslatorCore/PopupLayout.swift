@@ -104,13 +104,28 @@ public enum PopupFocusRule {
     ///   - panelStillKey: the panel got key back (e.g. a click inside it).
     ///   - newKeyWindowIsOurs: another window of this app is key now.
     ///   - dismissalSuspended: a capture run that must not react to focus theft.
+    ///   - showingAnnouncement: the panel holds an announcement, not a lookup. A click
+    ///     makes even an announcement key; losing that again ends no session, since
+    ///     there is no lookup behind it.
     public static func reasonAfterResigningKey(
         panelStillKey: Bool,
         newKeyWindowIsOurs: Bool,
-        dismissalSuspended: Bool
+        dismissalSuspended: Bool,
+        showingAnnouncement: Bool = false
     ) -> PopupHideReason? {
         if panelStillKey || dismissalSuspended { return nil }
+        if showingAnnouncement { return .announcementEnded }
         return newKeyWindowIsOurs ? .ownWindowFocused : .dismissed
+    }
+
+    /// Whether Esc, seen by the app's local key monitor, is the panel's to take.
+    ///
+    /// A lookup takes it whether or not it is key (a panel opened from Services may never
+    /// have become key). An announcement that is not key takes nothing: it stays up over
+    /// the app's own windows, and Esc there belongs to them (Cancel in Add to Anki,
+    /// clearing History's search, closing an alert sheet in Settings).
+    public static func takesEscape(panelIsKey: Bool, showingAnnouncement: Bool) -> Bool {
+        panelIsKey || !showingAnnouncement
     }
 }
 
@@ -170,6 +185,17 @@ public enum PopupFooterRow: String, CaseIterable, Equatable, Sendable {
 
     /// The row Return activates when no row is highlighted (`.defaultAction`).
     public static let defaultRow: PopupFooterRow = .addToAnki
+
+    /// The examples row's title, or nil when the row is not shown.
+    ///
+    /// "New Examples" replaces examples on screen; with none shown there is nothing to
+    /// replace, and the command finds some. A sentence never shows examples, so it gets
+    /// no row at all, whatever the backend offers.
+    public static func examplesTitle(canRefresh: Bool, isSentence: Bool, hasExamples: Bool) -> String? {
+        guard canRefresh else { return nil }
+        if hasExamples { return PopupFooterRow.newExamples.title }
+        return isSentence ? nil : "Find Examples"
+    }
 }
 
 /// Keyboard selection through the footer rows, as ↑/↓ move through a menu.

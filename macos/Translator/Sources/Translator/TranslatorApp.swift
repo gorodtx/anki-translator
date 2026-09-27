@@ -303,14 +303,18 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     /// the message and closes itself, since there is no translation to keep it open for.
     ///
     /// It never takes keyboard focus: the user is typing somewhere, and a message must not
-    /// swallow the next keystrokes. A click anywhere or its timer closes it. The banner
-    /// and the panel share one duration, so the panel never outlives its only content
-    /// (and if the banner goes first anyway, the panel closes on becoming empty).
+    /// swallow the next keystrokes. A click anywhere or its timer closes it.
+    ///
+    /// The message is the panel's own, not the model's: the lookup and its error stay as
+    /// they are underneath. Add to Anki reads that lookup, and wiping it for a message
+    /// would close the window and lose the user's choices in it.
     private func announce(_ message: String, level: NotificationLevel, at pointer: CGPoint? = nil) {
         let duration: Duration = level == .info ? .seconds(2.5) : .seconds(4)
-        model.clearForAnnouncement()
-        model.show(banner: message, level: level, duration: duration)
-        showPopup(width: PopupLayout.announcementWidth, at: pointer, takesKey: false)
+        model.speak(message)
+        showPopup(
+            width: PopupLayout.announcementWidth, at: pointer,
+            announcement: AppModel.BannerMessage(text: message, level: level)
+        )
         announceDismissal?.cancel()
         announceDismissal = Task { [weak self] in
             try? await Task.sleep(for: duration)
@@ -346,11 +350,13 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         Task { await model.translate(text) }
     }
 
-    private func showPopup(width: CGFloat, at pointer: CGPoint? = nil, takesKey: Bool = true) {
+    private func showPopup(width: CGFloat, at pointer: CGPoint? = nil, announcement: AppModel.BannerMessage? = nil) {
+        // A lookup replaces an announcement: its timer must not hide the card.
+        if announcement == nil { announceDismissal?.cancel() }
         popup.show(
             width: width,
             at: pointer ?? NSEvent.mouseLocation,
-            takesKey: takesKey,
+            announcement: announcement,
             openAnki: { [weak self] in self?.showAnkiSheet() },
             onDismiss: { [weak self] in Task { await self?.model.closeSession() } }
         )

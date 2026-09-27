@@ -86,11 +86,15 @@ struct TranslationPopupView: View {
     /// A finished lookup that found nothing (as opposed to an announcement, which has no query).
     private var isNoResult: Bool { !query.isEmpty && !state.loading && !hasResult }
 
+    /// The panel holds an announcement. The lookup stays in the model underneath it —
+    /// Add to Anki may be reading it — and is simply not drawn.
+    private var announcing: Bool { chrome.announcing }
+
     // MARK: - Header
 
     @ViewBuilder
     private var header: some View {
-        if !query.isEmpty {
+        if !announcing, !query.isEmpty {
             VStack(alignment: .leading, spacing: 3) {
                 HStack(alignment: .firstTextBaseline, spacing: 8) {
                     if isSentence {
@@ -138,7 +142,9 @@ struct TranslationPopupView: View {
 
     @ViewBuilder
     private var content: some View {
-        if hasResult {
+        if announcing {
+            EmptyView()
+        } else if hasResult {
             VStack(alignment: .leading, spacing: 0) {
                 if state.hasTranslation {
                     let paragraphs = PopupContent.translationParagraphs(state.translationText)
@@ -179,12 +185,21 @@ struct TranslationPopupView: View {
             .padding(.horizontal, PopupMetrics.textInset)
             .padding(.bottom, 12)
         } else if isNoResult {
-            Text(model.lastError ?? "No translation for “\(query)”.")
-                .font(.body)
-                .foregroundStyle(.secondary)
-                .textSelection(.enabled)
-                .padding(.horizontal, PopupMetrics.textInset)
-                .padding(.bottom, 12)
+            if let error = model.lastError {
+                // A fault, not an empty result: it carries its status symbol, as the
+                // banner that would otherwise repeat it does.
+                BannerRow(text: error, level: model.lastErrorLevel)
+                    .textSelection(.enabled)
+                    .padding(.top, 2)
+                    .padding(.bottom, 12)
+            } else {
+                Text("No translation for “\(query)”.")
+                    .font(.body)
+                    .foregroundStyle(.secondary)
+                    .textSelection(.enabled)
+                    .padding(.horizontal, PopupMetrics.textInset)
+                    .padding(.bottom, 12)
+            }
         }
     }
 
@@ -266,13 +281,19 @@ struct TranslationPopupView: View {
 
     @ViewBuilder
     private var bottom: some View {
-        if let banner = visibleBanner {
-            BannerRow(banner: banner)
-                // Alone (an announcement) it gets the panel's own vertical rhythm.
+        if announcing {
+            // Alone, it gets the panel's own vertical rhythm. Nothing at all once it is
+            // gone, and the panel then hides rather than stay up as empty glass.
+            if let announcement = chrome.announcement {
+                BannerRow(text: announcement.text, level: announcement.level)
+                    .padding(.vertical, 12)
+            }
+        } else if let banner = visibleBanner {
+            BannerRow(text: banner.text, level: banner.level)
                 .padding(.top, query.isEmpty ? 12 : 2)
                 .padding(.bottom, hasResult ? 6 : 12)
         }
-        if hasResult {
+        if !announcing, hasResult {
             footer
                 // A new showing starts with no row under the pointer: a row hovered when
                 // the panel was last hidden never heard the pointer leave.
@@ -299,6 +320,8 @@ struct TranslationPopupView: View {
 /// One footer row as it stands now.
 struct FooterRowState {
     let row: PopupFooterRow
+    /// What the row says; the examples row's depends on whether there are any.
+    var title: String
     /// Non-nil disables the row and says why.
     let disabledReason: String?
     var busy = false
@@ -315,16 +338,23 @@ enum PopupFooter {
         let state = model.state
         guard PopupContent.hasResult(state) else { return [] }
         var rows = [
-            FooterRowState(row: .addToAnki, disabledReason: ankiUnavailableReason(model)),
             FooterRowState(
-                row: .copyTranslation,
-                disabledReason: state.hasTranslation ? nil : "There is no translation to copy."
+                row: .addToAnki, title: PopupFooterRow.addToAnki.title,
+                disabledReason: ankiUnavailableReason(model)
+            ),
+            FooterRowState(
+                row: .copyTranslation, title: PopupFooterRow.copyTranslation.title,
+                disabledReason: state.hasTranslation ? nil : "There’s no translation to copy."
             ),
         ]
-        if state.canRefreshExamples {
+        if let title = PopupFooterRow.examplesTitle(
+            canRefresh: state.canRefreshExamples,
+            isSentence: PopupLayout.isSentence(state.originalText),
+            hasExamples: !state.examples.isEmpty
+        ) {
             rows.append(FooterRowState(
-                row: .newExamples,
-                disabledReason: state.refreshingExamples ? "Looking for other examples." : nil,
+                row: .newExamples, title: title,
+                disabledReason: state.refreshingExamples ? "Looking for examples." : nil,
                 busy: state.refreshingExamples
             ))
         }
@@ -332,8 +362,8 @@ enum PopupFooter {
     }
 
     private static func ankiUnavailableReason(_ model: AppModel) -> String? {
-        if !model.ankiStatus.available { return "Anki isn't running, or AnkiConnect isn't installed." }
-        if !model.state.canAddAnki { return "This result can't be added to Anki." }
+        if !model.ankiStatus.available { return "Anki isn’t running, or AnkiConnect isn’t installed." }
+        if !model.state.canAddAnki { return "This result can’t be added to Anki." }
         return nil
     }
 }
@@ -385,6 +415,11 @@ final class PopupChrome {
     var highlightedRow: PopupFooterRow?
     /// Bumped on every show.
     var showCount = 0
+    /// This showing is an announcement: only its message is drawn, never the lookup the
+    /// model still holds.
+    var announcing = false
+    /// The announcement's message; nil once it is over.
+    var announcement: AppModel.BannerMessage?
 }
 
 /// Natural heights of the parts, kept outside SwiftUI's state so writing one does not
@@ -435,18 +470,20 @@ private struct NumberedRow<Content: View>: View {
     }
 }
 
+/// A status line: a banner, an announcement, or the reason a lookup failed.
 private struct BannerRow: View {
-    let banner: AppModel.BannerMessage
+    let text: String
+    let level: NotificationLevel
 
     var body: some View {
         Label {
-            Text(banner.text)
+            Text(text)
                 .font(.callout)
                 .foregroundStyle(.primary)
                 .fixedSize(horizontal: false, vertical: true)
         } icon: {
-            Image(systemName: banner.level.panelSymbol)
-                .foregroundStyle(banner.level.panelTint)
+            Image(systemName: level.panelSymbol)
+                .foregroundStyle(level.panelTint)
         }
         .font(.callout)
         .frame(maxWidth: .infinity, alignment: .leading)
@@ -482,7 +519,7 @@ private struct MenuRow: View {
     let chrome: PopupChrome
     let action: () -> Void
 
-    private var title: String { item.row.title }
+    private var title: String { item.title }
     private var enabled: Bool { item.enabled }
     private var highlighted: Bool { chrome.highlightedRow == item.row && enabled }
 

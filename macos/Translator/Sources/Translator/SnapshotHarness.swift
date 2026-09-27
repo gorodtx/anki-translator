@@ -172,8 +172,9 @@ final class SnapshotRunner {
         // A lookup that failed: its reason once, as the body, and no banner repeating it.
         delegate.snapshotPresent(text: "qwzxv")
         await waitUntil(timeout: 25) { !delegate.model.state.loading }
-        delegate.model.lastError = "The backend stopped responding."
-        delegate.model.show(banner: "The backend stopped responding.", level: .error)
+        delegate.model.lastError = ErrorWording.backendStopped
+        delegate.model.lastErrorLevel = .error
+        delegate.model.show(banner: ErrorWording.backendStopped, level: .error)
         try? await Task.sleep(for: .milliseconds(450))
         await capturePopup("popup-error-\(appearance)")
         // The announcement path: a bare message, no lookup behind it.
@@ -1247,8 +1248,10 @@ final class SnapshotRunner {
         await probeFooterAccessibility()
         await probeMonitorsLifecycle()
         await probeAnnouncementsStayOffKey()
+        await probeClickedAnnouncement()
         await probeNoEmptyGlass()
         probeSpoken()
+        await probeAnnouncementOverAnki()
 
         // The announcement path closes itself (info: 2.5 s) and ends no session. This
         // probe is about that timer alone, so outside focus changes during the 3 s wait
@@ -1363,6 +1366,7 @@ final class SnapshotRunner {
         try? await Task.sleep(for: .milliseconds(300))
         guard let panel = delegate.snapshotPopupWindow else { return }
         var found: [String: String] = [:]
+        let titles = PopupFooter.rows(for: delegate.model).map(\.title)
         // From the window down, through AppKit views and SwiftUI's own elements.
         var stack: [Any] = [panel]
         var visited = 0
@@ -1370,7 +1374,7 @@ final class SnapshotRunner {
             visited += 1
             if let view = next as? NSView { stack.append(contentsOf: view.subviews) }
             guard let element = next as? NSAccessibilityProtocol else { continue }
-            if let label = element.accessibilityLabel(), PopupFooterRow.allCases.contains(where: { $0.title == label }) {
+            if let label = element.accessibilityLabel(), titles.contains(label) {
                 found[label] = element.accessibilityHelp() ?? ""
             }
             stack.append(contentsOf: element.accessibilityChildren() ?? [])
@@ -1380,7 +1384,7 @@ final class SnapshotRunner {
             return
         }
         let copy = found[PopupFooterRow.copyTranslation.title]
-        let examples = found[PopupFooterRow.newExamples.title]
+        let examples = found[PopupFooterRow.newExamples.title] ?? found["Find Examples"]
         let passed = copy == "Shift-Command-C" && (examples == nil || examples == "Command-R")
         let listed = found.sorted { $0.key < $1.key }.map { "\($0.key)=“\($0.value)”" }.joined(separator: ", ")
         NSLog("PROBE footer-accessibility-hints \(passed ? "PASS" : "FAIL") \(listed)")
@@ -1484,6 +1488,109 @@ final class SnapshotRunner {
         }
     }
 
+    /// An announcement a click made key, losing key again (here to another of our windows;
+    /// ⌘Tab or a click into another app take the same path) ends as an announcement: no
+    /// backend session is closed, since there was no lookup in it.
+    private func probeClickedAnnouncement() async {
+        guard let delegate else { return }
+        let popup = delegate.snapshotPopup
+        var detail = "announcement never shown"
+        var passed = false
+        for attempt in 1...3 {
+            delegate.snapshotHidePopup()
+            delegate.snapshotAnnounce("No text selected.", level: .info)
+            try? await Task.sleep(for: .milliseconds(250))
+            guard let panel = delegate.snapshotPopupWindow, panel.isVisible else { continue }
+            // What a click on it does.
+            panel.makeKey()
+            try? await Task.sleep(for: .milliseconds(150))
+            let wasKey = panel.isKeyWindow
+            let sessions = popup.sessionsEnded
+            let other = ProbeKeyPanel()
+            other.setFrameOrigin(NSPoint(x: panel.frame.maxX + 40, y: panel.frame.maxY - 80))
+            other.makeKeyAndOrderFront(nil)
+            try? await Task.sleep(for: .milliseconds(300))
+            other.orderOut(nil)
+            let ended = popup.sessionsEnded - sessions
+            passed = wasKey && !panel.isVisible && popup.lastHideReason == .announcementEnded && ended == 0
+            detail = "keyAfterClick=\(wasKey) visible=\(panel.isVisible) reason=\(Self.name(popup.lastHideReason)) closeSession=+\(ended) attempt=\(attempt)"
+            if passed || wasKey { break }
+        }
+        NSLog("PROBE clicked-announcement-ends-no-session \(passed ? "PASS" : "FAIL") \(detail)")
+        delegate.snapshotHidePopup()
+    }
+
+    /// The hot key with nothing selected, pressed while Add to Anki is key: the
+    /// announcement comes up over the window and leaves the lookup alone. The window stays
+    /// open with the user's choices in it, the model still holds the lookup, and Esc goes
+    /// on reaching the window (its Cancel) instead of being taken by the announcement.
+    private func probeAnnouncementOverAnki() async {
+        guard let delegate else { return }
+        let model = delegate.model
+        let popup = delegate.snapshotPopup
+        popup.suspendsDismissal = true
+        delegate.snapshotPresent(text: "serendipity")
+        await waitUntil(timeout: 25) { !model.state.loading }
+        try? await Task.sleep(for: .milliseconds(300))
+        popup.suspendsDismissal = false
+        delegate.showAnkiSheet()
+        try? await Task.sleep(for: .milliseconds(500))
+        await waitUntil(timeout: 20) { Self.ankiSettled(model) }
+        try? await Task.sleep(for: .milliseconds(800))
+        guard let window = delegate.snapshotWindow(id: "anki"), window.isVisible else {
+            NSLog("PROBE announcement-keeps-lookup FAIL the Add to Anki window did not open")
+            return
+        }
+        // A choice of the user's: the first value turned off (only when the form shows).
+        if let first = Self.checkboxes(in: window).first, first.state == .on {
+            first.performClick(nil)
+            try? await Task.sleep(for: .milliseconds(200))
+        }
+        let choices = { Self.checkboxes(in: window).map { $0.state == .on ? "on" : "off" }.joined(separator: ",") }
+        let choicesBefore = choices()
+        let lookup = (model.state.originalText, model.activeRequestId, model.state.hasTranslation)
+        let sessions = popup.sessionsEnded
+        // The empty-selection path; trust is set for it, since without the permission
+        // the hot key opens Settings instead of announcing.
+        let trusted = model.accessibilityTrusted
+        model.accessibilityTrusted = true
+        var captures = 0
+        delegate.snapshotHotKeyPress { captures += 1; return nil }
+        model.accessibilityTrusted = trusted
+        try? await Task.sleep(for: .milliseconds(700))
+        let announced = popup.isVisible && popup.showingAnnouncement && popup.announcement?.text == "No text selected."
+        let choicesAfter = choices()
+        let held = model.state.originalText == lookup.0 && model.activeRequestId == lookup.1
+            && model.state.hasTranslation == lookup.2
+        let kept = captures == 1 && announced && window.isVisible && held && choicesAfter == choicesBefore
+            && popup.sessionsEnded == sessions
+        NSLog("PROBE announcement-keeps-lookup \(kept ? "PASS" : "FAIL") captures=\(captures) announced=\(announced) ankiWindow=\(window.isVisible ? "open" : "closed") lookup “\(model.state.originalText)” #\(model.activeRequestId) (was “\(lookup.0)” #\(lookup.1)) choices [\(choicesBefore)]→[\(choicesAfter)] closeSession=+\(popup.sessionsEnded - sessions)")
+
+        // Esc as the local monitor sees it: the handler, called directly (the app may not
+        // be active, and then no key event reaches any window of it).
+        if !window.isVisible || !popup.isVisible {
+            NSLog("PROBE announcement-leaves-escape-handler SKIP nothing to press Esc over")
+        } else {
+            let taken = popup.localEscape()
+            let passed = !taken && popup.isVisible && popup.showingAnnouncement
+            NSLog("PROBE announcement-leaves-escape-handler \(passed ? "PASS" : "FAIL") monitor \(taken ? "took Esc" : "passed Esc on") announcement=\(popup.isVisible ? "still up" : "gone")")
+        }
+        // And through the app's event queue, when Add to Anki really is the key window.
+        if !window.isVisible || !popup.isVisible {
+            NSLog("PROBE announcement-leaves-escape SKIP nothing to press Esc over")
+        } else if NSApp.keyWindow !== window {
+            NSLog("PROBE announcement-leaves-escape SKIP Add to Anki is not key (focus taken from outside): key=\(NSApp.keyWindow.map { String(describing: Swift.type(of: $0)) } ?? "none")")
+        } else {
+            NSApp.postEvent(Self.escape(for: window), atStart: false)
+            await waitUntil(timeout: 2) { !window.isVisible }
+            let passed = !window.isVisible && popup.isVisible && popup.showingAnnouncement
+            NSLog("PROBE announcement-leaves-escape \(passed ? "PASS" : "FAIL") ankiWindow=\(window.isVisible ? "open" : "closed by its Cancel") announcement=\(popup.isVisible ? "still up" : "taken down by Esc")")
+        }
+        window.close()
+        delegate.snapshotHidePopup()
+        try? await Task.sleep(for: .milliseconds(300))
+    }
+
     /// A warning announcement (4 s) never shows an empty panel: sampled every 100 ms, the
     /// panel is never on screen without its banner. Then the guard itself: a banner that
     /// goes away early takes the panel with it.
@@ -1504,7 +1611,7 @@ final class SnapshotRunner {
             let visible = delegate.snapshotPopupWindow?.isVisible ?? false
             if !visible { break }
             samples += 1
-            if delegate.model.banner == nil { emptySamples += 1 }
+            if popup.announcement == nil { emptySamples += 1 }
         }
         let lasted = Date().timeIntervalSince(start)
         let timed = emptySamples == 0 && popup.lastHideReason == .announcementEnded && lasted > 3.5
@@ -1512,11 +1619,11 @@ final class SnapshotRunner {
 
         delegate.snapshotAnnounce("No text selected.", level: .info)
         try? await Task.sleep(for: .milliseconds(300))
-        delegate.model.banner = nil
+        popup.announcement = nil
         try? await Task.sleep(for: .milliseconds(300))
         let visible = delegate.snapshotPopupWindow?.isVisible ?? false
         let guarded = !visible && popup.lastHideReason == .announcementEnded
-        NSLog("PROBE empty-panel-hides \(guarded ? "PASS" : "FAIL") banner cleared early → visible=\(visible) reason=\(Self.name(popup.lastHideReason))")
+        NSLog("PROBE empty-panel-hides \(guarded ? "PASS" : "FAIL") announcement cleared early → visible=\(visible) reason=\(Self.name(popup.lastHideReason))")
         delegate.snapshotHidePopup()
     }
 
