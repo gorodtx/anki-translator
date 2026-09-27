@@ -40,6 +40,10 @@ cleanup() {
 }
 trap cleanup EXIT
 
+# The isolated backend must not reach the user's real Anki: point AnkiConnect at a closed
+# port unless the caller brings a stand-in of their own.
+export ANKI_CONNECT_URL="${ANKI_CONNECT_URL:-http://127.0.0.1:18799}"
+
 (
   cd "${REPO}"
   TRANSLATOR_SOCKET_PATH="${SOCK}" \
