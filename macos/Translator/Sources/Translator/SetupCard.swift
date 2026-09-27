@@ -34,13 +34,19 @@ struct SetupChecklist: View {
                 SettingsStatus(level: level(for: step), title: step.title, note: detail(for: step))
                 SettingsStatusDetail {
                     if step.id == .databases, !model.databaseDownloads.isEmpty {
-                        ProgressView(value: databaseFraction)
+                        // Titled for VoiceOver; the row above already says it on screen.
+                        ProgressView("Downloading databases", value: databaseFraction)
+                            .labelsHidden()
                             .progressViewStyle(.linear)
                             .controlSize(.small)
                             .frame(width: 200)
                         Button("Stop") { perform(.cancelDatabaseDownload) }
+                            .accessibilityLabel("Stop Download")
                     } else if let action = step.action, let label = step.actionLabel {
                         Button(label) { perform(action) }
+                    }
+                    if step.id == .databases, let problem = model.settingsProblems[.databases] {
+                        SettingsStatus(level: .error, title: problem)
                     }
                 }
             }

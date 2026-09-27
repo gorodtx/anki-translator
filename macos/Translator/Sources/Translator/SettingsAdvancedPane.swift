@@ -61,6 +61,9 @@ struct AdvancedSettingsPane: View {
         } else {
             SettingsStatus(level: .unknown, title: "Unknown until the backend answers.")
         }
+        if let problem = model.settingsProblems[.databases] {
+            SettingsStatus(level: .error, title: problem)
+        }
     }
 
     // MARK: - Dictionary
@@ -88,7 +91,9 @@ struct AdvancedSettingsPane: View {
     private func dictionaryNote(_ step: SetupStep) -> String {
         guard step.state == .done else { return step.detail }
         let names = model.ping?.engines.dictionaries ?? []
-        return names.isEmpty ? "Available." : names.joined(separator: ", ")
+        // One per line: the system's own names carry " - " inside them, and a comma run
+        // broke inside a name so that a line began with "- ", which reads as a bullet.
+        return names.isEmpty ? "Available." : names.joined(separator: "\n")
     }
 
     // MARK: - About

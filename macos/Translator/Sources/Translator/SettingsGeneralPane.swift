@@ -56,6 +56,9 @@ struct GeneralSettingsPane: View {
     /// under the checkbox's text, with the one button that helps.
     @ViewBuilder
     private var loginItemState: some View {
+        if let problem = model.settingsProblems[.loginItem] {
+            SettingsStatus(level: .error, title: problem)
+        }
         switch model.loginItem {
         case .requiresApproval:
             SettingsStatus(level: .warning, title: "Waiting for your approval in System Settings.")

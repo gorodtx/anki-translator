@@ -141,6 +141,17 @@ enum SettingsStatusLevel {
         }
     }
 
+    /// What VoiceOver says for the symbol, which it cannot see.
+    var spokenName: String {
+        switch self {
+        case .ok: return "Available"
+        case .warning: return "Needs attention"
+        case .error: return "Error"
+        case .unknown: return "Unknown"
+        case .working: return "In progress"
+        }
+    }
+
     fileprivate var tint: Color {
         switch self {
         case .ok: return .green
@@ -186,6 +197,8 @@ struct SettingsStatus: View {
             .frame(maxWidth: .infinity, alignment: .leading)
         }
         .accessibilityElement(children: .combine)
+        // The symbol is hidden from VoiceOver; the state it shows is said instead.
+        .accessibilityValue(level.spokenName)
     }
 }
 
