@@ -21,7 +21,11 @@ struct AdvancedSettingsPane: View {
                         note: model.ping.map { "Version \($0.version)" }
                     )
                 } else {
-                    SettingsStatus(level: .error, title: "Not running", note: model.connectionSummary)
+                    SettingsStatus(
+                        level: .error,
+                        title: "Not running",
+                        note: "Translator connects to it as soon as it starts."
+                    )
                 }
             }
 

@@ -81,6 +81,9 @@ final class AppModel {
         case databases
         /// Anki > Connection: decks, note types, the deck or note type chosen.
         case anki
+        /// The Sources and Anki panes: the backend's settings could not be read, so the
+        /// panes stay disabled; said with a Try Again instead of a spinner that never ends.
+        case load
     }
 
     private let client: IPCClient
@@ -115,13 +118,20 @@ final class AppModel {
 
     var isConnected: Bool { connection == .connected }
 
-    var connectionSummary: String {
-        switch connection {
-        case .idle: return "Not connected"
-        case let .connecting(attempt): return "Connecting… (\(attempt))"
-        case .connected: return "Connected"
-        case let .failed(message): return message
-        }
+    /// Whether a round of connection attempts has failed since the backend last answered.
+    /// The client goes back to connecting after every failed round, and the menu must not
+    /// flip between "starting" and "not running" every few seconds.
+    private var connectionRoundFailed = false
+
+    /// The state of the backend in a few words for the menu bar menu; nil while it is
+    /// connected, when there is nothing to say. The socket path and the retry count the
+    /// client reports go to the log, not to the user.
+    var connectionSummary: String? {
+        BackendConnectionSummary.text(
+            connected: isConnected,
+            connecting: { if case .connecting = connection { return true } else { return false } }(),
+            failedBefore: connectionRoundFailed
+        )
     }
 
     // MARK: - Lifecycle
@@ -135,6 +145,13 @@ final class AppModel {
     }
 
     private func handle(connection state: IPCClient.ConnectionState) {
+        switch state {
+        case .connected: connectionRoundFailed = false
+        case let .failed(message):
+            if !connectionRoundFailed { NSLog("[translator] \(message)") }
+            connectionRoundFailed = true
+        case .idle, .connecting: break
+        }
         connection = state
         guard state == .connected else { return }
         Task { await refreshAll() }
@@ -264,11 +281,12 @@ final class AppModel {
     /// wrong while the user is still looking at it, rather than failing at the moment a
     /// card is added.
     func loadModelFields() async {
-        guard let answer = try? await client.send(
-            IPCMethod.ankiModelFields, as: AnkiModelFields.self
-        ) else {
+        let answer: AnkiModelFields
+        do {
+            answer = try await client.send(IPCMethod.ankiModelFields, as: AnkiModelFields.self)
+        } catch {
             ankiModelFields = []
-            ankiModelFieldsError = "The backend did not answer."
+            ankiModelFieldsError = "Couldn’t read the note type’s fields: \(message(for: error))"
             return
         }
         ankiModelFields = answer.fields
@@ -307,8 +325,8 @@ final class AppModel {
             settingsProblems[.loginItem] = nil
         } catch {
             settingsProblems[.loginItem] = on
-                ? "Could not turn on opening at login: \(error.localizedDescription)"
-                : "Could not turn off opening at login: \(error.localizedDescription)"
+                ? "Couldn’t turn on opening at login: \(message(for: error))"
+                : "Couldn’t turn off opening at login: \(message(for: error))"
         }
         // Ask the system what it now thinks rather than assuming the call decided it.
         refreshLoginItem()
@@ -323,7 +341,7 @@ final class AppModel {
         do {
             start = try await client.send(IPCMethod.dbDownload, as: DatabaseDownloadStart.self)
         } catch {
-            settingsProblems[.databases] = "Could not start the download: \(message(for: error))"
+            settingsProblems[.databases] = "Couldn’t start the download: \(message(for: error))"
             return
         }
         settingsProblems[.databases] = nil
@@ -595,9 +613,20 @@ final class AppModel {
     private static let settingsSaveDelay: Duration = .milliseconds(400)
 
     func refreshSettings() async {
-        guard let data = try? await client.send(IPCMethod.settingsGet),
-              let loaded = try? BackendSettings.decode(from: data)
-        else { return }
+        let loaded: BackendSettings
+        do {
+            let data = try await client.send(IPCMethod.settingsGet)
+            loaded = try BackendSettings.decode(from: data)
+        } catch {
+            NSLog("[translator] settings.get failed: \(error)")
+            // Once read, the panes hold the backend's values and a failed re-read changes
+            // nothing; before that they are disabled, and the failure is why.
+            if !settingsSync.isLoaded {
+                settingsProblems[.load] = "Couldn’t read the settings: \(message(for: error))"
+            }
+            return
+        }
+        settingsProblems[.load] = nil
         // A change still waiting to be saved, or one the backend refused, is newer than
         // what the backend has; it wins. A refused one is sent again now.
         let saving = pendingSettingsSave != nil || settingsSavesInFlight > 0

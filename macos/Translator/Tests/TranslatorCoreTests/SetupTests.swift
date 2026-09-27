@@ -445,3 +445,31 @@ private func step(_ plan: SetupPlan, _ id: SetupStepID) -> SetupStep {
         }
     }
 }
+
+/// The menu's status line: short, only while not connected, and steady between retries.
+@Suite struct BackendConnectionSummaryTests {
+    @Test func nothingIsSaidWhileConnected() {
+        #expect(BackendConnectionSummary.text(connected: true, connecting: false, failedBefore: false) == nil)
+        #expect(BackendConnectionSummary.text(connected: true, connecting: false, failedBefore: true) == nil)
+    }
+
+    @Test func theFirstAttemptsReadAsStarting() {
+        #expect(BackendConnectionSummary.text(connected: false, connecting: true, failedBefore: false) == "Starting…")
+    }
+
+    @Test func aRetryAfterAFailedRoundStaysNotRunning() {
+        #expect(BackendConnectionSummary.text(connected: false, connecting: true, failedBefore: true) == "Backend Isn’t Running")
+        #expect(BackendConnectionSummary.text(connected: false, connecting: false, failedBefore: true) == "Backend Isn’t Running")
+        #expect(BackendConnectionSummary.text(connected: false, connecting: false, failedBefore: false) == "Backend Isn’t Running")
+    }
+
+    @Test func noLineCarriesAPathOrACounter() {
+        for connecting in [false, true] {
+            for failed in [false, true] {
+                let line = BackendConnectionSummary.text(connected: false, connecting: connecting, failedBefore: failed) ?? ""
+                #expect(!line.contains("/"))
+                #expect(line.rangeOfCharacter(from: .decimalDigits) == nil)
+            }
+        }
+    }
+}

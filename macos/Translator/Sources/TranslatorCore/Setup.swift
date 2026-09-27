@@ -507,3 +507,21 @@ public enum SetupPlanner {
         )
     }
 }
+
+/// The backend's state in a few words, for the one place outside Settings that shows it:
+/// the top of the menu bar menu.
+///
+/// Said only while something is missing (nothing when connected). The client retries in
+/// rounds and reports "connecting" at the start of each, so once a round has failed the
+/// line stays "not running" instead of flipping back every few seconds; only the first
+/// attempts after launch or after a disconnect read as starting.
+public enum BackendConnectionSummary {
+    public static let starting = "Starting…"
+    public static let notRunning = "Backend Isn’t Running"
+
+    public static func text(connected: Bool, connecting: Bool, failedBefore: Bool) -> String? {
+        if connected { return nil }
+        if connecting, !failedBefore { return starting }
+        return notRunning
+    }
+}

@@ -45,8 +45,11 @@ private struct MenuBarContent: View {
     let delegate: AppDelegate
 
     var body: some View {
-        Text(model.connectionSummary)
-        Divider()
+        // Only while something is missing: a working app's menu starts with its commands.
+        if let status = model.connectionSummary {
+            Text(status)
+            Divider()
+        }
         translateItem
         // A verb, and no ellipsis: it opens a list and asks nothing.
         Button("Show History") { delegate.showHistory() }

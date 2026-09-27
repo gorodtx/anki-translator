@@ -69,14 +69,29 @@ struct SourcesSettingsPane: View {
 struct SettingsUnsavedState: View {
     @Bindable var model: AppModel
 
+    @State private var isRetrying = false
+
     var body: some View {
         if !model.settingsLoaded {
-            SettingsStatus(
-                level: model.isConnected ? .working : .warning,
-                title: model.isConnected
-                    ? "Reading the settings…"
-                    : "Settings are unavailable until the backend is running."
-            )
+            if !model.isConnected {
+                SettingsStatus(level: .warning, title: "Settings are unavailable until the backend is running.")
+            } else if let problem = model.settingsProblems[.load], !isRetrying {
+                // A read that failed (a timeout while the backend warms up, an answer this
+                // version cannot decode) would otherwise spin here for as long as the
+                // window stays key.
+                SettingsStatus(level: .error, title: problem)
+                SettingsStatusDetail {
+                    Button("Try Again") {
+                        isRetrying = true
+                        Task {
+                            await model.refreshSettings()
+                            isRetrying = false
+                        }
+                    }
+                }
+            } else {
+                SettingsStatus(level: .working, title: "Reading the settings…")
+            }
         } else if let problem = model.settingsProblems[.save] {
             SettingsStatus(level: .error, title: problem)
         }
