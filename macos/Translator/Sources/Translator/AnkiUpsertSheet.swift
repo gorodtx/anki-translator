@@ -380,9 +380,17 @@ struct AnkiUpsertSheet: View {
         dialog.canChooseDirectories = false
         dialog.allowedContentTypes = [.png, .jpeg, .gif, .webP, .heic]
         dialog.prompt = "Choose"
-        guard dialog.runModal() == .OK, let url = dialog.url else { return }
-        imagePath = url.path
-        imageAction = .replaceWithSelected
+        let pick = { (response: NSApplication.ModalResponse) in
+            guard response == .OK, let url = dialog.url else { return }
+            imagePath = url.path
+            imageAction = .replaceWithSelected
+        }
+        // A sheet on this window, as file dialogs are when a window asks for them.
+        if let window = NSApp.keyWindow {
+            dialog.beginSheetModal(for: window, completionHandler: pick)
+        } else {
+            pick(dialog.runModal())
+        }
     }
 
     private func apply() async {
