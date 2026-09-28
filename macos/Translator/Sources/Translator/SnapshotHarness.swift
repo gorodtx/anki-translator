@@ -1086,9 +1086,9 @@ final class SnapshotRunner {
     }
 
     /// Why the window's SwiftUI accessibility tree cannot be read, or nil when it can.
-    /// SwiftUI builds it for a window that has been key, or for an assistive client; a
-    /// window of an app that never got activated has none, and then a probe that reads it
-    /// cannot tell a missing button from an unbuilt tree.
+    /// SwiftUI builds it for an assistive client; asked from inside the app, it may have
+    /// none at all even for the key window of the active app (measured), and then a probe
+    /// that reads it cannot tell a missing button from an unbuilt tree.
     private static func accessibilityUnbuilt(_ window: NSWindow) -> String? {
         guard buttonTitles(in: window).isEmpty else { return nil }
         return "accessibility tree not built (window key=\(window.isKeyWindow), app active=\(NSApp.isActive))"
