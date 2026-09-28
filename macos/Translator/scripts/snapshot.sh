@@ -10,7 +10,8 @@
 #
 # Pass-through knobs: TRANSLATOR_DEBUG_SNAPSHOT_TEXTS ("a|b|c"),
 # TRANSLATOR_DEBUG_APPEARANCE (light|dark|both), TRANSLATOR_DEBUG_SNAPSHOT_SCENES
-# (popup,settings,history), TRANSLATOR_BACKEND_REPO (checkout whose backend and .venv to run).
+# (popup,settings,history), TRANSLATOR_BACKEND_REPO (checkout whose backend and .venv to run),
+# TRANSLATOR_SNAPSHOT_APP (a binary to render instead of the debug build).
 set -euo pipefail
 
 OUT="${1:?usage: scripts/snapshot.sh OUT_DIR [--no-build]}"
@@ -23,7 +24,9 @@ OUT="$(cd "${OUT}" && pwd)"
 if [[ "${2:-}" != "--no-build" ]]; then
   (cd "${HERE}" && swift build -c release 2>&1 | grep -E "error:|Build complete" || true)
 fi
-APP_BIN="${HERE}/.build/release/Translator"
+# TRANSLATOR_SNAPSHOT_APP renders a built bundle's binary instead, e.g.
+# dist/Translator.app/Contents/MacOS/Translator: then Info.plist is real (About's version).
+APP_BIN="${TRANSLATOR_SNAPSHOT_APP:-${HERE}/.build/release/Translator}"
 [[ -x "${APP_BIN}" ]] || { echo "no build at ${APP_BIN}" >&2; exit 1; }
 
 # AF_UNIX allows 103 bytes, so the socket gets a short path of its own; everything else
