@@ -90,8 +90,27 @@ final class SnapshotRunner {
         return Set(raw.split(separator: ",").map { String($0).trimmingCharacters(in: .whitespaces) })
     }
 
+    /// Exit status of a run the locked screen made worthless (see `stopIfScreenLocked`).
+    static let screenLockedStatus: Int32 = 3
+
+    /// Whether the login window is in front of the session. While it is, none of our
+    /// windows can become key and every capture comes back blank, so a run would report
+    /// dozens of failures that say nothing about the app.
+    static var screenIsLocked: Bool {
+        let session = CGSessionCopyCurrentDictionary() as? [String: Any]
+        return (session?["CGSSessionScreenIsLocked"] as? Bool) ?? false
+    }
+
+    /// Ends the run, saying why, the moment the screen locks.
+    private func stopIfScreenLocked(_ place: String) {
+        guard Self.screenIsLocked else { return }
+        NSLog("[snapshot] the screen is locked (\(place)): windows cannot become key and captures are blank; unlock it and run again")
+        exit(Self.screenLockedStatus)
+    }
+
     func run() {
         try? FileManager.default.createDirectory(at: output, withIntermediateDirectories: true)
+        stopIfScreenLocked("at start")
         Task { @MainActor in
             // The backend's retry burst: give the client a moment to connect.
             await waitUntil(timeout: 20) { self.delegate?.model.isConnected == true }
@@ -1979,6 +1998,7 @@ final class SnapshotRunner {
     private static func name(_ reason: PopupHideReason?) -> String { reason?.rawValue ?? "none" }
 
     private func write(_ window: NSWindow, _ name: String) {
+        stopIfScreenLocked("before \(name)")
         WindowSnapshot.write(window, to: output.appendingPathComponent("\(name).png"))
     }
 

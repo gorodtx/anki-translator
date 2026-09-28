@@ -60,12 +60,19 @@ for _ in $(seq 1 200); do [[ -S "${SOCK}" ]] && break; sleep 0.1; done
 TRANSLATOR_SOCKET_PATH="${SOCK}" TRANSLATOR_DEBUG_SNAPSHOT="${OUT}" \
   "${APP_BIN}" >"${OUT}/app.log" 2>&1 &
 APP_PID=$!
-# Six lookups, two appearances, two windows: well inside four minutes.
-for _ in $(seq 1 480); do kill -0 "${APP_PID}" 2>/dev/null || break; sleep 0.5; done
+# Eight lookups, two appearances, four windows and the behaviour probes: about three
+# minutes; eight is the ceiling.
+for _ in $(seq 1 960); do kill -0 "${APP_PID}" 2>/dev/null || break; sleep 0.5; done
 if kill -0 "${APP_PID}" 2>/dev/null; then
   kill "${APP_PID}" 2>/dev/null || true
   echo "snapshot run timed out; see ${OUT}/app.log" >&2
   exit 1
+fi
+APP_STATUS=0
+wait "${APP_PID}" || APP_STATUS=$?
+if [[ "${APP_STATUS}" == 3 ]]; then
+  echo "the screen is locked: renders would be blank and focus probes would fail; unlock it and run again" >&2
+  exit 3
 fi
 
 count="$(find "${OUT}" -maxdepth 1 -name '*.png' | wc -l | tr -d ' ')"
