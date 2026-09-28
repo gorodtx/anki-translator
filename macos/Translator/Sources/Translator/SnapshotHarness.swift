@@ -989,13 +989,18 @@ final class SnapshotRunner {
         try? await Task.sleep(for: .milliseconds(500))
         write(window, "history-stale-\(appearance)")
         await waitForAccessibility(in: window) { Self.hasText("Can’t update History", in: window) }
-        let noticed = Self.hasText("Can’t update History", in: window)
-        let retried = Self.pressButton(titled: "Try Again", in: window)
-        await waitUntil(timeout: 5) { model.historyLoadError == nil }
-        try? await Task.sleep(for: .milliseconds(300))
-        let cleared = model.historyLoadError == nil && !Self.hasText("Can’t update History", in: window)
-        NSLog("[snapshot] PROBE history-stale-error \(noticed && retried && cleared ? "PASS" : "FAIL") notice \(noticed ? "shown" : "missing") over \(model.history.count) rows, Try Again \(retried ? "pressed" : "missing"), after it \(cleared ? "gone" : "still shown")")
-        if !cleared { await model.loadHistory() }
+        if let unseen = Self.accessibilityUnbuilt(window) {
+            NSLog("[snapshot] PROBE history-stale-error SKIP \(unseen); the state is in history-stale-\(appearance).png")
+            await model.loadHistory()
+        } else {
+            let noticed = Self.hasText("Can’t update History", in: window)
+            let retried = Self.pressButton(titled: "Try Again", in: window)
+            await waitUntil(timeout: 5) { model.historyLoadError == nil }
+            try? await Task.sleep(for: .milliseconds(300))
+            let cleared = model.historyLoadError == nil && !Self.hasText("Can’t update History", in: window)
+            NSLog("[snapshot] PROBE history-stale-error \(noticed && retried && cleared ? "PASS" : "FAIL") notice \(noticed ? "shown" : "missing") over \(model.history.count) rows, Try Again \(retried ? "pressed" : "missing"), after it \(cleared ? "gone" : "still shown")")
+            if !cleared { await model.loadHistory() }
+        }
 
         // A load that failed with nothing to show: not "No History".
         let rows = model.history.count
@@ -1005,10 +1010,15 @@ final class SnapshotRunner {
         write(window, "history-error-\(appearance)")
         await waitForAccessibility(in: window) { Self.accessibilityButton(titled: "Try Again", in: window) != nil }
         // Pressed the way VoiceOver presses it: SwiftUI's button is no NSButton.
-        let pressed = Self.pressButton(titled: "Try Again", in: window)
+        let unseen = Self.accessibilityUnbuilt(window)
+        let pressed = unseen == nil && Self.pressButton(titled: "Try Again", in: window)
         await waitUntil(timeout: 5) { !model.history.isEmpty }
         let recovered = pressed && model.history.count == rows && model.historyLoadError == nil
-        NSLog("[snapshot] PROBE history-load-error-retry \(recovered ? "PASS" : "FAIL") button \(pressed ? "pressed" : "missing"), rows \(model.history.count) of \(rows), error \(model.historyLoadError ?? "none")")
+        if let unseen {
+            NSLog("[snapshot] PROBE history-load-error-retry SKIP \(unseen); the state is in history-error-\(appearance).png")
+        } else {
+            NSLog("[snapshot] PROBE history-load-error-retry \(recovered ? "PASS" : "FAIL") button \(pressed ? "pressed" : "missing"), rows \(model.history.count) of \(rows), error \(model.historyLoadError ?? "none")")
+        }
         if !recovered {
             model.historyLoadError = nil
             await model.loadHistory()
@@ -1071,6 +1081,15 @@ final class SnapshotRunner {
             return false
         }
         return titles
+    }
+
+    /// Why the window's SwiftUI accessibility tree cannot be read, or nil when it can.
+    /// SwiftUI builds it for a window that has been key, or for an assistive client; a
+    /// window of an app that never got activated has none, and then a probe that reads it
+    /// cannot tell a missing button from an unbuilt tree.
+    private static func accessibilityUnbuilt(_ window: NSWindow) -> String? {
+        guard buttonTitles(in: window).isEmpty else { return nil }
+        return "accessibility tree not built (window key=\(window.isKeyWindow), app active=\(NSApp.isActive))"
     }
 
     /// SwiftUI builds a window's accessibility tree when it is first asked for, so the
@@ -1156,6 +1175,10 @@ final class SnapshotRunner {
     private func probeAnkiNotRunning(_ window: NSWindow) async {
         guard let model = delegate?.model else { return }
         await waitForAccessibility(in: window) { Self.hasText("Anki Isn’t Running", in: window) }
+        if let unseen = Self.accessibilityUnbuilt(window) {
+            NSLog("[snapshot] PROBE anki-not-running SKIP \(unseen); available \(model.ankiStatus.available), the state is in anki-*.png")
+            return
+        }
         let named = Self.hasText("Anki Isn’t Running", in: window)
         let notSetUp = Self.hasText("Anki Isn’t Set Up", in: window)
         // Two buttons, Cancel and the default one; Try Again must be that one.
@@ -1601,6 +1624,14 @@ final class SnapshotRunner {
     /// Page Down, End, Space and Home on a capped body, sent to the panel as the window
     /// server would deliver them to the key window.
     private func probeKeyboardScroll() async {
+        // The Esc probes before this one closed the session, and a lookup still running
+        // then was cancelled with its state frozen at "loading": look it up afresh, so the
+        // body is the finished, capped entry this probe needs.
+        if let delegate, delegate.model.state.loading || !delegate.model.state.hasTranslation {
+            delegate.snapshotPresent(text: "bank")
+            await waitUntil(timeout: 45) { !delegate.model.state.loading }
+            try? await Task.sleep(for: .milliseconds(400))
+        }
         await probe("keyboard-scroll") { panel in
             guard let delegate = self.delegate else { return (false, "no delegate") }
             let popup = delegate.snapshotPopup
