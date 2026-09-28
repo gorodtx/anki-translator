@@ -391,7 +391,7 @@ final class SnapshotRunner {
 
     private func probeAnkiCommandW() async -> Bool {
         guard let delegate else { return true }
-        delegate.showAnkiSheet()
+        delegate.snapshotOpenAnkiFromPopup()
         try? await Task.sleep(for: .milliseconds(1500))
         logMainMenu("anki-open")
         guard let window = delegate.snapshotWindow(id: "anki") else {
@@ -1137,7 +1137,7 @@ final class SnapshotRunner {
         delegate.snapshotPresent(text: ankiText)
         await waitUntil(timeout: 25) { !delegate.model.state.loading }
         try? await Task.sleep(for: .milliseconds(400))
-        delegate.showAnkiSheet()
+        delegate.snapshotOpenAnkiFromPopup()
         let opened = delegate.snapshotWindow(id: "anki")?.frame
         // The sheet starts preparing from its own task; let that begin, then finish.
         try? await Task.sleep(for: .milliseconds(500))
@@ -1212,7 +1212,7 @@ final class SnapshotRunner {
         delegate.snapshotPresent(text: ankiText)
         await waitUntil(timeout: 25) { !model.state.loading }
         popup.suspendsDismissal = false
-        delegate.showAnkiSheet()
+        delegate.snapshotOpenAnkiFromPopup()
         try? await Task.sleep(for: .milliseconds(500))
         await waitUntil(timeout: 20) { Self.ankiSettled(model) }
         try? await Task.sleep(for: .milliseconds(1000))
@@ -1235,17 +1235,27 @@ final class SnapshotRunner {
         let openedSettings = delegate.snapshotSettingsWindow.window?.isVisible == true
         let added = model.banner?.level == .success
         if !settingsWasOpen { delegate.snapshotSettingsWindow.window?.close() }
-        let blocked = warned && !buttons.contains("Add") && buttons.contains("Open Settings…") && openedSettings
-            && !added && window.isVisible
-        NSLog("[snapshot] PROBE anki-field-mismatch \(blocked ? "PASS" : "FAIL") issues \(issues), warning \(warned ? "shown" : "missing"), buttons \(buttons), Return \(openedSettings ? "opened Settings" : "did not open Settings")\(added ? ", added a note" : ""), window \(window.isVisible ? "open" : "closed")")
+        // Return and its outcome are observable either way; the warning and the button
+        // titles only through the accessibility tree, and then from the image otherwise.
+        let unseen = Self.accessibilityUnbuilt(window)
+        let read = unseen != nil || (warned && !buttons.contains("Add") && buttons.contains("Open Settings…"))
+        let blocked = read && !issues.isEmpty && openedSettings && !added && window.isVisible
+        let seen = unseen.map { "\($0), warning and buttons are in anki-fields-mismatch-\(appearance).png" }
+            ?? "warning \(warned ? "shown" : "missing"), buttons \(buttons)"
+        NSLog("[snapshot] PROBE anki-field-mismatch \(blocked ? "PASS" : "FAIL") issues \(issues), \(seen), Return \(openedSettings ? "opened Settings" : "did not open Settings")\(added ? ", added a note" : ""), window \(window.isVisible ? "open" : "closed")")
 
         // Fixed while the window is open, as in Settings: Add comes back by itself.
         model.settings.anki.fields = saved
-        await waitUntil(timeout: 20) { Self.ankiSettled(model) && Self.buttonTitles(in: window).contains("Add") }
-        try? await Task.sleep(for: .milliseconds(500))
-        let restored = Self.buttonTitles(in: window)
-        let cleared = !warning()
-        NSLog("[snapshot] PROBE anki-field-mismatch-fixed \(restored.contains("Add") && cleared ? "PASS" : "FAIL") buttons \(restored), warning \(cleared ? "gone" : "still shown")")
+        if let unseen {
+            await waitUntil(timeout: 20) { Self.ankiSettled(model) && model.ankiFieldIssues.isEmpty }
+            NSLog("[snapshot] PROBE anki-field-mismatch-fixed SKIP \(unseen); issues now \(model.ankiFieldIssues.map(\.configured))")
+        } else {
+            await waitUntil(timeout: 20) { Self.ankiSettled(model) && Self.buttonTitles(in: window).contains("Add") }
+            try? await Task.sleep(for: .milliseconds(500))
+            let restored = Self.buttonTitles(in: window)
+            let cleared = !warning()
+            NSLog("[snapshot] PROBE anki-field-mismatch-fixed \(restored.contains("Add") && cleared ? "PASS" : "FAIL") buttons \(restored), warning \(cleared ? "gone" : "still shown")")
+        }
         window.close()
         delegate.snapshotHidePopup()
         try? await Task.sleep(for: .milliseconds(300))
@@ -1292,7 +1302,7 @@ final class SnapshotRunner {
         delegate.snapshotPresent(text: ankiText)
         await waitUntil(timeout: 25) { !model.state.loading }
         popup.suspendsDismissal = false
-        delegate.showAnkiSheet()
+        delegate.snapshotOpenAnkiFromPopup()
         try? await Task.sleep(for: .milliseconds(500))
         await waitUntil(timeout: 20) { Self.ankiSettled(model) }
         try? await Task.sleep(for: .milliseconds(800))
@@ -1327,7 +1337,7 @@ final class SnapshotRunner {
             NSLog("[snapshot] PROBE anki-add-after-new-lookup \(added ? "PASS" : "FAIL") window \(window.isVisible ? "open" : "closed"), banner “\(banner?.text ?? "-")”")
             delegate.snapshotHidePopup()
             try? await Task.sleep(for: .milliseconds(300))
-            delegate.showAnkiSheet()
+            delegate.snapshotOpenAnkiFromPopup()
             try? await Task.sleep(for: .milliseconds(500))
             await waitUntil(timeout: 20) { Self.ankiSettled(model) }
             try? await Task.sleep(for: .milliseconds(500))
@@ -1888,7 +1898,7 @@ final class SnapshotRunner {
         await waitUntil(timeout: 25) { !model.state.loading }
         try? await Task.sleep(for: .milliseconds(300))
         popup.suspendsDismissal = false
-        delegate.showAnkiSheet()
+        delegate.snapshotOpenAnkiFromPopup()
         try? await Task.sleep(for: .milliseconds(500))
         await waitUntil(timeout: 20) { Self.ankiSettled(model) }
         try? await Task.sleep(for: .milliseconds(800))

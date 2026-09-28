@@ -619,6 +619,13 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
 
     func snapshotPresent(text: String) { present(text: text, at: snapshotPointer) }
     func snapshotHidePopup() { popup.hide() }
+    /// Opens Add to Anki the way the panel's row does: the panel steps aside quietly first,
+    /// keeping the session. Opened straight over a visible panel, the next outside click
+    /// would dismiss that panel, end the session and close the new window with it.
+    func snapshotOpenAnkiFromPopup() {
+        popup.hide(reason: .ownWindowFocused)
+        showAnkiSheet()
+    }
     var snapshotPopupWindow: NSWindow? { popup.window }
     var snapshotPopup: PopupPanelController { popup }
     /// Show the panel again over whatever the model holds now, without a new lookup.
