@@ -15,6 +15,8 @@ final class AppModel {
     // Current translation
     var state = ViewState()
     var activeRequestId: Int = 0
+    /// The newest request whose `translationState` event has been applied (see `translate`).
+    private var appliedEventRequestId = 0
     var phase: TranslationPhase = .final
     /// Why the current lookup failed, said as the body of the panel.
     var lastError: String?
@@ -181,6 +183,7 @@ final class AppModel {
             guard let payload = try? event.decode(TranslationStateEvent.self) else { return }
             guard payload.requestId >= activeRequestId else { return }  // stale request
             activeRequestId = payload.requestId
+            appliedEventRequestId = max(appliedEventRequestId, payload.requestId)
             phase = payload.phase
             let wasLoading = state.loading
             withAnimation(Motion.stateChange) { state = payload.state }
@@ -406,6 +409,14 @@ final class AppModel {
         refreshAnkiStatusForLookup()
         do {
             let response = try await client.send(IPCMethod.translate, params: ["text": text], as: TranslateResponse.self)
+            // Events of this request may have been applied before the reply resumed us
+            // ("begin" is, every time); see `ReplyOrdering`.
+            guard ReplyOrdering.replyApplies(
+                request: response.requestId, active: activeRequestId, lastEvent: appliedEventRequestId
+            ) else {
+                activeRequestId = max(activeRequestId, response.requestId)
+                return
+            }
             activeRequestId = response.requestId
             let wasLoading = state.loading
             withAnimation(Motion.stateChange) { state = response.state }
@@ -425,8 +436,12 @@ final class AppModel {
     }
 
     func closeSession() async {
-        _ = try? await client.send(IPCMethod.close)
+        // Counted when the close is asked for, not when it is answered. The backend takes
+        // one connection's requests in order, so whatever is prepared after this call
+        // belongs to the next session; a reply that arrives late — the backend busy with a
+        // slow lookup — must not close an Add to Anki window opened for that next one.
         closedSessions += 1
+        _ = try? await client.send(IPCMethod.close)
     }
 
     func refreshExamples() async {
@@ -484,6 +499,13 @@ final class AppModel {
             let response = try await client.send(
                 IPCMethod.historySelect, params: ["entry_id": entryId], as: TranslateResponse.self
             )
+            // As for a lookup's reply (see `translate`): never over a newer state.
+            guard ReplyOrdering.replyApplies(
+                request: response.requestId, active: activeRequestId, lastEvent: appliedEventRequestId
+            ) else {
+                activeRequestId = max(activeRequestId, response.requestId)
+                return true
+            }
             activeRequestId = response.requestId
             withAnimation(Motion.stateChange) { state = response.state }
             return true
