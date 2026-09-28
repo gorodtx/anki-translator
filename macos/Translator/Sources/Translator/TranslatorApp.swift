@@ -381,6 +381,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         )
         // While it is on screen the list follows new lookups (see `AppModel.lookupSettled`).
         model.historyWindowOpen = true
+        model.historyListAtTop = { [weak self] in self?.historyListIsAtTop() ?? true }
         if closeObservers["history"] == nil, let window = windows["history"] {
             closeObservers["history"] = NotificationCenter.default.addObserver(
                 forName: NSWindow.willCloseNotification, object: window, queue: .main
@@ -399,21 +400,30 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         }
     }
 
+    /// Whether History's list shows its top edge (true when there is no list to ask).
+    private func historyListIsAtTop() -> Bool {
+        guard let scroll = historyTable()?.enclosingScrollView else { return true }
+        return scroll.contentView.bounds.origin.y <= -scroll.contentInsets.top + 1
+    }
+
+    private func historyTable() -> NSTableView? {
+        guard let root = windows["history"]?.contentView else { return nil }
+        var stack = [root]
+        while let view = stack.popLast() {
+            if let table = view as? NSTableView { return table }
+            stack.append(contentsOf: view.subviews)
+        }
+        return nil
+    }
+
     /// Scrolls History's list to its top edge once the rows the reload just brought in are
     /// laid out (the list moves itself when they are inserted, so this waits for that).
     private func scrollHistoryToTop() {
         DispatchQueue.main.async { [weak self] in
-            guard let root = self?.windows["history"]?.contentView else { return }
-            var stack = [root]
-            while let view = stack.popLast() {
-                if let table = view as? NSTableView, let scroll = table.enclosingScrollView {
-                    let clip = scroll.contentView
-                    clip.scroll(to: NSPoint(x: clip.bounds.origin.x, y: -scroll.contentInsets.top))
-                    scroll.reflectScrolledClipView(clip)
-                    return
-                }
-                stack.append(contentsOf: view.subviews)
-            }
+            guard let scroll = self?.historyTable()?.enclosingScrollView else { return }
+            let clip = scroll.contentView
+            clip.scroll(to: NSPoint(x: clip.bounds.origin.x, y: -scroll.contentInsets.top))
+            scroll.reflectScrolledClipView(clip)
         }
     }
 

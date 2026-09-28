@@ -69,6 +69,12 @@ struct HistoryView: View {
             guard selection == nil, needle.isEmpty else { return }
             scrollToTop()
         }
+        // The same for a lookup made while the window is open, when the list was at its
+        // top: the new row is the one the user just looked up.
+        .onChange(of: model.historyTopReloads) {
+            guard selection == nil, needle.isEmpty else { return }
+            scrollToTop()
+        }
         .overlay { emptyState }
         .searchable(text: $query, placement: .toolbar)
         .frame(minWidth: 420, minHeight: 360)

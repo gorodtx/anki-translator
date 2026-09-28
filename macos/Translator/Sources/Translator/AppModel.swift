@@ -43,6 +43,12 @@ final class AppModel {
     var historyOpenFailure: HistoryOpenFailure?
     /// Counts the History window's reopenings, each after its list has been reloaded.
     var historyReopens = 0
+    /// Goes up after a reload of an open History window that should keep the list at its
+    /// top edge: it was there when the reload started (see `reloadOpenHistory`).
+    var historyTopReloads = 0
+    /// Set by the app: whether History's list shows its top edge right now. Asked before a
+    /// reload inserts rows, since the list moves itself once they are in.
+    @ObservationIgnored var historyListAtTop: () -> Bool = { true }
     /// Set by the History window's owner. While it is open, the list follows new lookups
     /// and a reconnected backend; while it is closed, nobody would see a reload.
     @ObservationIgnored var historyWindowOpen = false
@@ -165,7 +171,7 @@ final class AppModel {
         guard state == .connected else { return }
         Task { await refreshAll() }
         // "Can’t Load History" said while the backend was away is no longer true.
-        if historyWindowOpen { Task { await loadHistory() } }
+        if historyWindowOpen { Task { await reloadOpenHistory() } }
     }
 
     func refreshAll() async {
@@ -266,7 +272,7 @@ final class AppModel {
         guard wasLoading, !state.loading, !state.originalText.isEmpty else { return }
         // The backend stores the lookup with its result; an open History window shows it
         // at the top without being closed and opened again.
-        if historyWindowOpen { Task { await loadHistory() } }
+        if historyWindowOpen { Task { await reloadOpenHistory() } }
         if let lastError, banner?.text == lastError { return }
         speak(PopupSpeech.summary(for: state, error: lastError))
     }
@@ -469,6 +475,15 @@ final class AppModel {
         } catch {
             show(banner: message(for: error), level: .error)
         }
+    }
+
+    /// Reloads the rows of an open History window. A list that showed its top edge keeps
+    /// showing it: the newest lookup lands there, and SwiftUI would otherwise keep the old
+    /// first row in place and leave the new one half under the toolbar.
+    private func reloadOpenHistory() async {
+        let atTop = historyListAtTop()
+        guard await loadHistory(), atTop else { return }
+        historyTopReloads += 1
     }
 
     /// Reloads the history. A failure is kept in `historyLoadError` for the History window

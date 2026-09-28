@@ -918,6 +918,8 @@ final class SnapshotRunner {
         let shown = table?.numberOfRows ?? 0
         let ok = window.isVisible && model.history.first?.text == word && shown == model.history.count
         NSLog("[snapshot] PROBE history-live-update \(ok ? "PASS" : "FAIL") window \(window.isVisible ? "open" : "closed"), first row “\(model.history.first?.text ?? "-")”, wanted “\(word)”, rows \(rows) -> \(model.history.count), list shows \(shown)")
+        // The list was at its top: the new row is there in full, not half under the toolbar.
+        Self.probeFirstRow("history-first-row-live", in: window)
         write(window, "history-live-\(appearance)")
     }
 
