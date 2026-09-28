@@ -68,11 +68,15 @@ def test_info_plist_declares_agent_service_and_minimum_os() -> None:
         template.replace("${APP_NAME}", "Translator")
         .replace("${BUNDLE_ID}", "com.translator.desktop")
         .replace("${APP_VERSION}", "0.3.0")
+        .replace("${APP_BUILD}", "281")
         .replace("${MIN_MACOS}", "26.0")
     )
     plist = plistlib.loads(rendered.encode("utf-8"))
 
     assert plist["CFBundleIdentifier"] == "com.translator.desktop"
+    # About shows "Version 0.3.0 (281)": the build number, not the version twice.
+    assert plist["CFBundleShortVersionString"] == "0.3.0"
+    assert plist["CFBundleVersion"] == "281"
     assert plist["LSUIElement"] is True
     assert plist["LSMinimumSystemVersion"] == "26.0"
     service = plist["NSServices"][0]

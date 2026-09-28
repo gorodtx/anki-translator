@@ -24,6 +24,9 @@ SIGN_IDENTITY="-"
 APP_NAME="Translator"
 BUNDLE_ID="com.translator.desktop"
 APP_VERSION="${TRANSLATOR_APP_VERSION:-0.3.0}"
+# The build number (CFBundleVersion), shown in parentheses after the version in About: the
+# commit count only grows, as a build number must. A checkout without history gets 1.
+APP_BUILD="${TRANSLATOR_APP_BUILD:-$(git -C "${ROOT_DIR}" rev-list --count HEAD 2>/dev/null || echo 1)}"
 MIN_MACOS="26.0"
 
 log() { printf '[build-macos] %s\n' "$*" >&2; }
@@ -201,7 +204,7 @@ cat > "${CONTENTS}/Info.plist" <<PLIST
   <key>CFBundleDisplayName</key><string>${APP_NAME}</string>
   <key>CFBundlePackageType</key><string>APPL</string>
   <key>CFBundleShortVersionString</key><string>${APP_VERSION}</string>
-  <key>CFBundleVersion</key><string>${APP_VERSION}</string>
+  <key>CFBundleVersion</key><string>${APP_BUILD}</string>
   <key>CFBundleIconFile</key><string>AppIcon</string>
   <key>LSMinimumSystemVersion</key><string>${MIN_MACOS}</string>
   <key>LSUIElement</key><true/>
