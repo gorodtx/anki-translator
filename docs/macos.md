@@ -2,7 +2,9 @@
 
 Приложение рассчитано на Apple Silicon и macOS 26 или новее. В `Translator.app` находятся native SwiftUI/AppKit оболочка, Swift helper, CPython 3.13 и зависимости backend. На компьютере пользователя не нужны terminal, `uv`, внешний Python, репозиторий или Command Line Tools.
 
-Публичный релиз пока **BLOCKED**: 03.10.2026 пользователь подтвердил отсутствие Apple Developer Program, локально найдено 0 действительных signing identities. Ad-hoc DMG служит локальной проверке упаковки; он не доказывает обычное открытие скачанного приложения через Gatekeeper. Developer ID, успешная notarization и проверка реального скачанного релиза остаются условиями публичной доставки. Измерения и ограничения: [PROGRESS-TRANSLATOR1.md](release/PROGRESS-TRANSLATOR1.md).
+Опубликован [предварительный выпуск v0.3.0](https://github.com/gorodtx/selection_translator_anki/releases/tag/v0.3.0): build 295, Apple Silicon, macOS 26+, DMG 25 229 806 bytes. SHA256: `dd7249f9b7061a83176e52f15e0a9e6532bbddab4c75cf70041fd603688292ea`. Размеры и SHA256 всех восьми assets совпали; DMG скачан без авторизации, смонтирован, оба встроенных launcher прошли проверку. Базы SQLite объёмом 1,9 GB повторно не публикуются.
+
+**Подписанная публичная установка остаётся BLOCKED (D05).** Apple Developer Program отсутствует, у текущего DMG ad-hoc подпись. Обычное открытие скачанного приложения через Gatekeeper не подтверждено. В tag CI пять проверок исходников, native-компонентов и упаковки завершились успешно; notarization остановилась на обязательных signing inputs. Developer ID, notarization, stapling и проверка Gatekeeper остаются условиями полноценной публичной доставки. [Прогресс доставки](release/PROGRESS-DELIVERY.md), [историческая приёмка](release/PROGRESS-TRANSLATOR1.md).
 
 ## Установка
 
