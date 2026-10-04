@@ -289,3 +289,17 @@ A29 новый backlog: legacy host installer после успешного atom
 **A28 correction установлен:** source43af6cb/menu activation+run-loop ordering/unhide/Space+activation completion. Unit/local runtime green ограничен своим объёмом; настоящий повторный status-menu click ожидается от пользователя.
 
 Actual shortcut в General302 — **⇧⌘T**. Manual steps должны читать сохранённую комбинацию, не предполагать default. A29 obsolete host LaunchAgent убран после доказательства отсутствующего service; legacy developer installer bootstrap bug остаётся отдельным открытым пунктом, canonical app-owned launch PASS.
+
+
+### A31 / A27 — 2026-10-04T21:00:07.709076+00:00: first-run permissions и исправление probe
+
+Новый user requirement: необходимые разрешения запрашивать сразу после первой установки; минимум действий пользователя. Приложению для глобального capture/post-event нужен Accessibility; grant выполняет macOS/user, автоматическое выставление toggle не обещается. Добавить native request один раз при первом нормальном запуске; isolated tests не должны показывать host prompt, повторный launch после отказа не должен спамить. Existing General/Setup native style сохранить.
+
+A27 build302 **FAIL** по новому user screenshot: shortcut показывает native permission dialog вместо перевода. Источник ошибки первого исправления доказан native stderr: reportedTrust=false, AX focused-app probe иногда success → granted=true, затем false при смене foreground. Это ложноположительный grant, live AX success не доказывает именно process trust. Override и его abstraction/tests удаляются; authoritative AXIsProcessTrustedWithOptions остаётся, original historical tests/logs сохранены как ограниченные и ошибочный критерий отмечен. No code requirement/TCC bypass.
+
+
+### A31 — 2026-10-04T21:08:35.297461+00:00: host startup request подтверждён
+
+**Native request PASS:** production304 обычным Launch Services стартом без debug flags показал системный Translator Accessibility prompt; Main лично прочитал AX и просмотрел screenshot через CUA. Flag accessibilityPermissionRequested=1 ограничивает повторные автоматические запросы, explicit Setup/shortcut сохраняют повторную возможность. User/macOS grant остаётся обязательным; macOS native button ведёт к штатному toggle/TouchID. Scope «одна кнопка приложения + обязательные действия ОС», не обещать auto-grant.
+
+Доказанный stale Translator grant удалён supported scoped tccutil reset exit0; прочие приложения не включались и credentials не вводились. Current trust criterion исправлен по Apple API contract. A27 capture ждёт real grant + selection, A28 ждёт physical repeated menu result. Failed AX availability criterion и failed intermediate relaunch сохраняются в истории.

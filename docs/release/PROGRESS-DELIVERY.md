@@ -890,3 +890,21 @@ Normal launch current300 реально поднял shell28849/backend28866/hel
 ![Settings после correction: light](/Users/den/Documents/dev/translator-evidence/2026-10-04/native-hotfix/menu-correction-check/window-settings-reopen-light.png)
 
 ![Settings после correction: dark](/Users/den/Documents/dev/translator-evidence/2026-10-04/native-hotfix/menu-correction-check/window-settings-reopen-dark.png)
+
+
+### G116 — 2026-10-04T21:00:07.709076+00:00: physical FAIL и корректировка критерия permission
+
+User build302 shortcut FAIL: native OS Accessibility request вместо перевода. Main лично просмотрел исходный screenshot ниже; он содержит личный Obsidian background и не должен использоваться как marketing/media/public asset. tccd mismatch старой/302 signature сохранён. Native stderr показывает reported=false при AX0; прежний override неверно трактовал доступный AX ответ как grant. Main удаляет override и чистую abstraction с тремя тестами ложного критерия; не маскирует FAIL старыми 172 green tests. В Settings теперь только authoritative macOS trust, A31 first normal launch native permission prompt один раз, без автоприсвоения доступа. Same-build302 relaunch не дал grant; actual capture остаётся FAIL. User Settings repeated-menu result пока UNKNOWN.
+
+![Пользователь: shortcut открывает native Accessibility dialog](/Users/den/Documents/dev/translator-evidence/2026-10-04/native-hotfix/user-build302-permission-prompt.png)
+
+
+### G117 — 2026-10-04T21:08:35.297461+00:00: исправленный trust и первый native request
+
+Source5ecba75 normal commit gates PASS (Ruff/format130+14legacy/mypy108/Swift release build). Authority теперь AXIsProcessTrustedWithOptions(prompt:false); AX capability override/3 ложных unit tests удалены. Первая normal launch один раз вызывает native prompt, isolated defaults его не вызывают. Fresh production304/source684767cd256ad4692c2381152f29c559144a9c29949346031e7e32439c45556d seal PASS и packaging18PASS.
+
+Прежние exact shell80615/engine80627/helper80634: real backend shutdown RPC acknowledged; затем guarded shell TERM; все три process завершились до replacement. Это также исправляет обнаруженный промежуточный relaunch302, который успел attach к завершающемуся backend и остался без runtime; RED same-build-relaunch-stderr.log сохранён, новый fresh launch304 реально владеет backend.
+
+Выполнен **только** `tccutil reset Accessibility com.translator.desktop` exit0 для stale named grant; receipt translator-scoped-tcc-reset.log. Это supported macOS reset конкретного приложения; нет TCC database writes, global reset, signature requirement bypass или автоматического grant. Native permission предоставляется пользователем/macOS. First normal launch через Launch Services **без debug env**: accessibilityPermissionRequested=1, accessibilityTrusted=0. Main через CUA лично прочитал native Translator permission dialog и просмотрел screenshot в tool output до любого shortcut input. A31 startup request PASS в этом host scope; grant/capture A27 WAITING_USER. Orca CLI save попытки не нашли accessory helper (app_not_found), current CUA screenshot на диск не сохранён и не подменяется старой картинкой. Его AX текст совпадает с native OS dialog на user302 screenshot выше.
+
+Fresh304 ping: backend85833, DB3true/pendingbytes0, Applepairinstalled/helperstalefalse. Original DB files/history/config/Anki не очищались, DB downloads/uploads0; одна canonical app /Applications. Пользователь получил concrete native approval steps для304; A28 physical menu result ещё UNKNOWN. Предыдущий mac push a34e4cc remote SHA verified; новый5ecba75 ожидает delivery.

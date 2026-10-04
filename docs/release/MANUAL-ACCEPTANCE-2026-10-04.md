@@ -44,3 +44,8 @@ Installed0.3.0(300)/source30adcf27/nativebyte-match/sealPASS; oldexactPID69352 �
 ### M005 — 2026-10-04T20:54:11.949428+00:00: canonical302 для новой физической проверки
 
 Одна /Applications/Translator.app, source43af6cb, seal verified, backend/helper/DB3/Applepair/history IPC PASS. tccd signature mismatch доказан, saved shortcut **⇧⌘T**. Пользователю отправлены конкретные steps для exact installed copy и обоих bugs. **A27/A28 WAITING_USER**, A30 duplicate cleanup PASS. Нет нового public release и утверждения «всё исправлено».
+
+
+### M006 — 2026-10-04T21:08:35.297461+00:00: current304 и обязательный native grant
+
+User302 FAIL screenshot сохранён как original user-build302-permission-prompt.png и лично просмотрен. Current304 = source5ecba75/source digest684767cd256ad4692c2381152f29c559144a9c29949346031e7e32439c45556d, authoritative trust (без AX override), native first-launch request. Exact old processes остановлены с shutdown ack; named stale grant reset exit0. New normal launch без debug env реально показал native OS dialog, personally viewed CUA. Startup request PASS; grant/capture WAITING_USER и Settings repeated physical menu UNKNOWN. Новое UI screenshot на disk не экспортировалось; historical302 image не считается current304 screenshot.
