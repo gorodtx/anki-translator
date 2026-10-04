@@ -13,7 +13,7 @@ permissions:
 jobs:
   gate:
     name: lint, types, tests
-    runs-on: macos-15
+    runs-on: macos-26
     steps:
       - uses: actions/checkout@v4
         with:
@@ -26,6 +26,17 @@ jobs:
 
       - name: Sync dependencies
         run: uv sync --frozen --dev
+
+      - name: Validate native IPC toolchain
+        run: |
+          set -euo pipefail
+          swift --version
+          sdk="$(xcrun --show-sdk-version)"
+          echo "macOS SDK: ${sdk}"
+          case "${sdk}" in
+            26.*) ;;
+            *) echo "macOS 26 SDK required for the real Swift IPC tests" >&2; exit 1 ;;
+          esac
 
       - name: ruff check
         run: uv run --frozen ruff check .

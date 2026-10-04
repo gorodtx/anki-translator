@@ -56,7 +56,9 @@ def test_workflow_declares_the_expected_job_graph() -> None:
         for name, job in jobs.items()
         if name != "linux-parity"
     )
-    # Swift jobs need the macOS 26 SDK for TranslationSession(installedSource:).
+    # Python's real IPC regression also builds the Swift package (tools 6.2).
+    # All native build jobs need the macOS 26 SDK/toolchain.
+    assert jobs["gate"]["runs-on"] == "macos-26"
     assert jobs["sidecar"]["runs-on"] == "macos-26"
     assert jobs["shell"]["runs-on"] == "macos-26"
     assert jobs["bundle"]["runs-on"] == "macos-26"
