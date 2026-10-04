@@ -20,9 +20,20 @@ HERE="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 REPO="${TRANSLATOR_BACKEND_REPO:-$(cd "${HERE}/../.." && pwd)}"
 mkdir -p "${OUT}"
 OUT="$(cd "${OUT}" && pwd)"
+# Refuse stale renders rather than counting a previous run's PNG as new evidence.
+if find "${OUT}" -maxdepth 1 -name '*.png' -print -quit | grep -q .; then
+  echo "snapshot output already contains PNG files; use a fresh directory" >&2
+  exit 1
+fi
 
 if [[ "${2:-}" != "--no-build" ]]; then
-  (cd "${HERE}" && swift build -c release 2>&1 | grep -E "error:|Build complete" || true)
+  if (cd "${HERE}" && swift build -c release) >"${OUT}/build.log" 2>&1; then
+    grep -E "Build complete" "${OUT}/build.log" || true
+  else
+    BUILD_STATUS=$?
+    cat "${OUT}/build.log" >&2
+    exit "${BUILD_STATUS}"
+  fi
 fi
 # TRANSLATOR_SNAPSHOT_APP renders a built bundle's binary instead, e.g.
 # dist/Translator.app/Contents/MacOS/Translator: then Info.plist is real (About's version).
@@ -37,11 +48,16 @@ mkdir -p "${STATE}/cfg" "${STATE}/log"
 rm -f "${SOCK}"
 
 cleanup() {
+  [[ -n "${APP_PID:-}" ]] && kill "${APP_PID}" 2>/dev/null || true
+  [[ -n "${APP_PID:-}" ]] && wait "${APP_PID}" 2>/dev/null || true
   [[ -n "${BACKEND_PID:-}" ]] && kill "${BACKEND_PID}" 2>/dev/null || true
-  wait "${BACKEND_PID:-}" 2>/dev/null || true
+  [[ -n "${BACKEND_PID:-}" ]] && wait "${BACKEND_PID}" 2>/dev/null || true
   rm -f "${SOCK}"
 }
 trap cleanup EXIT
+trap 'exit 129' HUP
+trap 'exit 130' INT
+trap 'exit 143' TERM
 
 # The isolated backend must not reach the user's real Anki: point AnkiConnect at a closed
 # port unless the caller brings a stand-in of their own.
@@ -77,7 +93,51 @@ if [[ "${APP_STATUS}" == 3 ]]; then
   echo "the screen is locked: renders would be blank and focus probes would fail; unlock it and run again" >&2
   exit 3
 fi
+if [[ "${APP_STATUS}" != 0 ]]; then
+  echo "snapshot app failed (exit ${APP_STATUS}); see ${OUT}/app.log" >&2
+  exit "${APP_STATUS}"
+fi
 
 count="$(find "${OUT}" -maxdepth 1 -name '*.png' | wc -l | tr -d ' ')"
 echo "${count} images in ${OUT}"
-grep -c "could not capture\|not visible" "${OUT}/app.log" >/dev/null && grep "could not capture\|not visible" "${OUT}/app.log" >&2 || true
+if ! grep -Fq '[snapshot] done' "${OUT}/app.log"; then
+  echo "snapshot runner did not complete; see ${OUT}/app.log" >&2
+  exit 1
+fi
+failure_pattern='could not capture|could not encode|not visible|write failed|blank composite .*attempt 3|PROBE [^ ]+ FAIL'
+if grep -E "${failure_pattern}" "${OUT}/app.log" >&2; then
+  echo "snapshot output or behaviour failed; see ${OUT}/app.log" >&2
+  exit 1
+fi
+scenes="${TRANSLATOR_DEBUG_SNAPSHOT_SCENES:-popup,settings,history,anki,probes}"
+IFS=',' read -r -a selected_scenes <<< "${scenes}"
+for scene in "${selected_scenes[@]}"; do
+  scene="$(printf '%s' "${scene}" | tr -d '[:space:]')"
+  case "${scene}" in
+    probes) ;;
+    popup|settings|history|anki)
+      if ! find "${OUT}" -maxdepth 1 -name "${scene}-*.png" -print -quit | grep -q .; then
+        echo "snapshot run produced no ${scene} images; see ${OUT}/app.log" >&2
+        exit 1
+      fi
+      ;;
+    *) echo "unknown snapshot scene: ${scene}" >&2; exit 1 ;;
+  esac
+done
+while IFS= read -r written; do
+  if [[ ! -f "${OUT}/${written}" ]]; then
+    echo "declared snapshot is missing: ${written}; see ${OUT}/app.log" >&2
+    exit 1
+  fi
+done < <(sed -nE 's/.*\[snapshot\] wrote ([^ ]+\.png) .*/\1/p' "${OUT}/app.log")
+if [[ "${scenes}" == "probes" ]]; then
+  if ! grep -Eq 'PROBE [^ ]+ (PASS|SKIP)' "${OUT}/app.log"; then
+    echo "probe-only run produced no verdicts; see ${OUT}/app.log" >&2
+    exit 1
+  fi
+elif [[ "${count}" == 0 ]]; then
+  echo "snapshot run produced no images; see ${OUT}/app.log" >&2
+  exit 1
+fi
+# SKIP remains explicitly visible; it never becomes a claimed behaviour PASS.
+grep -E 'PROBE [^ ]+ SKIP' "${OUT}/app.log" || true

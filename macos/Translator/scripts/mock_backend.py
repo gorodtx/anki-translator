@@ -203,6 +203,8 @@ class Backend:
         return {
             "version": BACKEND_VERSION,
             "protocol": PROTOCOL_VERSION,
+            # Simulated contract for UI fixtures; this stand-in is not durable-history proof.
+            "capabilities": {"history_persistence": True},
             "pid": os.getpid(),
             "platform": "darwin",
             "db": {
