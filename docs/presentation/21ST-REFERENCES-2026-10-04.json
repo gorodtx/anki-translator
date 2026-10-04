@@ -1,0 +1,79 @@
+{
+  "retrieved_at": "2026-10-04",
+  "source": "21st.dev MCP search",
+  "scope": "Free catalog metadata only. No paid code retrieval, installation, copying, visual review, or license verification has been performed.",
+  "searches": [
+    {
+      "query": "minimal macOS software product demo hero",
+      "status": "READ_METADATA_ONLY",
+      "results": [
+        {
+          "id": 12330,
+          "type": "component",
+          "name": "MacBook Neo Hero",
+          "author": "jean.duthil13",
+          "url": "https://21st.dev/@jean.duthil13/components/mac-book-neo-hero",
+          "previewUrl": "https://cdn.21st.dev/jean.duthil13/mac-book-neo-hero/default/preview.1777246243067.png",
+          "videoUrl": "https://cdn.21st.dev/jean.duthil13/mac-book-neo-hero/default/video.1777246243067.mp4",
+          "description": "Scroll-driven image-sequence hero with floating glass step cards. Pin the page, scrub through hundreds of frames as the user scrolls, and reveal contextual cards at each segment. Inspired by Apple's product pages.\n"
+        },
+        {
+          "id": 4710,
+          "type": "component",
+          "name": "Hero with Product Mockup",
+          "author": "vaib215",
+          "url": "https://21st.dev/@vaib215/components/hero-with-product-mockup",
+          "previewUrl": "https://cdn.21st.dev/user_2rV0b4mwh6SKrMK7lUyQUkzEa92/hero-with-product-mockup/default/preview.1787004560748.png",
+          "videoUrl": "https://cdn.21st.dev/user_2rV0b4mwh6SKrMK7lUyQUkzEa92/hero-with-product-mockup/default/video.1787004583974.mp4",
+          "description": "Showcase your product in front of users and shine"
+        },
+        {
+          "id": 2572,
+          "type": "component",
+          "name": "macOS Dock",
+          "author": "dhmnpunit",
+          "url": "https://21st.dev/@dhmnpunit/components/mac-os-dock",
+          "previewUrl": "https://cdn.21st.dev/user_2uLQhEWebyAq5GWuPr9LHCr04M4/mac-os-dock/default/preview.1788469439113.png",
+          "videoUrl": "https://cdn.21st.dev/user_2uLQhEWebyAq5GWuPr9LHCr04M4/mac-os-dock/default/video.1788469463907.mp4",
+          "description": "An authentic, responsive React dock component that replicates the macOS dock experience with smooth magnification effects, GSAP animations, and real macOS-style interactions. Perfect for portfolios and desktop-style applications."
+        }
+      ]
+    },
+    {
+      "query": "interactive text selection floating toolbar",
+      "status": "READ_METADATA_ONLY",
+      "results": [
+        {
+          "id": 26926,
+          "type": "component",
+          "name": "Selection Bubble Menu",
+          "author": "laziekiki",
+          "url": "https://21st.dev/@laziekiki/components/selection-bubble-menu",
+          "previewUrl": "https://cdn.21st.dev/laziekiki/selection-bubble-menu/default/preview.1789003632689-e5378c25-8a8f-4ec2-b90d-beb0fa15a0cb.png",
+          "videoUrl": "https://cdn.21st.dev/laziekiki/selection-bubble-menu/default/video.1789003632689-e5378c25-8a8f-4ec2-b90d-beb0fa15a0cb.mp4",
+          "description": "A floating toolbar that springs up above any text selection, the pattern from Medium and Notion. Highlight text and format actions appear right where you are looking, follow the selection as you scroll, and flip below when there is no room above. Pressing a button never drops your selection, so you can stack formats without re-selecting. Bring your own actions, icons, and shortcuts. Self-contained: portaled, keyboard-aware, adapts to light or dark. React plus framer-motion."
+        },
+        {
+          "id": 10464,
+          "type": "component",
+          "name": "Dynamic Toolbar",
+          "author": "0xUrvish",
+          "url": "https://21st.dev/@0xUrvish/components/dynamic-toolbar",
+          "previewUrl": "https://cdn.21st.dev/user_0xUrvish/dynamic-toolbar/default/preview.1787318592613.png",
+          "videoUrl": "https://cdn.21st.dev/user_0xUrvish/dynamic-toolbar/default/video.1787318601934.mp4",
+          "description": "A dynamic toolbar with animated tool selection and smooth transitions."
+        },
+        {
+          "id": 12401,
+          "type": "component",
+          "name": "Input Bar",
+          "author": "serafimcloud",
+          "url": "https://21st.dev/@serafimcloud/components/input-bar",
+          "previewUrl": "https://cdn.21st.dev/21st.dev/input-bar/toolbar-actions/preview.1777454548896.png",
+          "videoUrl": "https://cdn.21st.dev/21st.dev/input-bar/toolbar-actions/video.1777454548896.mp4",
+          "description": "Chat composer with auto-resizing textarea, attachment chips for staged images/files, send/stop button, and slot-based left/right toolbar actions for mode pickers, model selectors, etc. Self-contained port from 21st.dev Agent Elements."
+        }
+      ]
+    }
+  ]
+}
