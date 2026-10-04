@@ -215,6 +215,40 @@ def test_unavailable_backend_is_reported_not_raised(tmp_path: Path) -> None:
         runtime.stop()
 
 
+def test_repeated_merge_preserves_formatted_example_boundaries(
+    anki: tuple[FakeAnkiConnect, AnkiFlow],
+) -> None:
+    server, flow = anki
+    server.state.models[DEFAULT_MODEL_NAME] = list(DEFAULT_MODEL_FIELDS)
+    config = AnkiConfig(deck="English", model=DEFAULT_MODEL_NAME, fields=FIELDS)
+    result = _result()
+    _wait(flow.add_note(config, "bank", result, lambda _: None))
+    note = next(iter(server.state.notes.values()))
+    original_fields = dict(note.fields)
+    preview = _wait(flow.prepare_upsert(config, "bank", result)).preview
+    assert preview is not None
+    decision = AnkiUpsertDecision(
+        create_new=False,
+        target_note_ids=(note.note_id,),
+        translation_action=AnkiFieldAction.MERGE_UNIQUE_SELECTED,
+        definitions_action=AnkiFieldAction.MERGE_UNIQUE_SELECTED,
+        examples_action=AnkiFieldAction.MERGE_UNIQUE_SELECTED,
+        image_action=AnkiImageAction.KEEP_EXISTING,
+        selected_translations=preview.values.translations,
+        selected_definitions_en=preview.values.definitions_en,
+        selected_examples_en=preview.values.examples_en,
+    )
+    for _ in range(2):
+        outcome = _wait(
+            flow.apply_upsert(
+                config=config, original_text="bank", preview=preview, decision=decision
+            )
+        )
+        assert outcome.outcome is AnkiOutcome.UNCHANGED
+        assert note.fields == original_fields
+    assert not any(action == "updateNoteFields" for action, _ in server.state.calls)
+
+
 def test_action_failure_surfaces_as_an_error(
     anki: tuple[FakeAnkiConnect, AnkiFlow],
 ) -> None:

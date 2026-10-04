@@ -878,7 +878,14 @@ def _strip_html(raw: str) -> str:
     value = _BR_RE.sub("\n", raw)
     value = _TAG_RE.sub("", value)
     value = html.unescape(value)
-    return _normalize_spaces(value.replace("\r", "\n"))
+    # <br> separates stored values. Collapsing every whitespace character
+    # here turns several examples into one sentence; the next merge then
+    # appends all original examples again because none match that sentence.
+    return "\n".join(
+        cleaned
+        for line in value.replace("\r\n", "\n").replace("\r", "\n").splitlines()
+        if (cleaned := _normalize_spaces(line))
+    )
 
 
 def _normalize_spaces(value: str) -> str:
