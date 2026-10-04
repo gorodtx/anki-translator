@@ -1,592 +1,140 @@
-# macOS port
+# Translator для macOS
 
-Reference for the macOS adapter: what runs where, how the pieces talk, and what
-has actually been verified on hardware.
+Приложение рассчитано на Apple Silicon и macOS 26 или новее. В `Translator.app` находятся native SwiftUI/AppKit оболочка, Swift helper, CPython 3.13 и зависимости backend. На компьютере пользователя не нужны terminal, `uv`, внешний Python, репозиторий или Command Line Tools.
 
-## Processes
+Публичный релиз пока **BLOCKED**: 03.10.2026 пользователь подтвердил отсутствие Apple Developer Program, локально найдено 0 действительных signing identities. Ad-hoc DMG служит локальной проверке упаковки; он не доказывает обычное открытие скачанного приложения через Gatekeeper. Developer ID, успешная notarization и проверка реального скачанного релиза остаются условиями публичной доставки. Измерения и ограничения: [PROGRESS-TRANSLATOR1.md](release/PROGRESS-TRANSLATOR1.md).
 
+## Установка
+
+После появления подписанного и нотарифицированного релиза:
+
+1. Скачать `Translator-<version>-macos-arm64.dmg` и открыть его в Finder.
+2. Перетащить `Translator.app` на значок `Applications` в окне DMG.
+3. Открыть Translator из Applications, затем извлечь DMG.
+
+В образе находятся приложение и ссылка `/Applications`. `install_macos.sh` в этом сценарии не используется. Приложение запускает backend из собственного bundle и соединяется с ним по Unix socket; положительный `ping` подтверждает готовность.
+
+Первый запуск показывает существующие шаги Settings. Accessibility нужна для чтения выделения через глобальную клавишу; разрешение выбирает пользователь в System Settings. Services доступен без этого разрешения. Словари Apple и языковая пара проверяются отдельно: наличие системного API не означает установленную модель. Загрузка пары выполняется существующим SwiftUI `.translationTask`/`prepareTranslation()`; headless helper самостоятельно модель не скачивает. Open at login — отдельный пользовательский выбор через `SMAppService.mainApp`; drag install не создаёт отдельный LaunchAgent backend.
+
+Offline базы не входят в DMG. Загрузка в Settings использует packaged `db-bundle.lock.json`, показывает объём отсутствующих файлов, сохраняет partial download и проверяет SHA256 до переноса на окончательное имя. Для полностью пустого хранилища текущий lock содержит **1 896 546 304 байта**. Отсутствие баз не препятствует запуску backend и не означает готовую offline конфигурацию.
+
+## Архитектура и владение процессами
+
+```text
+Выделение / hotkey / Services
+             │
+             ▼
+Translator.app — SwiftUI/AppKit, LSUIElement
+             │ Unix socket, NDJSON
+             ▼
+TranslatorBackend → TranslatorEngine — embedded CPython
+             ├── общая translate_logic, history, cache, Anki
+             └── TranslatorLookup — Swift helper
+                    ├── Dictionary Services
+                    └── Translation.framework
 ```
- selection / hotkey / Services
-            │
-            ▼
-   Translator.app  (SwiftUI shell, LSUIElement)
-            │  Unix domain socket, NDJSON
-            ▼
-   backend daemon  (embedded CPython 3.13)
-       ├── translate_logic pipeline  ── network: Google, Cambridge
-       │                             ── offline SQLite: primary / fallback / definitions
-       └── apple-lang-helper  (Swift sidecar, stdio NDJSON)
-                ├── Dictionary Services  (Oxford Russian Dictionary)
-                └── Translation.framework
-```
 
-The shell owns input, presentation and the pasteboard. The daemon owns the
-translation pipeline, history, cache and Anki. Nothing under
-`desktop_app/presentation` (GTK) is imported by the daemon.
+Оболочка отвечает за ввод, окна и pasteboard. Backend отвечает за перевод, историю и Anki; GTK presentation не импортируется в macOS daemon. `TranslatorEngine -> ../python/bin/python3.13` и `TranslatorLookup -> apple-lang-helper` — ссылки внутри bundle. Они сохраняют исходные бинарники и дают узнаваемые имена в Activity Monitor.
 
-### What the user sees in Activity Monitor
+`BackendBootstrap` сначала отправляет `ping` и проверяет protocol 1, положительный PID и boolean capability `history_persistence: true`. Совместимый существующий backend используется без смены владельца; Quit клиента его не завершает. Живой несовместимый или не отвечающий listener считается занятой точкой: приложение не заменяет его, а показывает причину в Settings. Исторический daemon с тем же номером protocol, но без этой capability, не считается совместимым.
 
-Three processes stay running, and their names are chosen so that someone
-looking at what runs on their machine can tell whose they are:
+При отсутствии listener приложение запускает `Contents/MacOS/TranslatorBackend` через `Process`, передаёт socket и собственный `TRANSLATOR_PARENT_PID`, пишет логи вне bundle и ждёт готовности до 30 секунд. Собственный child может быть автоматически перезапущен три раза. После исчерпания попыток существующая Start Backend позволяет попробовать снова.
 
-| Process | What it is | Parent |
-| --- | --- | --- |
-| `Translator` | the shell: hot key, popup, Settings | launchd (login item) |
-| `TranslatorEngine` | the backend daemon, embedded CPython | launchd (LaunchAgent) |
-| `TranslatorLookup` | the Swift sidecar for Dictionary Services | `TranslatorEngine` |
+Native `TranslatorBackend` и резервный shell launcher передают embedded Python флаг `-P` перед `-m`: текущая рабочая папка не подменяет packaged modules. `PYTHONPATH` задаёт только каталоги ресурсов приложения. Source tests и запуск обоих entrypoints из папки с намеренно конфликтующим `desktop_app` проверяют этот контракт; проверка выполняется `scripts/check_macos_bundle_runtime.py` с пустым профилем и минимальным PATH. На целевой машине эта developer проверка не нужна.
 
-The last two are **symlinks inside the bundle**, not renamed binaries:
-`Resources/bin/TranslatorEngine -> ../python/bin/python3.13` and
-`Resources/bin/TranslatorLookup -> apple-lang-helper`. Activity Monitor names a
-process after the file that was executed, so launching through the links is
-what changes the name; the binaries keep theirs, and every existing reference
-to `apple-lang-helper` — `Package.swift`, the smoke script, the tests — still
-resolves. Both the Swift launcher and `run-backend` exec through the links, so
-the name does not depend on who started the daemon. Measured after an install:
-`TranslatorEngine` and `Translator` with ppid 1, `TranslatorLookup` as a child
-of the engine, and `codesign --verify --deep --strict` still exits 0 — the
-symlinks do not break the seal.
+Quit завершает только сохранённый собственный `Process`: SIGTERM, ограниченное ожидание, при необходимости SIGKILL того же PID. Opt-in daemon watcher сравнивает фактический parent PID и штатно закрывает daemon при смерти владельца, включая SIGKILL оболочки. Внешний LaunchAgent без parent marker сохраняет прежнее поведение. Одно имя процесса не является доказательством владения.
 
-### Who starts what
+## Данные и изолированные проверки
 
-The two halves start by different mechanisms, and confusing them costs the user
-the whole app: the hot key, the popup and Settings all live in the shell, so a
-login that brings up only the daemon leaves nothing the user can reach.
-
-- **The daemon** is a LaunchAgent, `com.translator.desktop`, with
-  `RunAtLoad`, so it comes up at login. `KeepAlive` is
-  `{SuccessfulExit: false}` — restart only after an unsuccessful exit — and the
-  daemon installs a SIGTERM handler and exits 0. Measured: `launchctl kill
-  SIGTERM` leaves it `not running` and launchd does **not** bring it back;
-  `SIGKILL` is unsuccessful, and it returns within about two seconds, with no
-  ten-second throttle in between. So `launchctl kickstart -k` is the way to
-  restart it deliberately.
-- **The shell** is not a LaunchAgent. It registers itself through
-  `SMAppService.mainApp.register()` behind the "Open at login" stage in
-  Settings, so the user can see it and revoke it. Read the state from
-  `SMAppService.mainApp.status`, never from `sfltool dumpbtm` — the dump tool
-  can hang indefinitely while `SMAppService` keeps working.
-- **One trap in that status**: an app that was never registered answers
-  `.notFound`, not `.notRegistered`. Read literally, that renders as "the
-  system cannot find the bundle" and hides the button on every fresh install.
-  Both values mean the same thing here: not enabled, offer the button.
-- **After an install** the installer stops the old shell and opens the new
-  bundle, then confirms a process actually appeared. `open` exiting 0 only
-  means LaunchServices accepted the request; it has reported success with
-  nothing left running.
-- The bundle path `releases/current/Translator.app` is stable across updates,
-  but the directory's **inode is not** — the release is swapped by moving a
-  staging directory into place. If a login-item registration ever survives the
-  path but not the swap, that is where to look.
-
-## Backend protocol
-
-`desktop_app/platform/macos/ipc/protocol.py` is the single source of truth. One
-JSON object per line, UTF-8.
-
-| Direction | Shape |
+| Данные | Обычный путь |
 | --- | --- |
-| request | `{"id": <str\|int>, "method": "...", "params": {...}}` |
-| response | `{"id": ..., "ok": true, "result": {...}}` or `{"id": ..., "ok": false, "error": {"code","message"}}` |
-| event | `{"event": "...", "payload": {...}}` (no `id`) |
+| Настройки и история backend | `~/Library/Application Support/Translator` |
+| Offline базы | `~/Library/Application Support/Translator/db` |
+| Socket обычного приложения | `~/Library/Application Support/Translator/run-app/backend.sock` |
+| Логи | `~/Library/Logs/Translator` |
+| Native preferences | domain приложения, `UserDefaults` |
 
-Methods: `ping`, `translate`, `cancel`, `close`, `history.list`,
-`history.select`, `examples.refresh`, `copy_all`, `anki.status`, `anki.decks`,
-`anki.select_deck`, `anki.create_model`, `anki.prepare_upsert`,
-`anki.apply_upsert`, `anki.model_fields`, `anki.model_names`, `engines.refresh`,
-`db.download`, `db.cancel`, `settings.get`, `settings.save`, `shutdown`.
+Обычный launcher использует `run-app`; исторический external daemon сохраняет `run`. Это отделяет запуск нового приложения от занятого legacy listener. История backend записывается через async atomic persistence и восстанавливается при новом запуске. Изолированная migration/restart проверка сохранения одной записи пройдена; работа с существующей синхронизированной коллекцией Anki требует отдельной functional acceptance и не следует из distribution checks.
 
-Events: `translation.state` (phases `begin`/`partial`/`final`/`error`/`examples`),
-`notification`, `anki.availability`, `db.progress`.
+Developer overrides: `TRANSLATOR_CONFIG_DIR`, `TRANSLATOR_DB_DIR`, `TRANSLATOR_RUNTIME_DIR`, `TRANSLATOR_SOCKET_PATH`, `TRANSLATOR_LOG_DIR`. `DB_DIR` задаёт единственное место поиска баз. Приоритет socket: явный socket, явный runtime directory, системный default. `CONFIG_DIR` отдельно от socket и не переносит runtime автоматически. AF_UNIX ограничен 103 UTF-8 байтами. `socket.with_suffix(".pid")` даёт разные markers произвольным socket; нормальный `backend.sock` сохраняет `backend.pid`.
 
-### What `ping` reports about the engines
+`TRANSLATOR_DEFAULTS_SUITE` включает отдельный native domain для first-run, Settings pane, hotkey и Accessibility flag. В этом режиме восстановление/автосохранение frames через стандартный domain NSWindow отключено. Обычный запуск сохраняет прежние preferences и геометрию. Перенаправление `HOME` не изолирует per-user launchctl, TCC или login items: проверки используют именованные пути/domains, собственные PID и volumes.
 
-`engines` separates three things a client keeps confusing:
+## Обновление, откат, удаление
 
-- `apple_dictionary` / `apple_translation` — what this Mac **can** do, probed
-  through the sidecar. Plus `translation_status`
-  (`installed`/`supported`/`unsupported`/`unavailable`), `dictionaries`, and
-  the resolved `helper` path.
-- `enabled` — what the **user** left switched on: the six keys of the `sources`
-  block, straight from the config. Available and enabled are independent, and
-  onboarding needs both: "no dictionary on this Mac" and "you turned the
-  dictionary off" are different stages with different buttons.
-- `stale` — the cached probe aged past its TTL. `ping` answers from cache and
-  refreshes behind the reply, so the *next* `ping` is fresh; `engines.refresh`
-  waits for the probe and returns the new snapshot.
+Для DMG-установки пользователь завершает Translator, заменяет приложение в Applications новой копией и запускает её. Данные и offline базы находятся вне app bundle. Для ручного отката нужно сохранить прежнюю копию до замены, завершить новую и вернуть прежнюю по тому же пути. Совместимость данных со всеми историческими версиями проверяется отдельно; замена двух локальных bundle не доказывает её автоматически.
 
-A snapshot that was never taken is not the same as an aged one. The startup
-probe is fire-and-forget and the socket opens right behind it, so a fast client
-used to read `translation_status: "unknown"` with both engines `false` — which
-the shell latches into `appleTranslationReady`, painting the Apple onboarding
-stages as unavailable on a healthy Mac. `ping` now waits for that first probe
-(capped at 5 s, well inside the shell's 30 s request timeout) and only the aged
-path stays lock-free. **So `unknown` never reaches a client that asked once.**
+Удаление приложения после Quit сохраняет Application Support и Logs. Удаление данных и отключение ранее выбранного Open at login — отдельные пользовательские действия.
 
-`db` reports `primary`/`fallback`/`definitions` as booleans plus a `sources`
-map naming the directory each file actually came from — one shared `dir` lied
-whenever the bases were split across directories. `pending_bytes` is what a
-download would pull right now, summed from the sizes the lock records for the
-files that are absent: the bases are 1.8 GB and a button that starts that
-without saying so is a surprise people meter their connection over. It is
-`null` when the lock cannot be read, which is **not** the same as nothing left
-to download — a client must not render that as ready.
+`scripts/install_macos.sh` остаётся developer/legacy маршрутом с `current`, `previous`, staging, rollback и LaunchAgent. Обычному пользователю он не нужен. Account-home guard fail-closed при ошибке `dscl`; restart/remove проверяют exact executable path и используют exact PID, оставляя одноимённые development/downloaded копии в покое. Настоящая пользовательская legacy установка не менялась в distribution acceptance.
 
-### Sources, and how a client turns one off
+## Протокол
 
-`settings.get` / `settings.save` carry a `sources` object with exactly six
-boolean keys: `apple_dictionary`, `apple_translation`, `google`, `cambridge`,
-`offline_examples`, `definitions_pack`. The pipeline reads them through a
-`ContextVar` scoped to the request, so a toggle takes effect on the next
-translation without a restart.
+Single source: `desktop_app/platform/macos/ipc/protocol.py`; UTF-8, один JSON object на строку.
 
-`settings.save` is **stricter than reading the config file**, deliberately. An
-unknown key, a non-boolean value, or a `sources` that is not an object fails
-with `invalid_params` and changes nothing on disk. Loading stays lenient so an
-older config keeps working, but a client that sends nonsense must hear about it
-rather than have every source silently switched back on.
-
-Turning all six off is allowed. Translation then stops with an explanatory
-notification instead of an empty popup, which is indistinguishable from a
-broken app.
-
-### Anki field names
-
-`anki.model_fields` answers `{"fields": [...], "error": null|"..."}` for the
-configured note type. It exists so a mistyped field name is visible where it is
-typed rather than when a card is added: the app can show the names Anki really
-has and mark the ones that do not exist.
-
-It is deliberately **not** folded into `settings.save`. Anki is another program
-and may simply be closed; validating on save would make the settings unsavable
-whenever it is.
-
-Measured against the fake AnkiConnect, all four states:
-
-```
-anki reachable   -> {"fields": ["Word","Translation","Example","Definition","Image"], "error": null}
-unknown model    -> {"fields": [], "error": null}
-no note type     -> {"fields": [], "error": "No note type is configured."}
-anki unreachable -> {"fields": [], "error": "AnkiConnect error: Cannot connect to host …"}
-```
-
-Note the second line: a note type that does not exist answers exactly like one
-with no fields. So an empty list means **"nothing to compare against"**, never
-"every name is wrong" — with no names in hand a client must mark nothing as
-missing, whether or not there is an `error`.
-
-`anki.prepare_upsert` also answers `available_fields`, and the name is
-misleading enough to be worth stating: it is **what the sheet should offer** —
-the names this app is configured to write, plus whatever the matched note
-already carries — not the note type's field list. A name that is configured but
-absent from the model appears there on purpose, because the app would write to
-it. Measured with `word` misconfigured as `Woord` against a note holding `word`
-and `translation`:
-
-```
-available_fields: ['Woord', 'translation', 'example_en', 'definitions_en', 'image', 'word']
-```
-
-For what Anki actually has, ask `anki.model_fields`.
-
-### Anki note types
-
-`anki.model_names` answers `{"models": [...], "error": null|"..."}`: the note
-types of the collection, for Settings to offer as a pop-up. `error` set means
-Anki could not be asked (closed, AnkiConnect missing), and the empty list then
-says nothing about the collection. Choosing one is an ordinary `settings.save`
-of `anki.model`; the app's own note type is adopted automatically only while no
-note type the collection has is configured, so a choice survives the next
-`anki.status`.
-
-### Downloading the offline bases
-
-`db.download` starts the missing files from `scripts/db-bundle.lock.json` and
-answers `{"started": bool, "files": [...]}`; on a full store it starts nothing.
-Progress arrives as `db.progress` events (`file`, `state`, `received`, `total`,
-`error`), throttled to 250 ms. `db.cancel` stops the run.
-
-The download is idempotent and resumable: a file whose sha256 already matches
-is skipped, a partial file continues with a `Range` request, and a file whose
-digest does not match is deleted rather than kept — a wrong 1.8 GB base that
-looks present is worse than an absent one.
-
-The view state carries both `translation` (hard-wrapped for the GTK label, kept
-for parity) and `translation_raw` (unwrapped — native clients should use this),
-plus `apple`: the `LexicalInfo` tree with IPA, parts of speech and
-sense-numbered translations when the dictionary matched.
-
-Socket path: `~/Library/Application Support/Translator/run/backend.sock`.
-**AF_UNIX allows at most 103 bytes**; the daemon refuses a longer path with a
-clear error instead of failing inside `bind()`.
-
-## Sidecar protocol
-
-`macos/AppleLangHelper` speaks NDJSON on stdio; the Python client is
-`translate_logic/infrastructure/providers/apple.py`, which keeps one long-lived
-process per event loop and re-spawns it up to three times if it exits.
-
-Ops: `ping`, `dictionaries`, `availability`, `define`, `text_definition`,
-`translate`, `shutdown`.
-
-`define` answers with records (`dictionary`, `headword`, `title`, `anchor`,
-`markup`). When `markup` is present the client hands the records to
-`translate_logic.infrastructure.providers.apple_dcs` for structured parsing;
-otherwise it falls back to `text_definition` and parses the flat
-`DCSCopyTextDefinition` string itself. Both paths end in the same `LexicalInfo`.
-
-Translation errors are typed: `translation_not_installed`,
-`translation_unsupported`, `translation_failed`, `unsupported_os`. All of them
-mean "no machine translation" to the pipeline — never a hard failure.
-
-## How the Apple engines join the pipeline
-
-`translate_logic/application/pipeline/translate.py` races the on-device lookup
-against the network providers:
-
-1. The dictionary lookup starts in parallel with Google and Cambridge.
-2. Whichever produces a usable translation first becomes the partial result.
-3. The final result merges Apple's candidates and examples into the network
-   result and attaches `LexicalInfo`.
-
-Measured here over ten single words (`bank`, `time`, `run`, `light`, `book`,
-`point`, `well`, `child`, `spring`, `match`), cold HTTP cache for the first row:
-
-| Configuration | first partial p50 | first partial p95 |
-| --- | --- | --- |
-| network only | 307 ms | 734 ms |
-| network + Apple | 16 ms | 22 ms |
-
-The dictionary answers roughly twenty times faster than the fastest network
-provider, so on macOS the popup is filled before Google has replied. The final
-merged result still waits for the network, which on a cold cache lands between
-300 ms and 1 s.
-
-Per-provider timings for a single `bank` lookup:
-
-| Stage | Time |
+| Направление | Формат |
 | --- | --- |
-| Apple dictionary partial | 124 ms (cold sidecar spawn) |
-| Google | 322 ms |
-| Cambridge | 989 ms |
-| final, merged | 990 ms |
+| Request | `{"id": <str\|int>, "method": "...", "params": {...}}` |
+| Success | `{"id": ..., "ok": true, "result": {...}}` |
+| Error | `{"id": ..., "ok": false, "error": {"code","message"}}` |
+| Event | `{"event": "...", "payload": {...}}` |
 
-### Dictionary coverage
+Methods: `ping`, `translate`, `cancel`, `close`, `history.list`, `history.select`, `examples.refresh`, `copy_all`, `anki.status`, `anki.decks`, `anki.select_deck`, `anki.create_model`, `anki.prepare_upsert`, `anki.apply_upsert`, `anki.model_fields`, `anki.model_names`, `engines.refresh`, `db.download`, `db.cancel`, `settings.get`, `settings.save`, `shutdown`. Events: `translation.state`, `notification`, `anki.availability`, `db.progress`. Swift literals сравниваются с Python в CI.
 
-Two paths exist. The structured one parses the entry markup returned by
-`DCSCopyRecordsForSearchString`; the flat one parses the plain text of
-`DCSCopyTextDefinition` and is only a fallback. Measured over the same 22 probe
-words:
+`ping.engines` разделяет availability, пользовательские `enabled` toggles и `stale`. Первый probe ожидается до установленного лимита; aged snapshot обновляется в фоне, `engines.refresh` ждёт новое состояние. `installed`, `supported`, `unsupported`, `unavailable` не смешиваются с выбором пользователя.
 
-| Path | words with candidates | with IPA | with examples | p50 | p95 |
-| --- | --- | --- | --- | --- | --- |
-| structured markup | 21 / 22 | 21 | 20 | 17 ms | 21 ms |
-| flat text | 18 / 22 | 18 | 16 | 13 ms | 26 ms |
+`ping.db` содержит booleans трёх баз, `sources` фактических расположений, `dir` места загрузки и `pending_bytes`. Непрочитанный lock означает unknown, а не нулевую загрузку. Socket node не означает готовый listener: healthcheck спрашивает `ping` и не переводит текст, чтобы не загрязнять историю.
 
-The flat path has two gaps the structured one closes:
+`settings.save` принимает шесть boolean source keys: `apple_dictionary`, `apple_translation`, `google`, `cambridge`, `offline_examples`, `definitions_pack`. Неверные keys/типы отвергаются без изменения файла; loader старых файлов остаётся lenient. Все источники могут быть выключены с понятной notification.
 
-- **Phrasal verbs are invisible to it.** `make up`, `take off` and `break down`
-  return nothing; `look up` and `get over` return the whole `look` / `get`
-  article instead of the phrasal sub-entry. Through the structured path they
-  resolve correctly: `look up` to навещать / отыскивать, `make up` to
-  доплачивать / возмещать, `take off` to снимать / уводить.
-- **Only the first homograph reaches it.** `bank` yields the river-bank article
-  and never the financial one, even though the dictionary holds three records.
-  The structured path merges all of them into one card.
+`anki.model_fields` возвращает `fields` и optional `error`; пустой список не доказывает неверные поля. `anki.model_names` возвращает note types. Выбор модели сохраняется настройкой; создание собственного note type — отдельное действие. Реальные add/duplicate/merge/media/custom-field проверки относятся к functional acceptance Main.
 
-Whichever path answers, the pipeline still guards against a mismatched entry:
-a definition whose headword does not match is only applied to single-word
-queries, and phrasal blocks belonging to another phrase are dropped. An
-inflected form resolves to the base article, so `went` arrives as the whole of
-`go`: 26 blocks, 22 of them phrasal verbs like `go about` and `go back` that
-translate nothing the reader asked for. Filtering them leaves 5 blocks and 17
-candidates instead of 26 and 33. A record that is itself phrasal, such as
-`look up`, is left untouched.
+## Apple engines и исходные решения
 
-Over a wider 38-word probe the structured path answered 35. The three that did
-not are dictionary gaps rather than parser defects, and the network providers
-cover all of them:
+Swift helper использует stdio NDJSON; ops: `ping`, `dictionaries`, `availability`, `define`, `text_definition`, `translate`, `shutdown`. Typed errors отсутствующей модели не превращают весь pipeline в hard failure.
 
-| Word | What the dictionary holds | Result |
-| --- | --- | --- |
-| `get over` | a phrasal section with two example sentences and no sense-level translation | card with examples, no candidates |
-| `run into`, `figure out`, `deal with`, `rely on`, `put up with`, `in spite of` | no entry under any search method (exact, prefix, wildcard) | no card |
+Structured Dictionary Services path возвращает markup/headword/title/anchor и собирается в `LexicalInfo`; flat `DCSCopyTextDefinition` — fallback. Фильтры отделяют чужие phrasal blocks и сохраняют корректное падежное управление после `+ a/i/p`. Примеры сами по себе не становятся придуманным переводом headword. Эти решения восстановлены в [CONTEXT-TRANSLATOR1.md](release/CONTEXT-TRANSLATOR1.md).
 
-Inventing a gloss out of `get over`'s example sentences was tried and rejected
-on the numbers: across 30 words it recovered two correct translations and
-introduced six wrong ones, because those sentences translate idioms rather than
-the headword.
+Helper не блокирует main queue: Dictionary Services и Translation отвечают через неё. Вход stdio читается отдельно. Большие статьи требуют увеличенного stream limit; default asyncio 64 KB недостаточен. Длительный helper принадлежит backend и ограниченно перезапускается после падения.
 
-One trap worth naming. Oxford marks case government with a Latin letter after a
-plus: `наталкиваться на + a`, `следить за + i`, `отчитываться в + p`. The
-candidate cleaner drops anything carrying Latin letters, so it used to throw
-those translations away whole, and an article whose senses all govern a case
-produced nothing at all. Stripping the marker before the Latin check recovered
-38 candidates over 30 words and lost none: `come across` went from 0 to 7,
-`look after` from 1 to 6, `account for` from 4 to 11.
+Старые hardware timings, dictionary corpus и screenshot geometry являются историческими измерениями; они не перенесены в текущий PASS. SF/system typography, Liquid Glass, assets и native primitives сохранены. macOS не имеет пользовательского Dynamic Type control, поэтому исходный проект использует системные text styles без обещания iOS text scaling.
 
-**`TRANSLATOR_DB_DIR` is a directive, not a hint.** With it set, that is the
-only place the bases are looked for. It behaved as a hint once, and the two
-halves of the system then disagreed: the installer decided what to download
-from the override while the runtime happily read the bases from the shared
-store and answered "present" for a directory that was empty. With no override
-the chain still falls through per file, which is what lets a repo checkout work
-alongside the shared store.
+## Developer build
 
-`ping` reports, per base, the directory it actually resolved from, and `dir`
-separately as the place a download would go. A single directory plus three
-booleans could lie in either direction — naming the download directory while
-the files came from a checkout, or naming an empty override while answering
-"present".
-
-**Entries are big.** The Oxford article for `set` is about 106 KB of markup and
-arrives as a single NDJSON line, and `run` is 87 KB. asyncio's default stream
-limit is 64 KB, so the client raises its subprocess limit to 8 MB and drops an
-oversized line rather than letting the reader task die with it.
-
-Both gaps close once `markup` is present, measured on the same words through
-`apple_dcs`:
-
-| Query | Flat text | Structured records |
-| --- | --- | --- |
-| `bank` | 1 article, 11 candidates | 3 homographs, 7 blocks, 19 candidates |
-| `look up` | whole `look` article, 36 senses | the `look up` section, 10 candidates |
-| `take off` | nothing | 3 blocks, 11 candidates |
-| `went` | entry found, 0 candidates | senses of `go`, 33 candidates |
-
-Records carry the disambiguation the flat string drops: a homograph number, a
-`title` naming the lemma an inflected form belongs to, and an `anchor` of the
-form `xpointer(//*[@id='…'])` pointing at the phrasal-verb section inside the
-parent entry. `apple_dcs.lexical_from_records` follows the anchor when it is
-present, keeps the headword the dictionary matched (`look up` stays `look up`,
-`went` stays `went`), and merges homographs into consecutive part-of-speech
-blocks marked with the dictionary's own superscript (`noun¹`, `noun²`).
-
-## Verified facts
-
-Everything below was produced by running it here, on macOS 26.5.2 (arm64,
-Command Line Tools only, no Xcode).
-
-- `RegisterEventHotKey` (Carbon) returns `noErr` with no TCC permission.
-- `AXIsProcessTrusted()` is false until the user grants Accessibility, and the
-  synthesized-⌘C fallback needs the same grant, so selection capture has to go
-  through the Services item until it is given (see Permissions).
-- `DCSCopyTextDefinition` works from an unsigned CLI binary, about a
-  millisecond warm, and returns the Oxford Russian Dictionary entry with IPA
-  and `▸` example pairs.
-- `DCSCopyDefinitionMarkup` segfaults with the naive signature — do not use it.
-  `DCSCopyRecordsForSearchString` plus `DCSRecordCopyData` is the structured
-  path, and its getters return unretained values. Declare every `DCSGet…`
-  function as returning `Unmanaged<…>`; taking the value directly traps when
-  Swift releases a +0 reference. Search methods observed: 0 exact, 1 prefix,
-  3 wildcard. A multi-word idiom with no headword of its own (`in spite of`)
-  returns nothing at all.
-- The sidecar must not block its main thread. Dictionary Services and
-  Translation deliver replies through the main queue, so a `readLine` loop or a
-  semaphore on the main thread hangs the first request forever; the sidecar
-  reads stdin on its own thread and leaves the main thread in `dispatchMain()`.
-- Command Line Tools ship Swift Testing in
-  `Library/Developer/Frameworks` without telling SwiftPM, and no XCTest at all.
-  `scripts/swift-test.sh` adds the framework and `lib_TestingInterop.dylib`
-  search paths; a package also needs `platforms: [.macOS(.v14)]` or the test
-  macros fail to expand.
-- `TranslationSession(installedSource:target:)` works headless, but only for an
-  already-installed pair. `canRequestDownloads` is false outside SwiftUI, both
-  for a plain binary and for an ad-hoc-signed bundle, so the download has to be
-  triggered once from `.translationTask` plus `prepareTranslation()`.
-- en→ru is `supported` but not installed by default; 38 languages are supported.
-- SwiftUI Liquid Glass (`glassEffect`, `GlassEffectContainer`) compiles with
-  `swiftc -target arm64-apple-macos26.0` under Command Line Tools.
-- The bundled CPython keeps FTS5 (SQLite 3.53.1) and `threadsafety == 3`.
-
-## Layout
-
-| Path | Role |
-| --- | --- |
-| `desktop_app/platform/paths.py` | every macOS directory, with env overrides |
-| `desktop_app/platform/macos/` | protocol, socket server, session, daemon, CLI client |
-| `translate_logic/infrastructure/providers/apple.py` | sidecar client and merge inputs |
-| `translate_logic/infrastructure/providers/apple_dcs.py` | entry markup to `LexicalInfo` |
-| `macos/AppleLangHelper/` | Swift sidecar (SwiftPM) |
-| `macos/Translator/` | SwiftUI shell (SwiftPM); `TranslatorCore` holds the pure, testable layer |
-| `scripts/build_macos_app.sh` | assembles `dist/Translator.app` |
-| `scripts/install_macos.sh` | install, update, rollback, remove, healthcheck, status |
-| `scripts/run_backend_macos.sh` | dev launcher for the daemon |
-| `.github/workflows/macos.yml` | gate, linux-parity, sidecar, shell, bundle, notarize |
-
-## Running the whole stack
+На build машине нужны Apple Silicon, macOS 26 SDK, Swift/Command Line Tools и `uv`; на целевой машине они не нужны.
 
 ```bash
-scripts/run_backend_macos.sh &                       # Python daemon on the socket
-scripts/build_macos_app.sh --out dist                # -> dist/Translator.app (57 MB)
-open dist/Translator.app                             # menu-bar item, no dock icon
+uv sync --frozen --dev
+uv python install 3.13
+scripts/build_macos_app.sh --out dist
+scripts/package_macos_dmg.sh dist/Translator.app out
+uv run --frozen ruff check .
+uv run --frozen python -m mypy
+uv run --frozen python -m pytest -q
 ```
 
-The shell has debug entry points so the UI can be driven without a selection or a
-shortcut: `TRANSLATOR_DEBUG_TEXT="bank"` opens the popup on that text at launch,
-and `TRANSLATOR_DEBUG_WINDOW=settings|history|anki` opens one window.
-`macos/Translator/scripts/mock_backend.py` answers the real protocol with canned
-data, including the two-phase timing, for working without Python running.
+Format gate проверяет изменённые Python files через `uv run --frozen ruff format --check`. Swift tests запускаются соответствующими `scripts/swift-test.sh`, учитывающими Swift Testing из Command Line Tools.
 
-Verified end to end here: the bundled shell connected to the live daemon
-(`ipc client connected`) and drove two real translations through the pipeline
-with per-provider timings in the log.
+Builder требует настоящие shell/backend/helper binaries, embeds CPython/dependencies, заранее компилирует bytecode, исключает внешние symlinks и offline SQLite, сохраняет `build-info.json` и подписывает bundle. Manifest содержит revision, SHA256 точного исходного набора, arch/minimum OS/version/build, resolved dependencies, database lock и unsigned Python binary identity. Изменение исходников во время сборки останавливает source guard.
 
-Protocol drift is caught by CI: the `shell` job extracts every `Method` and
-`Event` literal from `protocol.py` and fails if any is missing from
-`TranslatorCore/Protocol.swift`.
+SHA256 DMG проверяет bytes конкретного artifact. Повторяемый build recipe и checksum не означают bit-for-bit одинаковый DMG: подпись/timestamp, filesystem metadata и текущий неполный transitive dependency lock меняют bytes. Manifest сохраняет реально разрешённые версии. После runtime/toolchain bundle должен оставаться неизменным; `PYTHONDONTWRITEBYTECODE=1` задаётся при собственном запуске backend.
 
-## Popup geometry
+## CI и публичная подпись
 
-The popup sizes itself to its content and caps the scrollable body at half the
-screen's visible height, clamped to 360–640pt. Measured against the live
-backend on a display whose visible height is 1073pt, so the cap is 536pt and
-the chrome around it 134pt:
+Workflow содержит gates, Linux parity, Swift helper/shell, bundle и tag-only notarization. Bundle job создаёт DMG с app version, legacy ZIP и checksums. Tag version берётся из `vX.Y.Z`; полная Git history сохраняет build count.
 
-| Query | Width | Height | Why |
-| --- | --- | --- | --- |
-| `in spite of everything he said` | 380 | 174 | a sentence: translation only, no dictionary card |
-| `serendipity` | 480 | 600 | one sense, still under the cap |
-| `bank`, `set` | 480 | 670 | at the cap, body scrolls |
+Один `scripts/sign_macos_app.sh` обслуживает локальный builder и CI: все Mach-O, включая `TranslatorBackend`, подписываются до outer app. Developer ID включает hardened runtime и timestamp. Ошибка nested signing останавливает pipeline; `codesign --verify --deep --strict` проверяет результат.
 
-Every real word lookup reaches the cap, because a card carries IPA, sense
-blocks, five definitions and three examples. That makes the cap, not the
-content, decide how much is readable without scrolling, which is why it follows
-the screen rather than a fixed number. The body carries a soft scroll edge
-effect so content passing under the action bar reads as continuing rather than
-clipped.
+Tag notarization требует все шесть inputs: `APPLE_ID`, `APPLE_TEAM_ID`, `APPLE_APP_PASSWORD`, `APPLE_SIGNING_IDENTITY`, `APPLE_CERT_BASE64`, `APPLE_CERT_PASSWORD`. Их отсутствие завершает public gate ошибкой BLOCKED вместо успешного пропуска.
 
-Window geometry is measurable without Screen Recording, through
-`CGWindowListCopyWindowInfo`, and it is the only automated acceptance available
-for the interface here. It proves layer, size and that a window exists at all.
-It says nothing about colour, typography, legibility on glass, or the Reduce
-Transparency path — those need a person.
+Native `SecPKCS12Import` получает certificate password вне argv. `notarytool store-credentials` получает app-specific password через documented secure prompt в echo-disabled PTY и сохраняет его в temporary keychain; submit использует keychain profile. Unit tests проверяют synthetic input/redaction и fail-closed behaviour. Реальная Apple authorization adapter ещё не проверена из-за отсутствия аккаунта.
 
-## Anki
+App и DMG отдельно должны получить явный status `Accepted`, пройти stapling/validation и Gatekeeper assessment. ZIP/DMG checksums пересчитываются после подписи и stapling. Signing material удаляется в `always()` cleanup. Public upload/release publishing в текущей задаче не выполнялись.
 
-Anki cannot be installed on a build machine, so the add / update / merge / image
-path is covered by an in-process AnkiConnect stand-in that serves the real wire
-protocol over a local socket (`tests/fakes/anki_connect.py`). It implements only
-the actions the client calls; anything else answers with an error, the way a
-version mismatch would.
+Protected GitHub inventory 03.10.2026 показал пустые repository-scoped Actions variable/secret names; environment/org/effective-job inputs остаются unknown. API access не доказывает push auth, CI execution или скачанное приложение. Gatekeeper downloaded notarized DMG проверяется отдельно после появления легитимного Developer ID/account и разрешения на публикацию.
 
-Driven through the daemon over its own socket, with `ANKI_CONNECT_URL` pointed
-at the stand-in, the observed action sequence is:
+## Границы подтверждения
 
-```
-modelNames  deckNames  findNotes  addNote  findNotes  notesInfo
-```
+Source tests, local seal, actual embedded backend под Foundation harness, native snapshot и real SwiftUI/Anki interaction — разные измерения. Mock screenshot или исторический отчёт не заменяют текущий запуск. Полный coverage sanitized историй, current commands/results/SHA256 и unresolved items находятся в release CONTEXT/PROGRESS и внешнем distribution evidence root. Visual redesign в этом проходе не выполнялся.
 
-and the note that lands carries the mapped fields, the query term highlighted
-and definitions in italics:
-
-```
-word: bank
-translation: банк; берег
-definitions_en: <i>a financial institution</i>
-example_en: Most <mark class="hl">banks</mark> are reluctant.
-```
-
-### What it does not do
-
-Matching keys on the configured field name, so only notes already in the app's
-own shape are found. A note whose fields are called `Word` and `Translation`
-is fetched but never matched — the app cannot know that `Word` holds the
-headword. The consequence is worth stating plainly: **pointed at an existing
-hand-made deck, the app adds new notes rather than updating the ones already
-there.** Upsert works on decks the app itself has filled.
-
-Two related behaviours, both deliberate: `create_model` owns the field mapping
-and overwrites whatever `settings.save` stored, because its own model has its
-own field names; and the field list offered in the sheet dedupes
-case-insensitively, so `word` and `Word` never appear as two separate fields.
-
-Writing that harness found a real defect. `findNotes` returning `[]` — the
-normal answer for a word being added for the first time — was reported as
-"Invalid AnkiConnect response", because the guard meant to catch a malformed
-payload also fired on a legitimate empty list. The same held for a profile with
-no models, which is exactly the state `createModel` exists to fix.
-
-## Typography, and one plan item that could not be met
-
-The original plan listed Dynamic Type as mandatory for every screen. It is not
-achievable here: **macOS has no Dynamic Type control.** There is no system
-text-size setting for it to follow, `dynamicTypeSize` and `ScaledMetric` are
-inert, and the text styles resolve to fixed points regardless:
-
-```
-NSFont.preferredFont(.body)    13.0 pt        defaults NSPreferredTextSize   unset
-NSFont.preferredFont(.callout) 12.0 pt        universalaccess text-size key  absent
-NSFont.preferredFont(.title1)  22.0 pt
-card height under NSHostingView: 146 pt at xSmall and at accessibility5 alike
-```
-
-So that item was closed as not applicable rather than left open. The type
-tokens were still moved onto text styles, for a different and smaller reason:
-the hierarchy had been living in forty literal point sizes spread across four
-views. Naming them by role removed that. The sizes map one to one onto the
-system styles, so nothing moved on screen — the popup measures 480×670 before
-and after — with the single exception of the BrE/AmE tag, which had no style at
-9 pt and became 10.
-
-### Running the bundled interpreter by hand
-
-`Resources/bin/run-backend` sets `PYTHONDONTWRITEBYTECODE=1`; invoking
-`Resources/python/bin/python3.13` directly does not. Without it the import
-writes `__pycache__` inside `Resources/` and the code seal breaks — the same
-failure as a shipped test helper, from a different direction. Set the variable:
-
-```bash
-APP=path/to/Translator.app/Contents/Resources
-PYTHONDONTWRITEBYTECODE=1 PYTHONPATH="$APP/app:$APP/site-packages" \
-  "$APP/python/bin/python3.13" -c 'import desktop_app; print(desktop_app.__file__)'
-```
-
-`test_built_bundle_seal_is_intact` catches it when it happens, and the bundle
-job in CI re-verifies the seal after running the whole toolchain.
-
-## Permissions
-
-| Path | Permission | If denied |
-| --- | --- | --- |
-| Services menu item | none | always available |
-| Global shortcut (`RegisterEventHotKey`) | none | always available |
-| Reading the selection via Accessibility | Accessibility | nothing to fall back to — see below |
-| Downloading the en→ru pair | none, but needs SwiftUI | machine translation stays off |
-
-**The Services item is not a third-choice fallback; it is the only way to get
-the selected text with no permission at all.** The synthesized ⌘C was written
-as a fallback for when Accessibility is refused, but it needs the same grant,
-because `CGEventPost` is gated on it too. Measured on an untrusted process:
-
-```
-AXIsProcessTrusted()                 false
-kAXFocusedUIElement                  status -25204 (kAXErrorCannotComplete)
-CGEvent ⌘C created (down/up = true), posted to .cghidEventTap
-NSPasteboard.changeCount             733 -> 733   (never moved)
-```
-
-So the two reading paths do not degrade one into the other: without the grant
-both are dead, and only the Services item and the global shortcut still work.
-The shortcut on its own cannot read a selection, so an ungranted install is
-usable through the Services menu — which is why that path carries more weight
-than its position in the code suggests. The app does say so rather than
-failing quietly: an untrusted `translateSelection` asks for trust, opens the
-settings pane and warns.
-
-Screenshots and window inspection from a terminal additionally need Screen
-Recording and Accessibility for that terminal; without them `screencapture`
-fails with "could not create image from display" and System Events returns
--1728.
-
-## Release
-
-`scripts/build_macos_app.sh` produces an ad-hoc-signed bundle that runs locally.
-Distribution needs a Developer ID certificate: the `notarize` job runs only on
-tags and only when `APPLE_ID`, `APPLE_TEAM_ID`, `APPLE_APP_PASSWORD`,
-`APPLE_SIGNING_IDENTITY`, `APPLE_CERT_BASE64` and `APPLE_CERT_PASSWORD` are set.
-Without them it skips with a notice rather than failing.
-
-Offline bases stay out of code releases. `scripts/db-bundle.lock.json` pins the
-bundle tag and the sha256 of each file, and the installer verifies a download
-before promoting it.
+Измеренная приёмка 04.10.2026: sourcec248d6/DMG662cbf64 в собственной чистой VM прошёл обычную Finder installation/update, автоматический TextEdit Services, native UI загрузку трёх pinned DB/Apple pair, холодный первый EN→RU, History/restart и новый Services перевод при блокированной внешней сети. Это локальный ad-hoc artifact и реальный native GUI с синтетическим текстом; публичная подпись/notarization/download Gatekeeper, физический drag/hotkey и remote CI остаются отдельными gates. Точный scope, исходные JPEG/SHA и preserved fixture rollback assertion/cleanup результаты находятся в [P028](release/PROGRESS.md). Дизайн не менялся.

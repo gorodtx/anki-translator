@@ -1,0 +1,21 @@
+{
+  "schema": 1,
+  "image": "c248d6-guest-restart-history.jpg",
+  "source_sha256": "c248d674a64b71546d3766d508431ac9dcde995af75e9f294f5064e4020b73fd",
+  "bytes": 512128,
+  "sha256": "54fdb478614082d17222f562f9ade26fd955f9ba83c65ce79c7f22bf2a66ef68",
+  "kind": "original CUA JPEG; exact byte copy, no crop/edit/reencode; actual owned guest UI",
+  "note": "Native History после normal Quit/Finder relaunch: одна exact EN/RU запись полностью читаема, Search/native chrome видимы, содержимое не перекрыто. Restart identity/readback записаны отдельно; screenshot один не доказывает causal restart.",
+  "copied_at_utc": "2026-10-04T02:28:47.864236+00:00",
+  "main_personally_viewed_original": true,
+  "execution_owner": "Translator1-Distribution",
+  "main_visual_review": "Native History после normal Quit/Finder relaunch: одна exact EN/RU запись полностью читаема, Search/native chrome видимы, содержимое не перекрыто. Restart identity/readback записаны отдельно; screenshot один не доказывает causal restart.",
+  "boundary": "Main original visual/byte review; capture and guest CUA actions by peer. Outer isolated viewer is infrastructure. Public Gatekeeper/physical shortcut/broker-wide offline not proved.",
+  "fnv1a32": 3305011850,
+  "peer_original_identity_sha256": "1897292b03ad18793916e3b66f99fe3c72a8535130ae1242eb6583a4e9c415a2",
+  "original_image_dimensions": [
+    2200,
+    1964
+  ],
+  "main_verified_retained_fnv_match": true
+}

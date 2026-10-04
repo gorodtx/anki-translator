@@ -1,0 +1,15 @@
+{
+  "task": "user-continuation",
+  "source_sha256": "48865972511c88fe78b1e74df3f21c3bebbdae66f11fb9919a62098348abf51f",
+  "bytes": 624210,
+  "fnv1a32": 3527594208,
+  "sha256": "0617836b1a74e570dcaf7102086eaa8005bd489d751bea02ac269a09ae7ea389",
+  "kind": "original CUA JPEG; no crop/reencode; real VM UI; synthetic input where stated",
+  "note": "Реальное взаимодействие в чистой macOS VM: Sources показывает установленную Apple English→Russian pair; все шесть sources ещё включены, запросов translation не было.",
+  "schema": 1,
+  "image": "488659-guest-apple-installed.jpg",
+  "copied_at_utc": "2026-10-04T01:56:47.068297+00:00",
+  "main_personally_viewed_original": true,
+  "main_visual_review": "Sources English to Russian green installed status, all six sources still checked before Apple-only changes. No actual translated result in this capture.",
+  "boundary": "Original source488 pre-A23 artifact; peer actual guest CUA, Main original-byte/visual review; outer viewer is disposable infrastructure. No fixed-c248 Services or nonempty translation claim."
+}

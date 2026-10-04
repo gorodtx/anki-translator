@@ -1,0 +1,21 @@
+{
+  "schema": 1,
+  "image": "c248d6-guest-services-enabled.jpg",
+  "source_sha256": "c248d674a64b71546d3766d508431ac9dcde995af75e9f294f5064e4020b73fd",
+  "bytes": 550983,
+  "sha256": "db20a31381c65beb653227cdca51e0318b216c4ebd1068c75c4acf88f7c0b976",
+  "kind": "original CUA JPEG; exact byte copy, no crop/edit/reencode; actual owned guest UI",
+  "note": "Оригинальное TextEdit Services меню с читаемым enabled Translate with Translator после обычного Finder Replace/relaunch; без manual registry/preferences workaround. Остальная product UI позади меню не оценивается этим snapshot.",
+  "copied_at_utc": "2026-10-04T02:28:47.862294+00:00",
+  "main_personally_viewed_original": true,
+  "execution_owner": "Translator1-Distribution",
+  "main_visual_review": "Оригинальное TextEdit Services меню с читаемым enabled Translate with Translator после обычного Finder Replace/relaunch; без manual registry/preferences workaround. Остальная product UI позади меню не оценивается этим snapshot.",
+  "boundary": "Main original visual/byte review; capture and guest CUA actions by peer. Outer isolated viewer is infrastructure. Public Gatekeeper/physical shortcut/broker-wide offline not proved.",
+  "fnv1a32": 816371607,
+  "peer_original_identity_sha256": "2a117964d445309ff65ca2cfdbb793187214346eec278fc057cd5302d9ba7962",
+  "original_image_dimensions": [
+    2200,
+    1964
+  ],
+  "main_verified_retained_fnv_match": true
+}

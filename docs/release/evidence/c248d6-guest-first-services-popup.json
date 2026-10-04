@@ -1,0 +1,21 @@
+{
+  "schema": 1,
+  "image": "c248d6-guest-first-services-popup.jpg",
+  "source_sha256": "c248d674a64b71546d3766d508431ac9dcde995af75e9f294f5064e4020b73fd",
+  "bytes": 522209,
+  "sha256": "4d5bd00c2c606d052a8b240f7fbec81faf1b74a3062ad43fe4420c41e09c7834",
+  "kind": "original CUA JPEG; exact byte copy, no crop/edit/reencode; actual owned guest UI",
+  "note": "Первый genuine Services popup: The weather is beautiful today. → Сегодня прекрасная погода. Непустой Russian result/Copy Translation читаемы; Add to Anki disabled в не настроенном guest scope. General показывает Accessibility needed/use Services, login unchecked; TCC не расширялся.",
+  "copied_at_utc": "2026-10-04T02:28:47.863318+00:00",
+  "main_personally_viewed_original": true,
+  "execution_owner": "Translator1-Distribution",
+  "main_visual_review": "Первый genuine Services popup: The weather is beautiful today. → Сегодня прекрасная погода. Непустой Russian result/Copy Translation читаемы; Add to Anki disabled в не настроенном guest scope. General показывает Accessibility needed/use Services, login unchecked; TCC не расширялся.",
+  "boundary": "Main original visual/byte review; capture and guest CUA actions by peer. Outer isolated viewer is infrastructure. Public Gatekeeper/physical shortcut/broker-wide offline not proved.",
+  "fnv1a32": 917960974,
+  "peer_original_identity_sha256": "b3218301ba7a3995e1f6c81196315ccad422bb956fbf871d4ebd4efbf12acbf6",
+  "original_image_dimensions": [
+    2200,
+    1964
+  ],
+  "main_verified_retained_fnv_match": true
+}

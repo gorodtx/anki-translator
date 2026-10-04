@@ -1,0 +1,16 @@
+{
+  "bytes": 465876,
+  "fnv1a": 83413124,
+  "sha256": "417d7361875ce12accfe3d85cf0af1f1f0783108ee8018b022ac17bc9c8115ee",
+  "origin": "guestMountedDmgVisibleCapture.screenshot; original CUA JPEG bytes",
+  "source_sha256": "48865972511c88fe78b1e74df3f21c3bebbdae66f11fb9919a62098348abf51f",
+  "guest": "translator-first-run-20261004 macOS26.5",
+  "visible_action": "Actual CUA pointer clicks mounted DMG; Finder app/Applications alias visible; drag/install not yet accepted",
+  "boundary": "Public template desktop; real guest Finder interaction, not mock/synthetic rendering; no quarantined-download/public signing proof",
+  "receiver": "owned data-only fixed path; documented CUA setValue after paste timeout",
+  "schema": 1,
+  "copied_at_utc": "2026-10-04T00:52:09.797559+00:00",
+  "image": "488659-guest-dmg.jpg",
+  "main_personally_viewed_original": true,
+  "main_visual_review": "Guest Finder volume Translator shows readable Translator app icon and Applications alias; mounted window only. Outer viewer is disposable test infrastructure, not app design."
+}

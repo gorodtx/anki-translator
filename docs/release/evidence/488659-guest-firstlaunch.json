@@ -1,0 +1,19 @@
+{
+  "origin": "guestFirstLaunchCapture.screenshot",
+  "kind": "actual guest native General Settings after ordinary Applications launch; no mock or synthetic renderer",
+  "source_sha256": "48865972511c88fe78b1e74df3f21c3bebbdae66f11fb9919a62098348abf51f",
+  "bytes": 613343,
+  "fnv1a": 2700188467,
+  "sha256": "6ffe1f8da9ef7e8134c20265efc25d241f28c7f31d214b594fb29a3a8ca33dd1",
+  "not_proven": [
+    "drag installation",
+    "public quarantine/signing/notarization",
+    "model download complete",
+    "translation"
+  ],
+  "schema": 1,
+  "image": "488659-guest-firstlaunch.jpg",
+  "copied_at_utc": "2026-10-04T01:22:29.277077+00:00",
+  "main_personally_viewed_original": true,
+  "main_visual_review": "Actual guest native General Settings: readable offline databases missing primary/fallback/definitions, 1.9 GB warning, Download action, Accessibility needed for shortcut with Services instruction, login unchecked. No overlap or clipped content in the product window. Outer viewer is owned test infrastructure."
+}

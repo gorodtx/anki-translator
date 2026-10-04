@@ -1,0 +1,15 @@
+{
+  "task": "user-continuation",
+  "source_sha256": "48865972511c88fe78b1e74df3f21c3bebbdae66f11fb9919a62098348abf51f",
+  "bytes": 622621,
+  "fnv1a32": 4263312190,
+  "sha256": "530a01acd9a095be605036918905a6597daa5f8abc93c6bfad5fdbd8351e486d",
+  "kind": "original CUA JPEG; no crop/reencode; real VM UI; synthetic input where stated",
+  "note": "Реальное меню TextEdit Services VM с выделенной собственной синтетической фразой: Translate with Translator отсутствует при установленном source488 и положительной LS регистрации. Это A23 runtime RED до metadata fix.",
+  "schema": 1,
+  "image": "488659-guest-services-missing.jpg",
+  "copied_at_utc": "2026-10-04T01:56:47.071864+00:00",
+  "main_personally_viewed_original": true,
+  "main_visual_review": "Real TextEdit Services submenu fully visible with other text/search services and bottom Services Settings; Translate with Translator absent. Actual A23 pre-fix menu RED, selection supported by separate image.",
+  "boundary": "Original source488 pre-A23 artifact; peer actual guest CUA, Main original-byte/visual review; outer viewer is disposable infrastructure. No fixed-c248 Services or nonempty translation claim."
+}

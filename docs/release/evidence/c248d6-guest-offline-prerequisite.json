@@ -1,0 +1,22 @@
+{
+  "schema": 1,
+  "image": "c248d6-guest-offline-prerequisite.jpg",
+  "source_sha256": "c248d674a64b71546d3766d508431ac9dcde995af75e9f294f5064e4020b73fd",
+  "bytes": 589034,
+  "fnv1a": 3222236325,
+  "sha256": "a42bed0a2c222a3e8075220f6c5811604731fc664c1bcdc9fcee74d89eb2ac6b",
+  "fnv1a32": 3222236325,
+  "kind": "original CUA JPEG; exact byte copy, no crop/edit/reencode; actual owned guest UI",
+  "note": "Настоящее enabled TextEdit Services menu перед единственной PF activation. Меню закрывает часть полного предложения; blue selection видна частично. Полный собственный input подтверждён отдельным48-byte fixture/history record. Старое имя5b80 DMG в Finder позади — inventory fixture, а не доказательство identity запущенного app; currentc248 identity зафиксирована runtime manifest/log отдельно.",
+  "copied_at_utc": "2026-10-04T03:14:15.110895+00:00",
+  "main_personally_viewed_original": true,
+  "execution_owner": "Translator1-Distribution",
+  "main_visual_review": "Настоящее enabled TextEdit Services menu перед единственной PF activation. Меню закрывает часть полного предложения; blue selection видна частично. Полный собственный input подтверждён отдельным48-byte fixture/history record. Старое имя5b80 DMG в Finder позади — inventory fixture, а не доказательство identity запущенного app; currentc248 identity зафиксирована runtime manifest/log отдельно.",
+  "boundary": "Capture/guest CUA действия — retained peer; Main лично просмотрел original в original resolution и сверил exact bytes/FNV. Outer isolated viewer — infrastructure. Native external IPv6/physical shortcut/public Gatekeeper не доказаны.",
+  "peer_original_identity_sha256": "e6ff361c35be86dc9491405b674790bb345c994ab05bd9ccc0225c3b2d44234e",
+  "original_image_dimensions": [
+    2200,
+    1964
+  ],
+  "main_verified_retained_fnv_match": true
+}

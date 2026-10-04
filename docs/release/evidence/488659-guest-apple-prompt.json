@@ -1,0 +1,19 @@
+{
+  "origin": "guestApplePromptCapture.screenshot",
+  "kind": "actual Apple system Download Languages to Translate sheet in clean guest; before row downloads; no mock/synthetic renderer",
+  "source_sha256": "48865972511c88fe78b1e74df3f21c3bebbdae66f11fb9919a62098348abf51f",
+  "bytes": 596309,
+  "fnv1a": 2462992935,
+  "sha256": "b3c672b54fada7ca5c7c9f64ebaa04dfdc2abc49cfbf6a70bab9d49ac1b246bb",
+  "not_proven": [
+    "language models complete",
+    "nonempty translation",
+    "public signing/quarantine",
+    "drag install"
+  ],
+  "schema": 1,
+  "image": "488659-guest-apple-prompt.jpg",
+  "copied_at_utc": "2026-10-04T01:30:27.865582+00:00",
+  "main_personally_viewed_original": true,
+  "main_visual_review": "Actual Apple system Download Languages to Translate sheet over native Sources. English (US) and Russian rows each offer Download; Done is readable. Initial prompt before row downloads, no completion/output proof. Outer viewer is disposable test infrastructure."
+}

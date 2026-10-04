@@ -1,0 +1,22 @@
+{
+  "schema": 1,
+  "image": "c248d6-guest-offline-popup.jpg",
+  "source_sha256": "c248d674a64b71546d3766d508431ac9dcde995af75e9f294f5064e4020b73fd",
+  "bytes": 567072,
+  "fnv1a": 3931998770,
+  "sha256": "01a24972f38612d3e68a5aa82f74ed28cd5da3fb5c640f3da24d4ddf67d1aa9f",
+  "fnv1a32": 3931998770,
+  "kind": "original CUA JPEG; exact byte copy, no crop/edit/reencode; actual owned guest UI",
+  "note": "Полностью читаемый genuine Services popup: The small blue bird is sitting near the window. → Маленькая голубая птичка сидит возле окна. Copy Translation доступна, Add to Anki disabled в guest без collection. General позади показывает Accessibility needed/use Services и unchecked login. PF Enabled/IPv4 deny/history1→2 подтверждены отдельными timestamped records; screenshot сам по себе не доказывает airgap.",
+  "copied_at_utc": "2026-10-04T03:14:15.110895+00:00",
+  "main_personally_viewed_original": true,
+  "execution_owner": "Translator1-Distribution",
+  "main_visual_review": "Полностью читаемый genuine Services popup: The small blue bird is sitting near the window. → Маленькая голубая птичка сидит возле окна. Copy Translation доступна, Add to Anki disabled в guest без collection. General позади показывает Accessibility needed/use Services и unchecked login. PF Enabled/IPv4 deny/history1→2 подтверждены отдельными timestamped records; screenshot сам по себе не доказывает airgap.",
+  "boundary": "Capture/guest CUA действия — retained peer; Main лично просмотрел original в original resolution и сверил exact bytes/FNV. Outer isolated viewer — infrastructure. Native external IPv6/physical shortcut/public Gatekeeper не доказаны.",
+  "peer_original_identity_sha256": "36b0b657d0902f66002fc97328cff89d934f1ccddc562cd1261bbb6767c976ad",
+  "original_image_dimensions": [
+    2200,
+    1964
+  ],
+  "main_verified_retained_fnv_match": true
+}

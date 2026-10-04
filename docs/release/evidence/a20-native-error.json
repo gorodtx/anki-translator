@@ -1,0 +1,25 @@
+{
+  "schema": 1,
+  "captured_utc_date": "2026-10-03",
+  "copied_at_utc": "2026-10-04T00:27:08.828789+00:00",
+  "original_filename": "a20-real-cua-error.jpg",
+  "sha256": "786e8ef4f5d1d9ffc28353a52393cb69dc91a3d6863438713d4b08eabb68c6a4",
+  "bytes": 21108,
+  "dimensions": [
+    880,
+    130
+  ],
+  "format": "JPEG",
+  "source_sha256": "68469f7aa3e9702c31c067e173bb2f8ca7e1fc769332c800d7e0cbfb41764a7e",
+  "revision": "c7ff962dbf8e1f44bf1022cc2dd0da95ca452a3a",
+  "version": "0.3.0",
+  "build": "282",
+  "capture": "Original documented CUA native app screenshot; data-only export of existing image bytes",
+  "fixture": "Synthetic sentence; Google provider outbound denied",
+  "visible_result": "Translation failed.",
+  "reviewed_by": [
+    "Main",
+    "Translator1-Distribution"
+  ],
+  "scope": "Native error readability and preserved existing styling on source68469f; excludes later source488659, first launch, physical selection, VoiceOver speech and public Gatekeeper acceptance"
+}

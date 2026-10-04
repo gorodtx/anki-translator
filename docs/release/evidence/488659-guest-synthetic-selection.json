@@ -1,0 +1,15 @@
+{
+  "task": "user-continuation",
+  "source_sha256": "48865972511c88fe78b1e74df3f21c3bebbdae66f11fb9919a62098348abf51f",
+  "bytes": 545814,
+  "fnv1a32": 1208377824,
+  "sha256": "4819bfc761c961d8bd86c1e558d27f71a7763db71b3c713d1508c687e1252d5c",
+  "kind": "original CUA JPEG; no crop/reencode; real VM UI; synthetic input where stated",
+  "note": "Реальное CUA взаимодействие с TextEdit VM; выделена собственная синтетическая фраза The weather is beautiful today., пользовательские данные не использовались.",
+  "schema": 1,
+  "image": "488659-guest-synthetic-selection.jpg",
+  "copied_at_utc": "2026-10-04T01:56:47.069756+00:00",
+  "main_personally_viewed_original": true,
+  "main_visual_review": "Real TextEdit Untitled with full blue-selected own synthetic sentence The weather is beautiful today. Positive selection control, no user private content or translation proof.",
+  "boundary": "Original source488 pre-A23 artifact; peer actual guest CUA, Main original-byte/visual review; outer viewer is disposable infrastructure. No fixed-c248 Services or nonempty translation claim."
+}
