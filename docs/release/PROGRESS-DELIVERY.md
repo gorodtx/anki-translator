@@ -868,3 +868,25 @@ Current production build300/source30adcf27b21bc0746862cb84682e9be714f62199af819f
 ### G113 — 2026-10-04T20:31:06.625879+00:00 — host positive control и user gate
 
 Normal launch current300 реально поднял shell28849/backend28866/helper28867. Actual IPC pingPASS:3DBtrue/pendingbytes0/Applepairinstalled/history_persistencetrue. Root current production SHA сверил с установленным binary; receipt native-hotfix/host-hotfix-receipt.json. macOS Translator permissionrow1 реально наблюдён, apptrust0; delayedclick был отклонён element_not_found безmutation, следующаяpage уже LoginItems — Main не вмешивается в чужую GUI navigation. Async user requests native shortcut+menu tests; A27/A28 physical acceptance не объявлена PASS. Source/tests/presentation normalcommits54da692/cc160b9/e00ff39; docs и actual push/gates завершаются.
+
+
+### G114 — 2026-10-04T20:43:15.415286+00:00: user FAIL и cleanup scope
+
+Прямые ответы пользователя на build300: A27 Accessibility/shortcut FAIL; A28 repeated menu Settings FAIL. Ни source checks, ни 172 Swift tests, ни window-order snapshots не объявляются их физической приёмкой. Push be417db выполнен с нормальными gates и verified remote SHA; релиз не обновлён. Read-only scan: множество generated Translator.app копий; Launch Services содержит 15 registrations, из них часть paths уже отсутствует. Добавлен A30: оставить одну canonical installation и убрать exact stale copies/registrations с process guards и metadata receipts, без повторных DB downloads/uploads и без очистки пользовательских данных.
+
+![Пользователь: дубликаты Translator в Spotlight](/Users/den/Documents/dev/translator-evidence/2026-10-04/native-hotfix/user-duplicate-copies.png)
+
+
+### G115 — 2026-10-04T20:54:11.949428+00:00: одна installation, доказанный TCC mismatch, build302
+
+- Удалены 18 generated/stale app bundles, включая clean/untracked helper worktree outputs; exact process/path guards, Info/build metadata и native SHA сохранены в native-hotfix/app-consolidation-receipt.json и peer-generated-copy-cleanup.json. Старый symlink ~/Applications удалён, current300 перенесён в /Applications, затем заменён production302. SQLite/history/config/Anki не тронуты; DB downloads/uploads отсутствуют. Obsolete legacy LaunchAgent с отсутствующим service и несуществующим target удалён после сохранения plist; SMAppService preference не изменялся.
+- Launch Services dump: **ровно один** com.translator.desktop path /Applications/Translator.app. Spotlight mdfind: **ровно тот же путь**. Filesystem search bounded project/helper/evidence/user Applications/support/Trash/Downloads/system Applications: **ровно одна Translator.app**. Evidence canonical-final-receipt.json.
+- macOS tccd фактически сообщает `Failed to match existing code requirement for subject com.translator.desktop and service kTCCServiceAccessibility`; saved cdhash19b63ea2c9411a218e2a66954eb4cf5be8f364c5 != production300 d47d42e8c4e3a1f0fb3ad1c875720ec7cb4ec3f0. Это измеренная причина enabled-toggle/denied-process, не предположение и не поломка SQLite. TCC базы не менялись, signature bypass не добавлялся.
+- Source43af6cb: activation внутри user menu action, default run-loop mode для ordering после tracking, explicit unhide, active Space и bounded completion при didBecomeActive. Normal commit gates PASS; fresh Swift build PASS; native window reopen2PASS/focus2SKIP. Ни один SKIP не заменяет физический menu click.
+- Production302 (43af6cb) seal PASS; packaging18PASS. Ordinary Launch Services launch с debug-window=Settings (без synthetic text/capture/trust) реально дал shell69024 → engine69043 → lookup69051. Fresh IPC ping: DB3true/pendingbytes0/Applepairinstalled/history_persistencetrue/helper /Applications/Translator.app/stalefalse. No launchd/bootstrap нужен для app-owned backend.
+- Main лично просмотрел actual Settings302 через CUA: warning remains; saved shortcut **⇧⌘T**, а не ошибочно предложенный раньше ⌥⌘T. System Settings действительно показывает Translator toggle on. Permission row selection не удалась; coordinate retry returned noWindowsAvailable без успешной mutation. Пользователю отправлена одна новая bundled проверка удаления stale row/добавления exact canonical302 + реального shortcut/menu. A27/A28 остаются WAITING_USER; final acceptance не заявлена.
+- Main лично просмотрел оба новых PNG ниже: нативный стиль сохранён. CI для предыдущего pushed be417db SUCCESS https://github.com/gorodtx/selection_translator_anki/actions/runs/37232867883; source43af6cb ещё ожидает следующую delivery, release не обновлён.
+
+![Settings после correction: light](/Users/den/Documents/dev/translator-evidence/2026-10-04/native-hotfix/menu-correction-check/window-settings-reopen-light.png)
+
+![Settings после correction: dark](/Users/den/Documents/dev/translator-evidence/2026-10-04/native-hotfix/menu-correction-check/window-settings-reopen-dark.png)

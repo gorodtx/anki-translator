@@ -34,3 +34,13 @@ Main read-only прочитал Info.plist: `/Users/den/Library/Application Supp
 ## M003 — 2026-10-04T20:31:06.625879+00:00 — новая копия реально запущена
 
 Installed0.3.0(300)/source30adcf27/nativebyte-match/sealPASS; oldexactPID69352 остановлен, new shell28849/backend28866/helper28867 подтверждены. Current UDS ping подтверждает3DB и AppleENRUinstalled. История не очищалась, базы повторно не скачивались. System Settings row Translator=1 лично прочитан; appstoredtrust=0. UI changed between observation/click: stale element action rejected, toggle не был изменён Main. User получил два конкретных native test вопроса; не считаем отсутствие ответа согласием/успехом. Legacy bootstrap5 отмечен A29, ordinary app runtime recovered.
+
+
+### M004 — 2026-10-04T20:43:15.415286+00:00: реальный ответ на build300
+
+Пользователь: «Settings остаются позади или не появляются». Accessibility toggle включён, перевод не работает. **Оба физические сценария FAIL**, предыдущие unit/runtime/Z-order результаты остаются в своём измеренном объёме. Дополнительно обнаружены дубликаты Spotlight; пользователь запросил оставить одну рабочую копию. Root продолжает самостоятельно.
+
+
+### M005 — 2026-10-04T20:54:11.949428+00:00: canonical302 для новой физической проверки
+
+Одна /Applications/Translator.app, source43af6cb, seal verified, backend/helper/DB3/Applepair/history IPC PASS. tccd signature mismatch доказан, saved shortcut **⇧⌘T**. Пользователю отправлены конкретные steps для exact installed copy и обоих bugs. **A27/A28 WAITING_USER**, A30 duplicate cleanup PASS. Нет нового public release и утверждения «всё исправлено».

@@ -270,3 +270,22 @@ Read-only установлен running build282, com.translator.desktop; stored 
 A27 code/regression PASS; actual installed build300 nonprompt access state пока denied, macOS row observed enabled. User requested refresh/re-add only Translator via штатный UI и actual shortcut capture; результат ещё WAITING_USER_REPLY, A27 целиком не PASS. A28 source/actual window-server order2themes PASS, reuse/pane сохранены; физический menu/focus WAITING_USER_REPLY, unattended focus2SKIP. Native design unchanged.
 
 A29 новый backlog: legacy host installer после успешного atomic swap/current3DBhashes получил launchctl bootstrap exit5; сервис absent. Ordinary current app300 запущена через LaunchServices, owned backendPID28866 pingPASS/3DBtrue/pendingbytes0/AppleENRUinstalled. Legacy background-registration failure не скрывается и не доказывает невозможность обычного запуска; root/sudo/BTM resets не выполнялись. Сохраняется для отдельного bounded diagnosis после двух native bugs.
+
+
+### A27/A28/A30 — повторная ручная проверка 2026-10-04T20:43:15.415286+00:00
+
+- **A27 FAIL по реальному ответу пользователя:** разрешение в macOS включено, глобальный перевод по-прежнему не работает. Проверка source/AX-probe не заменяет этот результат.
+- **A28 FAIL по реальному ответу пользователя:** уже открытые Settings остаются позади либо не появляются после меню. Синтетический window-server PASS сохранён как узкий отдельный факт.
+- **A30 IN_PROGRESS — одна установленная копия:** пользователь потребовал удалить дубли. Spotlight screenshot показывает несколько build/test путей. Read-only inventory подтвердил реальные generated app copies и 15 Launch Services registrations, включая удалённые пути. Оставить один canonical app в /Applications; не трогать SQLite, history, настройки и Anki. Сохранить metadata и отчёт удаления.
+- Source/docs HEAD be417db уже pushed/remote SHA verified; это не приёмка исправлений. Новый публичный релиз до закрытия A27/A28 не выполнен.
+
+
+### A27/A28/A30 — накопление фактов 2026-10-04T20:54:11.949428+00:00
+
+**A30 PASS в измеренном scope:** 18 duplicate/generated app bundles удалены с metadata receipts; filesystem, Spotlight и Launch Services подтверждают одну canonical /Applications/Translator.app build302. DB/history/config не менялись. Future development builds не оставлять зарегистрированными; собственные временные bundles после проверки удалять.
+
+**A27 причина доказана:** tccd отвергает signature requirement существующего grant. Переустановка/переключение чужой старой копии не является проверкой текущего grant. Exact canonical302 должен быть повторно добавлен пользователем в существующее Accessibility разрешение; без Developer ID ad-hoc updates могут снова потребовать разрешение. Не делать signature/TCC bypass и не объявлять проблему закрытой по одному enabled toggle.
+
+**A28 correction установлен:** source43af6cb/menu activation+run-loop ordering/unhide/Space+activation completion. Unit/local runtime green ограничен своим объёмом; настоящий повторный status-menu click ожидается от пользователя.
+
+Actual shortcut в General302 — **⇧⌘T**. Manual steps должны читать сохранённую комбинацию, не предполагать default. A29 obsolete host LaunchAgent убран после доказательства отсутствующего service; legacy developer installer bootstrap bug остаётся отдельным открытым пунктом, canonical app-owned launch PASS.
