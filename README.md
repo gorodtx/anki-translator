@@ -20,7 +20,7 @@ Linux GNOME (GTK4 + D-Bus) and macOS (SwiftUI + Unix socket) share one translati
 
 [English](#english) | [Русский](#русский)
 
-Supported now: **Linux GNOME (Wayland/X11)** and **macOS 26 (Apple silicon)**.  
+Supported now: **Linux GNOME (Wayland/X11)** and **macOS 26 (Apple silicon)**.<br>
 Planned (not supported yet): **Windows**.
 
 [![Python](https://img.shields.io/badge/Python-3.13-3776AB?logo=python&logoColor=white)](https://www.python.org/)

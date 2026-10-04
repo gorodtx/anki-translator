@@ -78,4 +78,3 @@ _GOLDEN_QUERIES: tuple[GoldenQuery, ...] = (
 
 def golden_queries() -> list[GoldenQuery]:
     return list(_GOLDEN_QUERIES)
-
