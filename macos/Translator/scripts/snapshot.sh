@@ -115,7 +115,7 @@ for scene in "${selected_scenes[@]}"; do
   scene="$(printf '%s' "${scene}" | tr -d '[:space:]')"
   case "${scene}" in
     probes) ;;
-    popup|settings|history|anki)
+    popup|settings|history|anki|window)
       if ! find "${OUT}" -maxdepth 1 -name "${scene}-*.png" -print -quit | grep -q .; then
         echo "snapshot run produced no ${scene} images; see ${OUT}/app.log" >&2
         exit 1

@@ -119,6 +119,7 @@ final class SnapshotRunner {
                 NSApp.appearance = NSAppearance(named: appearance)
                 if scenes.contains("popup") { await popupScenes(appearance: name) }
                 if scenes.contains("settings") { await settingsScene(appearance: name) }
+                if scenes.contains("window") { await settingsReopenScene(appearance: name) }
                 if scenes.contains("history") { await historyScene(appearance: name) }
                 if scenes.contains("anki") { await ankiScene(appearance: name) }
                 if scenes.contains("probes") { await popupProbes() }
@@ -130,6 +131,40 @@ final class SnapshotRunner {
     }
 
     // MARK: - Scenes
+
+    /// Exercise the menu's actual deferred Settings action with an already-open window
+    /// hidden behind another application. No user window, permission or data is changed.
+    private func settingsReopenScene(appearance: String) async {
+        guard let delegate else { return }
+        delegate.showSettings(pane: .sources)
+        try? await Task.sleep(for: .milliseconds(600))
+        let settings = delegate.snapshotSettingsWindow
+        guard let window = settings.window else { return }
+        let originalNumber = window.windowNumber
+        NSApp.hide(nil)
+        try? await Task.sleep(for: .milliseconds(300))
+        let wasHidden = NSApp.isHidden
+        delegate.showSettingsFromMenu()
+        await waitUntil(timeout: 3) { !NSApp.isHidden && window.isVisible }
+        try? await Task.sleep(for: .milliseconds(200))
+        // Window-server order is the acceptance for bringing Settings above other apps.
+        // An unattended action is not a physical menu click: macOS may deny activation.
+        let onScreen = CGWindowListCopyWindowInfo([.optionOnScreenOnly, .excludeDesktopElements], kCGNullWindowID)
+            as? [[String: Any]] ?? []
+        let frontWindow = onScreen.first { ($0[kCGWindowLayer as String] as? Int) == 0 }
+        let frontNumber = frontWindow?[kCGWindowNumber as String] as? Int
+        let passed = wasHidden && !NSApp.isHidden && window.isVisible && frontNumber == originalNumber
+            && settings.window?.windowNumber == originalNumber
+            && settings.selectedPane == .sources
+        NSLog("[snapshot] PROBE settings-menu-reopen \(passed ? "PASS" : "FAIL") front=\(frontNumber == originalNumber) hiddenBefore=\(wasHidden) hiddenAfter=\(NSApp.isHidden) reused=\(settings.window?.windowNumber == originalNumber) pane=\(settings.selectedPane?.rawValue ?? "nil")")
+        if NSApp.isActive && window.isKeyWindow {
+            NSLog("[snapshot] PROBE settings-menu-focus PASS active=true key=true")
+        } else {
+            NSLog("[snapshot] PROBE settings-menu-focus SKIP activation request not granted without physical user input; active=\(NSApp.isActive) key=\(window.isKeyWindow)")
+        }
+        write(window, "window-settings-reopen-\(appearance)")
+        window.close()
+    }
 
     /// Beyond the defaults: a word too long for any line, and an entry with dozens of senses.
     private static let popupExtraTexts = ["pneumonoultramicroscopicsilicovolcanoconiosis", "set"]
