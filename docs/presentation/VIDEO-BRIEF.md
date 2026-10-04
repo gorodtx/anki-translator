@@ -1,6 +1,12 @@
 # Демонстрация Translator — сценарий и запись
 
-Статус: **первичный brief, запись не выполнена**. Основная аудитория — русскоязычный пользователь macOS, читающий английский текст. Цель — за один короткий пример показать путь от выделения до русского перевода. Дизайн настоящего приложения сохраняется.
+Статус: **WAITING_USER_REAL_VIDEO_LOGO**, 04.10.2026 19:38UTC. Пользователь сам записывает настоящий screencast и делает новый логотип; peer готовит только интеграцию в минимальные README/landing. Генерация видео/лого/рисованного demo отменена прямым user steering `msg_4eb531224ca9`. Native дизайн неизменен. Прежний brief ниже — исторический; code composition уже перенесена во внешнее evidence, не является deliverable текущего сайта.
+
+## Интеграция настоящих файлов
+
+После получения разрешённых пользователем файлов: подтвердить actual frames/личные данные/версию приложения, сохранить original/hash и provenance; локальный approved MP4 + poster из настоящего кадра + optional русские captions подключить в `site/media.js`. Сейчас video/poster/captions null, logo existing/provisional. Native `<video controls playsinline preload="metadata">`, без autoplay/loop/speedup; обработка missing/error не выдаёт placeholder за capture. Preview/keyboard/reduced-motion готовятся независимо, actual playback/codecs/длительность/монтаж ещё **UNVERIFIED**. Текущее generated WebM evidence сохранено только как superseded experiment.
+
+Приёмка настоящего видео: selected text/Services/полученный RU popup читаются; фактическая скорость не маскируется; нужный build указан по source, а не по внешнему виду. Root ведёт build295 walkthrough; peer не запускает/не обновляет приложение. Пользователь выбирает собственную фразу; прежние guest examples не являются результатом новой записи.
 
 ## Рекомендуемый первый ролик
 
@@ -24,7 +30,9 @@ History/Anki не перегружать в первом ролике. Допо�
 4. Включать умеренный zoom и readable cursor. Не добавлять искусственное изменение app UI. Для первого master достаточно landscape 1920×1080; 60fps использовать, если capture/render не портит motion.
 5. Сохранить исходную запись/project и export MP4. GIF/WebP и лёгкий loop/poster для README/сайта производятся отдельно из master; не класть огромный видеофайл или personal footage в Git автоматически.
 
-## Что можно сделать через агента без записи пользователя
+## Прежние варианты агентной генерации — отменены 04.10.2026
+
+Следующие варианты сохраняются только как история первоначального brief. Они не входят в действующий scope и не должны выполняться: пользователь готовит настоящее видео самостоятельно.
 
 Написать script/storyboard и код композиции, подготовить титры, camera moves, transitions, собственные selection annotations, сделать preview/render и варианты форматов. Remotion — один проверяемый кандидат; окончательный toolchain выбирает presentation owner после research.
 

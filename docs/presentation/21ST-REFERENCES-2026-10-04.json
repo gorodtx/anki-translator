@@ -1,7 +1,7 @@
 {
   "retrieved_at": "2026-10-04",
   "source": "21st.dev MCP search",
-  "scope": "Free catalog metadata only. No paid code retrieval, installation, copying, visual review, or license verification has been performed.",
+  "scope": "Initial FREE metadata preserved; three PNG previews actually reviewed on2026-10-04, no paid code/source/license retrieval/import. User19:38 steering: generated demo superseded; restrained layout ideas only.",
   "searches": [
     {
       "query": "minimal macOS software product demo hero",
@@ -74,6 +74,68 @@
           "description": "Chat composer with auto-resizing textarea, attachment chips for staged images/files, send/stop button, and slot-based left/right toolbar actions for mode pickers, model selectors, etc. Self-contained port from 21st.dev Agent Elements."
         }
       ]
+    },
+    {
+      "query": "selection bubble menu native product demo",
+      "status": "FREE_METADATA_AND_SELECTED_PNG_REVIEW",
+      "results": [
+        {
+          "id": 26926,
+          "name": "Selection Bubble Menu",
+          "author": "laziekiki",
+          "url": "https://21st.dev/@laziekiki/components/selection-bubble-menu",
+          "previewUrl": "https://cdn.21st.dev/laziekiki/selection-bubble-menu/default/preview.1789003632689-e5378c25-8a8f-4ec2-b90d-beb0fa15a0cb.png",
+          "videoUrl": "https://cdn.21st.dev/laziekiki/selection-bubble-menu/default/video.1789003632689-e5378c25-8a8f-4ec2-b90d-beb0fa15a0cb.mp4",
+          "description": "A floating toolbar that springs up above any text selection, the pattern from Medium and Notion. Highlight text and format actions appear right where you are looking, follow the selection as you scroll, and flip below when there is no room above. Pressing a button never drops your selection, so you can stack formats without re-selecting. Bring your own actions, icons, and shortcuts. Self-contained: portaled, keyboard-aware, adapts to light or dark. React plus framer-motion.",
+          "license": "UNKNOWN",
+          "visualReview": "PNG_ACTUALLY_VIEWED"
+        },
+        {
+          "id": 23394,
+          "name": "Great UI Animated Select",
+          "author": "saurabh-2607",
+          "url": "https://21st.dev/@saurabh-2607/components/great-ui-animated-select",
+          "previewUrl": "https://cdn.21st.dev/user_2wdgsmfD3BNOOm4oOqUDUS9IXZI/great-ui-animated-select/default/preview.1785424893010.png",
+          "videoUrl": "https://cdn.21st.dev/user_2wdgsmfD3BNOOm4oOqUDUS9IXZI/great-ui-animated-select/default/video.1785424900768.mp4",
+          "description": "A premium interactive dropdown component with dynamic spring-based menu expanding animations and sequenced staggering list items.",
+          "license": "UNKNOWN",
+          "visualReview": "NOT_VIEWED"
+        },
+        {
+          "id": 2531,
+          "name": "Inline Dropdown",
+          "author": "al11o",
+          "url": "https://21st.dev/@al11o/components/inline-dropdown",
+          "previewUrl": "https://cdn.21st.dev/user_2vqlNaXxxOK0sb02XrSapLE8eQv/inline-dropdown/default/preview.1750807007502.png",
+          "videoUrl": "https://cdn.21st.dev/user_2vqlNaXxxOK0sb02XrSapLE8eQv/inline-dropdown/default/video.1750807009213.mp4",
+          "description": "Context menu with hold to click and text input hidden\n\nFull credits to : https://github.com/haaarshsingh\nhttps://ui.harshsingh.xyz/inline-dropdown",
+          "license": "UNKNOWN",
+          "visualReview": "NOT_VIEWED"
+        }
+      ]
+    }
+  ],
+  "visual_review": [
+    {
+      "id": 26926,
+      "status": "PNG_ACTUALLY_VIEWED",
+      "evidence": "/Users/den/Documents/dev/translator-evidence/2026-10-03/delivery/presentation/references/presentation-bubble.png",
+      "video_review": "NOT_VIEWED",
+      "license": "UNKNOWN"
+    },
+    {
+      "id": 4710,
+      "status": "PNG_ACTUALLY_VIEWED",
+      "evidence": "/Users/den/Documents/dev/translator-evidence/2026-10-03/delivery/presentation/references/presentation-hero.png",
+      "video_review": "NOT_VIEWED",
+      "license": "UNKNOWN"
+    },
+    {
+      "id": 12330,
+      "status": "PNG_ACTUALLY_VIEWED",
+      "evidence": "/Users/den/Documents/dev/translator-evidence/2026-10-03/delivery/presentation/references/presentation-macbook.png",
+      "video_review": "NOT_VIEWED",
+      "license": "UNKNOWN"
     }
   ]
 }
