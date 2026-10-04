@@ -2,9 +2,11 @@ from __future__ import annotations
 
 from pathlib import Path
 import subprocess
+import os
 from typing import Any, cast
 
 import yaml
+import pytest
 
 REPO_ROOT = Path(__file__).resolve().parents[1]
 WORKFLOW = REPO_ROOT / ".github" / "workflows" / "macos.yml"
@@ -134,6 +136,17 @@ def test_bundle_job_refuses_to_ship_offline_databases() -> None:
     assert "codesign -v --deep --strict" in commands
 
 
+def test_bundle_smoke_checks_both_actual_launchers_without_checkout_imports() -> None:
+    commands = _commands("bundle")
+    assert "scripts/check_macos_bundle_runtime.py" in commands
+    assert (
+        '--app dist/Translator.app --report "${RUNNER_TEMP}/bundle-runtime.json"'
+        in commands
+    )
+    assert "python -m desktop_app.platform.macos.client" not in commands
+    assert 'wait "${backend_pid}" 2>/dev/null || true' not in commands
+
+
 def test_notarize_job_is_tag_gated_and_secret_gated() -> None:
     job = _jobs()["notarize"]
 
@@ -149,6 +162,67 @@ def test_notarize_job_is_tag_gated_and_secret_gated() -> None:
     assert "notarytool submit" in commands
     assert "stapler staple" in commands
     assert "options runtime" in commands
+
+
+@pytest.mark.parametrize(
+    "missing",
+    [
+        "",
+        "CERT_BASE64",
+        "CERT_PASSWORD",
+        "APPLE_APP_PASSWORD",
+        "APPLE_SIGNING_IDENTITY",
+        "APPLE_ID",
+        "APPLE_TEAM_ID",
+    ],
+)
+def test_tag_notarization_refuses_incomplete_credentials(
+    tmp_path: Path, missing: str
+) -> None:
+    check = next(step for step in _steps("notarize") if step.get("id") == "secrets")
+    names = {
+        "APPLE_ID",
+        "APPLE_TEAM_ID",
+        "APPLE_APP_PASSWORD",
+        "APPLE_SIGNING_IDENTITY",
+        "CERT_BASE64",
+        "CERT_PASSWORD",
+    }
+    assert set(check["env"]) == names
+    environment = {"PATH": os.defpath, "GITHUB_OUTPUT": str(tmp_path / "output")}
+    environment.update({name: "synthetic-test-value" for name in names})
+    if missing:
+        environment[missing] = ""
+    result = subprocess.run(
+        ["bash", "-c", str(check["run"])],
+        env=environment,
+        text=True,
+        capture_output=True,
+        check=False,
+    )
+    assert result.returncode == (1 if missing else 0)
+    assert "synthetic-test-value" not in result.stdout + result.stderr
+    assert environment["GITHUB_OUTPUT"]
+    assert (tmp_path / "output").read_text().strip() == (
+        "ready=false" if missing else "ready=true"
+    )
+
+
+def test_notarization_uses_shared_signing_and_final_dmg_checksums() -> None:
+    commands = _commands("notarize")
+    assert "scripts/sign_macos_app.sh" in commands
+    assert "scripts/import_macos_certificate.swift" in commands
+    assert "scripts/store_notary_credentials.py" in commands
+    assert '--password "${APPLE_APP_PASSWORD}"' not in commands
+    assert '-P "${CERT_PASSWORD}"' not in commands
+    assert commands.count('== "Accepted"') == 2
+    assert commands.count("stapler validate") == 2
+    assert commands.index('stapler staple "${dmg}"') < commands.index(
+        '> "$(basename "${dmg}").sha256"'
+    )
+    assert "Remove temporary signing material" in {
+        step.get("name") for step in _steps("notarize")
+    }
 
 
 def test_bundle_job_reruns_the_toolchain_against_the_built_app() -> None:

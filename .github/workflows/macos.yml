@@ -98,6 +98,9 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
+      - name: Install uv
+        uses: astral-sh/setup-uv@v5
+
       - name: Show toolchain
         run: |
           set -euo pipefail
@@ -127,7 +130,7 @@ jobs:
             '{"id":"2","op":"dictionaries"}' \
             '{"id":"3","op":"shutdown"}' \
             | ./.build/release/apple-lang-helper | tee /tmp/sidecar.jsonl
-          python3 - <<'PY'
+          uv run --frozen python - <<'PY'
           import json, pathlib, sys
           lines = [json.loads(l) for l in pathlib.Path("/tmp/sidecar.jsonl").read_text().splitlines() if l.strip()]
           assert [m["id"] for m in lines] == ["1", "2", "3"], lines
@@ -149,6 +152,9 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
+      - name: Install uv
+        uses: astral-sh/setup-uv@v5
+
       - name: Build Translator
         working-directory: macos/Translator
         run: swift build -c release
@@ -162,7 +168,7 @@ jobs:
           set -euo pipefail
           # Method and event names are duplicated in Swift; drift breaks the app
           # silently, so compare both lists.
-          python3 - <<'PY'
+          uv run --frozen python - <<'PY'
           import pathlib, re
 
           py = pathlib.Path("desktop_app/platform/macos/ipc/protocol.py").read_text()
@@ -186,6 +192,8 @@ jobs:
     runs-on: macos-26
     steps:
       - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
 
       - name: Install uv
         uses: astral-sh/setup-uv@v5
@@ -199,7 +207,14 @@ jobs:
         run: uv sync --frozen --dev
 
       - name: Build Translator.app
-        run: scripts/build_macos_app.sh --out dist
+        run: |
+          set -euo pipefail
+          if [[ "${GITHUB_REF_TYPE}" == tag ]]; then
+            version="${GITHUB_REF_NAME#v}"
+            [[ "${version}" =~ ^[0-9]+\.[0-9]+\.[0-9]+$ ]] || { echo 'invalid release version'; exit 1; }
+            export TRANSLATOR_APP_VERSION="${version}"
+          fi
+          scripts/build_macos_app.sh --out dist
 
       - name: Verify bundle contract
         run: |
@@ -223,40 +238,10 @@ jobs:
       - name: Backend smoke from inside the bundle
         run: |
           set -euo pipefail
-          export TRANSLATOR_CONFIG_DIR="${RUNNER_TEMP}/tr/cfg"
-          export TRANSLATOR_DB_DIR="${RUNNER_TEMP}/tr/db"
-          export TRANSLATOR_RUNTIME_DIR="/tmp/tr-run"
-          export TRANSLATOR_LOG_DIR="${RUNNER_TEMP}/tr/logs"
-          mkdir -p "${TRANSLATOR_DB_DIR}" "${TRANSLATOR_RUNTIME_DIR}"
-          dist/Translator.app/Contents/Resources/bin/run-backend --log-level INFO &
-          backend_pid=$!
-          for _ in $(seq 1 30); do
-            [[ -S "${TRANSLATOR_RUNTIME_DIR}/backend.sock" ]] && break
-            sleep 1
-          done
-          test -S "${TRANSLATOR_RUNTIME_DIR}/backend.sock"
-          # No offline bases on the runner: ping must still answer and report them missing.
-          uv run --frozen python -m desktop_app.platform.macos.client ping --timeout 10 > ping.json
-          python3 - <<'PY'
-          import json
-          data = json.load(open("ping.json"))["result"]
-          assert data["protocol"] == 1, data
-          db = data["db"]
-          # Field by field, not whole-dict equality: the report grows over time
-          # and an exact match turns every addition into a CI failure.
-          assert db["primary"] is False, db
-          assert db["fallback"] is False, db
-          assert db["definitions"] is False, db
-          assert db["dir"], db
-          # No base is present here, so none may claim a source directory.
-          assert all(value is None for value in db["sources"].values()), db
-          # An empty store is the only place the full download cost is visible,
-          # and this runner is the only empty store we ever get.
-          assert db["pending_bytes"] == 1896546304, db
-          print("bundle backend OK:", data["version"])
-          PY
-          uv run --frozen python -m desktop_app.platform.macos.client shutdown --timeout 10 || true
-          wait "${backend_pid}" 2>/dev/null || true
+          # Both actual embedded launchers must ignore unrelated cwd packages.
+          # The shared checker owns each profile/socket/PID and verifies the seal.
+          uv run --frozen python scripts/check_macos_bundle_runtime.py \
+            --app dist/Translator.app --report "${RUNNER_TEMP}/bundle-runtime.json"
 
       - name: The toolchain must not write into a signed bundle
         run: |
@@ -282,6 +267,7 @@ jobs:
           shasum -a 256 out/Translator-macos.zip out/install_macos.sh \
             | sed 's| out/|  |' > out/macos-assets.sha256
           cat out/macos-assets.sha256
+          scripts/package_macos_dmg.sh dist/Translator.app out
 
       - name: Installer must verify what the release ships
         run: |
@@ -312,6 +298,8 @@ jobs:
             out/Translator-macos.zip
             out/install_macos.sh
             out/macos-assets.sha256
+            out/Translator-*-macos-arm64.dmg
+            out/Translator-*-macos-arm64.dmg.sha256
           if-no-files-found: error
 
   notarize:
@@ -321,6 +309,9 @@ jobs:
     runs-on: macos-26
     steps:
       - uses: actions/checkout@v4
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@v5
 
       - name: Download bundle
         uses: actions/download-artifact@v4
@@ -335,12 +326,16 @@ jobs:
           APPLE_TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
           APPLE_APP_PASSWORD: ${{ secrets.APPLE_APP_PASSWORD }}
           APPLE_SIGNING_IDENTITY: ${{ secrets.APPLE_SIGNING_IDENTITY }}
+          CERT_BASE64: ${{ secrets.APPLE_CERT_BASE64 }}
+          CERT_PASSWORD: ${{ secrets.APPLE_CERT_PASSWORD }}
         run: |
-          if [[ -n "${APPLE_ID}" && -n "${APPLE_TEAM_ID}" && -n "${APPLE_APP_PASSWORD}" && -n "${APPLE_SIGNING_IDENTITY}" ]]; then
+          set -euo pipefail
+          if [[ -n "${APPLE_ID}" && -n "${APPLE_TEAM_ID}" && -n "${APPLE_APP_PASSWORD}" && -n "${APPLE_SIGNING_IDENTITY}" && -n "${CERT_BASE64}" && -n "${CERT_PASSWORD}" ]]; then
             echo "ready=true" >> "${GITHUB_OUTPUT}"
           else
             echo "ready=false" >> "${GITHUB_OUTPUT}"
-            echo "::notice::Developer ID secrets absent; skipping notarization."
+            echo "::error::Public release BLOCKED: Developer ID certificate and notarization credentials are required."
+            exit 1
           fi
 
       - name: Import signing certificate
@@ -350,13 +345,13 @@ jobs:
           CERT_PASSWORD: ${{ secrets.APPLE_CERT_PASSWORD }}
         run: |
           set -euo pipefail
-          keychain="${RUNNER_TEMP}/build.keychain"
+          keychain="${RUNNER_TEMP}/build.keychain-db"
           security create-keychain -p actions "${keychain}"
           security set-keychain-settings -lut 3600 "${keychain}"
           security unlock-keychain -p actions "${keychain}"
-          echo "${CERT_BASE64}" | base64 --decode > "${RUNNER_TEMP}/cert.p12"
-          security import "${RUNNER_TEMP}/cert.p12" -k "${keychain}" -P "${CERT_PASSWORD}" \
-            -T /usr/bin/codesign -T /usr/bin/security
+          umask 077
+          printf '%s' "${CERT_BASE64}" | base64 --decode > "${RUNNER_TEMP}/cert.p12"
+          swift scripts/import_macos_certificate.swift "${RUNNER_TEMP}/cert.p12" "${keychain}"
           security list-keychains -d user -s "${keychain}" login.keychain-db
           security set-key-partition-list -S apple-tool:,apple:,codesign: -s -k actions "${keychain}"
           rm -f "${RUNNER_TEMP}/cert.p12"
@@ -372,24 +367,59 @@ jobs:
           set -euo pipefail
           ditto -x -k out/Translator-macos.zip unpacked
           app="unpacked/Translator.app"
-          find "${app}/Contents/Resources" -type f \( -name '*.so' -o -name '*.dylib' \) \
-            -exec codesign --force --timestamp --options runtime --sign "${APPLE_SIGNING_IDENTITY}" {} +
-          codesign --force --timestamp --options runtime --sign "${APPLE_SIGNING_IDENTITY}" \
-            "${app}/Contents/Resources/python/bin/python3.13" \
-            "${app}/Contents/Resources/bin/apple-lang-helper"
-          codesign --force --timestamp --options runtime --sign "${APPLE_SIGNING_IDENTITY}" "${app}"
+          # One signing host covers every Mach-O, including TranslatorBackend,
+          # with --options runtime and timestamp for the Developer ID identity.
+          scripts/sign_macos_app.sh "${app}" "${APPLE_SIGNING_IDENTITY}"
+          keychain="${RUNNER_TEMP}/build.keychain-db"
+          uv run --frozen python scripts/store_notary_credentials.py translator-ci "${keychain}"
           ditto -c -k --sequesterRsrc --keepParent "${app}" notarize.zip
-          xcrun notarytool submit notarize.zip --apple-id "${APPLE_ID}" \
-            --team-id "${APPLE_TEAM_ID}" --password "${APPLE_APP_PASSWORD}" --wait
+          xcrun notarytool submit notarize.zip --keychain-profile translator-ci --keychain "${keychain}" --wait --output-format json > app-notary.json
+          uv run --frozen python - <<'PY'
+          import json
+          from pathlib import Path
+          assert json.loads(Path("app-notary.json").read_text())["status"] == "Accepted", "App notarization was not Accepted"
+          PY
           xcrun stapler staple "${app}"
+          xcrun stapler validate "${app}"
+          codesign --verify --deep --strict "${app}"
           spctl -a -vvv "${app}"
           mkdir -p signed
           ditto -c -k --sequesterRsrc --keepParent "${app}" signed/Translator-macos.zip
+          cp scripts/install_macos.sh signed/
+          (cd signed && shasum -a 256 Translator-macos.zip install_macos.sh > macos-assets.sha256 && shasum -a 256 -c macos-assets.sha256)
+          scripts/package_macos_dmg.sh "${app}" signed
+          dmg="$(find signed -maxdepth 1 -name '*.dmg' -print)"
+          test -n "${dmg}"
+          codesign --force --timestamp --sign "${APPLE_SIGNING_IDENTITY}" "${dmg}"
+          xcrun notarytool submit "${dmg}" --keychain-profile translator-ci --keychain "${keychain}" --wait --output-format json > dmg-notary.json
+          uv run --frozen python - <<'PY'
+          import json
+          from pathlib import Path
+          assert json.loads(Path("dmg-notary.json").read_text())["status"] == "Accepted", "DMG notarization was not Accepted"
+          PY
+          xcrun stapler staple "${dmg}"
+          xcrun stapler validate "${dmg}"
+          spctl --assess --type open --context context:primary-signature --verbose=2 "${dmg}"
+          # Signing/stapling changes bytes: regenerate the distributed checksum last.
+          (cd signed && shasum -a 256 "$(basename "${dmg}")" > "$(basename "${dmg}").sha256" && shasum -a 256 -c "$(basename "${dmg}").sha256")
+
+      - name: Remove temporary signing material
+        if: always()
+        run: |
+          rm -f "${RUNNER_TEMP}/cert.p12"
+          if [[ -f "${RUNNER_TEMP}/build.keychain-db" ]]; then
+            security delete-keychain "${RUNNER_TEMP}/build.keychain-db"
+          fi
 
       - name: Upload notarized bundle
         if: steps.secrets.outputs.ready == 'true'
         uses: actions/upload-artifact@v4
         with:
           name: Translator-macos-notarized
-          path: signed/Translator-macos.zip
+          path: |
+            signed/Translator-macos.zip
+            signed/install_macos.sh
+            signed/macos-assets.sha256
+            signed/Translator-*-macos-arm64.dmg
+            signed/Translator-*-macos-arm64.dmg.sha256
           if-no-files-found: error
