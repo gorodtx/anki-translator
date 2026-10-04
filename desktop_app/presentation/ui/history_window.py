@@ -8,7 +8,10 @@ from desktop_app.application.history import HistoryItem
 from desktop_app.presentation.ui.drag import attach_window_drag
 from desktop_app.presentation.ui.theme import apply_theme
 from desktop_app import gtk_types
-from translate_logic.shared.highlight import build_highlight_spec, highlight_to_pango_markup
+from translate_logic.shared.highlight import (
+    build_highlight_spec,
+    highlight_to_pango_markup,
+)
 from translate_logic.models import Example, TranslationStatus
 
 gi = importlib.import_module("gi")
@@ -70,7 +73,7 @@ class HistoryWindow:
         window.set_child(root)
         apply_theme()
 
-        self._window = window
+        self._window: gtk_types.Gtk.ApplicationWindow = window
         self._list_box = list_box
         self._items: list[HistoryItem] = []
         self._rows: list[_HistoryRow] = []

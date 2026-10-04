@@ -1,0 +1,90 @@
+{
+  "version": 1,
+  "components": [
+    {
+      "path": ".",
+      "prefixes": [
+        ""
+      ],
+      "dependencies": [
+        ".venv"
+      ],
+      "commit": [
+        [
+          "uv",
+          "run",
+          "--no-sync",
+          "ruff",
+          "check",
+          "."
+        ],
+        [
+          "uv",
+          "run",
+          "--no-sync",
+          "python",
+          "scripts/check_python_format.py"
+        ],
+        [
+          "uv",
+          "run",
+          "--no-sync",
+          "python",
+          "-m",
+          "mypy"
+        ]
+      ],
+      "push": [
+        [
+          "uv",
+          "run",
+          "--no-sync",
+          "python",
+          "-m",
+          "pytest",
+          "-q"
+        ]
+      ]
+    },
+    {
+      "path": "macos/Translator",
+      "prefixes": [
+        "macos/Translator/",
+        ".orca-gates.json"
+      ],
+      "commit": [
+        [
+          "swift",
+          "build",
+          "-c",
+          "release"
+        ]
+      ],
+      "push": [
+        [
+          "scripts/swift-test.sh"
+        ]
+      ]
+    },
+    {
+      "path": "macos/AppleLangHelper",
+      "prefixes": [
+        "macos/AppleLangHelper/",
+        ".orca-gates.json"
+      ],
+      "commit": [
+        [
+          "swift",
+          "build",
+          "-c",
+          "release"
+        ]
+      ],
+      "push": [
+        [
+          "scripts/swift-test.sh"
+        ]
+      ]
+    }
+  ]
+}

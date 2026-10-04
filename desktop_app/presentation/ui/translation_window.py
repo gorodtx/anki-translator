@@ -170,7 +170,7 @@ class TranslationWindow:
         window.set_child(root)
         apply_theme()
 
-        self._window = window
+        self._window: gtk_types.Gtk.ApplicationWindow = window
         self._rendered_state: TranslationViewState | None = None
         self._upsert_popover: Any | None = None
         self._upsert_cleanup: Callable[[], None] | None = None
@@ -730,7 +730,9 @@ class TranslationWindow:
         self._rendered_state = state
 
     def _field_row(self, label: gtk_types.Gtk.Label) -> gtk_types.Gtk.Box:
-        row = Gtk.Box(orientation=Gtk.Orientation.VERTICAL, spacing=4)
+        row: gtk_types.Gtk.Box = Gtk.Box(
+            orientation=Gtk.Orientation.VERTICAL, spacing=4
+        )
         label.set_xalign(0.0)
         row.append(label)
         return row
@@ -910,8 +912,12 @@ class TranslationWindow:
             return False
         return True
 
-    def _labeled_row(self, title: str, widget: object) -> gtk_types.Gtk.Box:
-        row = Gtk.Box(orientation=Gtk.Orientation.VERTICAL, spacing=4)
+    def _labeled_row(
+        self, title: str, widget: gtk_types.Gtk.Widget
+    ) -> gtk_types.Gtk.Box:
+        row: gtk_types.Gtk.Box = Gtk.Box(
+            orientation=Gtk.Orientation.VERTICAL, spacing=4
+        )
         label = Gtk.Label(label=title)
         label.set_xalign(0.0)
         row.append(label)

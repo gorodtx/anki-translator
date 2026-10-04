@@ -3,7 +3,10 @@ from __future__ import annotations
 from enum import Enum
 import importlib
 
-from desktop_app.infrastructure.notifications.models import Notification, NotificationLevel
+from desktop_app.infrastructure.notifications.models import (
+    Notification,
+    NotificationLevel,
+)
 from desktop_app import gtk_types
 
 gi = importlib.import_module("gi")
@@ -52,7 +55,7 @@ class BannerHost:
         revealer.set_reveal_child(False)
         revealer.set_transition_duration(BannerUi.TRANSITION_MS.value)
         revealer.set_child(box)
-        self._revealer = revealer
+        self._revealer: gtk_types.Gtk.Revealer = revealer
 
     @property
     def widget(self) -> gtk_types.Gtk.Revealer:

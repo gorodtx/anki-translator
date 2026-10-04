@@ -54,7 +54,9 @@ class SettingsWindow:
         self._model_names_future: Future[AnkiListResult] | None = None
         self._model_ready = False
         self._pending_anki: AnkiConfig | None = None
-        self._window = Gtk.ApplicationWindow(application=app)
+        self._window: gtk_types.Gtk.ApplicationWindow = Gtk.ApplicationWindow(
+            application=app
+        )
         self._window.set_title("Settings")
         self._window.set_default_size(460, 360)
         self._window.set_resizable(False)

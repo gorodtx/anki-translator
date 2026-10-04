@@ -1,0 +1,23 @@
+{
+  "version": 1,
+  "baseline_revision": "c7ff962dbf8e1f44bf1022cc2dd0da95ca452a3a",
+  "unchanged_legacy_files": {
+    "desktop_app/app.py": "fe6a91dfe99e992892b2dc81036af8e5923d205378583633ff6117568d81bc7e",
+    "desktop_app/application/examples_state.py": "b056e50d8dce604b7c2971c8239b76998f5e7d538c1037f72c42b446fbc6c4e1",
+    "desktop_app/application/use_cases/example_refresh.py": "c557b6731449489aa844d57519414ee071443b4e956b5d70d093f59c900be9ad",
+    "desktop_app/infrastructure/anki/__init__.py": "362f205ba587d6b1acbb04db6e4c9a77fd4ccf9c0def8549f1b19951048874bc",
+    "desktop_app/infrastructure/anki/service.py": "33885e83c71eb86f29aa9395f5bf44cf30026141e746be87140bf385b8b195a9",
+    "desktop_app/presentation/controllers/__init__.py": "811e73b8961c5dafa4730609bbc15e1c46cb94979915d78366a23a1ec7297bb1",
+    "desktop_app/presentation/controllers/translation_controller.py": "48ad16ca6761c698f3a513cd24e9e2a0efa83feef540451b5b4a20f033c72b0e",
+    "desktop_app/presentation/controllers/translation_view.py": "a409e26398ef9921a3895b73a08d76afda8348ce1d38bd2505945cd31768b1f0",
+    "desktop_app/presentation/dbus/service.py": "2484d6d9c17d9c7eb4e42d8f66c3be848d8c0b3391d7cb01fb978aa5208f03fd",
+    "dev/scripts/nightly_dataset.py": "cd28de685feb28ba8636c96ad3836fa45de689384a2c40db06a6a570b20cb122",
+    "tests/test_examples_refresh.py": "45eb3916938d3ac7324a6a62a0c1202e025d428cacb61584c04b5ed6a4ef42fa",
+    "tests/test_regressions.py": "0bc699baa81cc9f56842c6f98ad4a23b3d041144cb3a9d6e5844d2af2905dd1f",
+    "translate_logic/application/pipeline/__init__.py": "507684379eb23141fca130227f5d4518d606c1bc00884642c33a91955f83d88e",
+    "translate_logic/infrastructure/http/transport.py": "a4d5a4a8748bc168af8dabfc299d499009744be75f6ea3c66292726737ddad25",
+    "translate_logic/infrastructure/language_base/validation.py": "dd1ce1cb4fec416d6040cfa18e801e0afbbfb7d845e83e7f6c8ff535c20864d2",
+    "translate_logic/infrastructure/providers/__init__.py": "a1e97ac403fdd0c2e5d914c5bf11379242d137f85db77d8dbd09896ef0fb8154",
+    "translate_logic/infrastructure/providers/cambridge.py": "7a9015a881ba65d96f788143dbb6a2f80a13d1587f12a089f4631754383949b1"
+  }
+}

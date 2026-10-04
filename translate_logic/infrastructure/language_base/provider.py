@@ -82,7 +82,7 @@ def _fts_token_query(text: str) -> str | None:
     if not tokens:
         return None
     bounded = tokens[:_TOKEN_QUERY_LIMIT]
-    clauses = ['en:"' + token.replace('"', '""') + '"' for token in bounded]
+    clauses: list[str] = ['en:"' + token.replace('"', '""') + '"' for token in bounded]
     if len(clauses) == 1:
         return clauses[0]
     return " AND ".join(clauses)
