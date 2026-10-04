@@ -115,7 +115,7 @@ write_launch_agent() {
   <dict>
     <key>TRANSLATOR_CONFIG_DIR</key><string>${SUPPORT_DIR}</string>
     <key>TRANSLATOR_DB_DIR</key><string>${DB_DIR}</string>
-    <key>TRANSLATOR_RUNTIME_DIR</key><string>${SUPPORT_DIR}/run</string>
+    <key>TRANSLATOR_RUNTIME_DIR</key><string>${SUPPORT_DIR}/run-app</string>
     <key>TRANSLATOR_LOG_DIR</key><string>${LOG_DIR}</string>
   </dict>
   <key>RunAtLoad</key><true/>
@@ -146,13 +146,17 @@ PLIST
 # breaks the working setup. Touch launchd only when HOME really is the account's
 # home directory.
 real_home() {
-  local home
-  home="$(dscl . -read "/Users/$(id -un)" NFSHomeDirectory 2>/dev/null | awk '{print $2}')"
-  printf '%s\n' "${home:-${HOME}}"
+  local record home
+  record="$(dscl . -read "/Users/$(id -un)" NFSHomeDirectory 2>/dev/null)" || return 1
+  home="${record#NFSHomeDirectory: }"
+  [[ "${home}" == /* && "${home}" != "${record}" ]] || return 1
+  printf '%s\n' "${home}"
 }
 
 launchd_is_ours() {
-  [[ "${HOME}" == "$(real_home)" ]]
+  local account_home
+  account_home="$(real_home)" || return 1
+  [[ "${HOME}" == "${account_home}" ]]
 }
 
 agent_load() {
@@ -244,17 +248,44 @@ install_app() {
 # starts no shell leaves an app the user cannot reach, and an update that leaves
 # the old shell running leaves them on old code. Both are fixed here.
 #
-# `pkill -x` matches the process name exactly. Anything looser is a trap: the
-# backend launcher is called TranslatorBackend, so a prefix match on
-# "Translator" would take it down too and start a fight with launchd.
+# A same-named development or downloaded copy is not this installation.
+# Never signal by name; check the executable path before using an exact PID.
+owned_app_pid() {
+  local pid executable
+  for pid in $(pgrep -x "${APP_NAME}" 2>/dev/null || true); do
+    executable="$(ps -p "${pid}" -o comm= 2>/dev/null)" || continue
+    executable="${executable#"${executable%%[![:space:]]*}"}"
+    case "${executable}" in
+      "${RELEASES_DIR}/current/${APP_NAME}.app/Contents/MacOS/${APP_NAME}"|\
+      "${RELEASES_DIR}/previous/${APP_NAME}.app/Contents/MacOS/${APP_NAME}")
+        printf '%s\n' "${pid}"; return 0 ;;
+    esac
+  done
+  return 1
+}
+
+stop_app() {
+  launchd_is_ours || return 0
+  local pid waited=0
+  pid="$(owned_app_pid)" || return 0
+  kill -TERM "${pid}" || return 1
+  while kill -0 "${pid}" 2>/dev/null && (( waited < 50 )); do
+    sleep 0.1
+    waited=$((waited + 1))
+  done
+  if kill -0 "${pid}" 2>/dev/null; then
+    log "the owned app did not stop; leaving it untouched"
+    return 1
+  fi
+  log "stopped the previous shell (pid ${pid})"
+}
+
 restart_app() {
   if ! launchd_is_ours; then
     log "HOME is not the account home; not touching the running app"
     return 0
   fi
-  if pkill -x "${APP_NAME}" 2>/dev/null; then
-    log "stopped the previous shell"
-  fi
+  stop_app || return 1
   if ! open "${LINK_DIR}/${APP_NAME}.app" 2>/dev/null; then
     log "could not launch the app; open ${LINK_DIR}/${APP_NAME}.app by hand"
     return 0
@@ -266,7 +297,7 @@ restart_app() {
   while (( waited < APP_LAUNCH_WAIT_S * 10 )); do
     # `|| true`: pgrep exits 1 when nothing matches, and under `set -e` with
     # `pipefail` that aborts the installer on the loop's very first turn.
-    pid="$(pgrep -x "${APP_NAME}" 2>/dev/null | head -1 || true)"
+    pid="$(owned_app_pid || true)"
     [[ -n "${pid}" ]] && break
     sleep 0.1
     waited=$((waited + 1))
@@ -292,6 +323,7 @@ rollback() {
 }
 
 remove_app() {
+  stop_app || return 1
   agent_unload
   rm -f "${AGENT_PLIST}" "${LINK_DIR}/${APP_NAME}.app"
   rm -rf "${RELEASES_DIR}"
@@ -311,16 +343,20 @@ remove_app() {
 # effects — `translate` would leave an entry in the user's history on every
 # healthcheck.
 backend_answers() {
-  local socket="$1" reply
+  local socket="$1" reply ok protocol pid persistence
   reply="$(printf '%s\n' '{"id":1,"method":"ping","params":{}}' \
     | nc -U "${socket}" -w "${PING_TIMEOUT_S}" 2>/dev/null || true)"
-  # Test the payload, never the pipeline's exit code: that belongs to nc.
-  [[ "${reply}" == *'"ok":true'* ]]
+  # Parse exact typed fields; ok alone also describes an incompatible legacy daemon.
+  ok="$(printf '%s' "${reply}" | /usr/bin/plutil -extract ok raw -expect bool -o - - 2>/dev/null)" || return 1
+  protocol="$(printf '%s' "${reply}" | /usr/bin/plutil -extract result.protocol raw -expect integer -o - - 2>/dev/null)" || return 1
+  pid="$(printf '%s' "${reply}" | /usr/bin/plutil -extract result.pid raw -expect integer -o - - 2>/dev/null)" || return 1
+  persistence="$(printf '%s' "${reply}" | /usr/bin/plutil -extract result.capabilities.history_persistence raw -expect bool -o - - 2>/dev/null)" || return 1
+  [[ "${ok}" == true && "${protocol}" == 1 && "${persistence}" == true ]] && (( pid > 1 ))
 }
 
 healthcheck() {
   local status=0
-  local socket="${SUPPORT_DIR}/run/backend.sock"
+  local socket="${SUPPORT_DIR}/run-app/backend.sock"
   # launchd needs a moment to start the daemon right after bootstrap.
   local waited=0
   while [[ ! -S "${socket}" && "${waited}" -lt 10 ]]; do

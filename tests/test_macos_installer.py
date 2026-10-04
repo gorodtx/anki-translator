@@ -1,7 +1,10 @@
 from __future__ import annotations
 
 from pathlib import Path
+import json
+import shlex
 import subprocess
+import sys
 
 import pytest
 
@@ -21,6 +24,89 @@ def test_installer_is_executable_and_syntactically_valid() -> None:
         ["bash", "-n", str(INSTALLER)], capture_output=True, text=True, check=False
     )
     assert result.returncode == 0, result.stderr
+
+
+@pytest.mark.skipif(sys.platform != "darwin", reason="Apple plutil health parsing")
+@pytest.mark.parametrize(
+    "protocol,pid,capability,ready",
+    [
+        (1, 123, True, True),
+        (12, 123, True, False),
+        (1, 1, True, False),
+        (1, 123, False, False),
+        (1, 123, None, False),
+        (1, 123, "true", False),
+    ],
+)
+def test_healthcheck_requires_compatible_capability(
+    protocol: int,
+    pid: int,
+    capability: bool | str | None,
+    ready: bool,
+) -> None:
+    payload: dict[str, object] = {"protocol": protocol, "pid": pid}
+    if capability is not None:
+        payload["capabilities"] = {"history_persistence": capability}
+    reply = json.dumps({"ok": True, "result": payload}, separators=(",", ":"))
+    text = _text()
+    block = text[text.index("backend_answers()") : text.index("healthcheck()")]
+    result = subprocess.run(
+        [
+            "bash",
+            "-c",
+            "PING_TIMEOUT_S=1\nnc() { printf '%s\\n' "
+            + shlex.quote(reply)
+            + "; }\n"
+            + block
+            + "\nbackend_answers /tmp/synthetic.sock",
+        ],
+        text=True,
+        capture_output=True,
+        check=False,
+    )
+    assert result.returncode == (0 if ready else 1), result.stdout + result.stderr
+
+
+@pytest.mark.parametrize("owned", [True, False])
+def test_shell_pid_filter_rejects_same_named_foreign_bundle(owned: bool) -> None:
+    text = _text()
+    block = text[text.index("owned_app_pid()") : text.index("stop_app()")]
+    script = """
+APP_NAME=Translator
+RELEASES_DIR='/tmp/test profile/releases'
+pgrep() { printf '11\n22\n33\n'; }
+ps() {
+  case "$2" in
+    11) printf '/tmp/foreign/Translator.app/Contents/MacOS/Translator\n';;
+    22) printf '/tmp/test profile/releases/current/Translator.app/Contents/MacOS/TranslatorBackend\n';;
+    33) printf '%s\n' "$TEST_EXECUTABLE";;
+  esac
+}
+"""
+    expected = (
+        "/tmp/test profile/releases/current/Translator.app/Contents/MacOS/Translator"
+        if owned
+        else "/tmp/another/Translator.app/Contents/MacOS/Translator"
+    )
+    import shlex
+
+    result = subprocess.run(
+        [
+            "bash",
+            "-c",
+            script
+            + "TEST_EXECUTABLE="
+            + shlex.quote(expected)
+            + "\n"
+            + block
+            + "\nowned_app_pid",
+        ],
+        text=True,
+        capture_output=True,
+        check=False,
+    )
+    assert result.returncode == (0 if owned else 1)
+    assert result.stdout == ("33\n" if owned else "")
 
 
 @pytest.mark.parametrize(
@@ -199,13 +285,16 @@ def test_installer_restarts_the_shell_app_not_only_the_daemon() -> None:
 
     assert "restart_app" in install_block
     restart = text[text.index("restart_app()") : text.index("rollback()")]
-    assert 'pkill -x "${APP_NAME}"' in restart, "an exact name match, never a prefix"
+    assert "stop_app" in restart
+    assert "pkill" not in text
+    assert 'kill -TERM "${pid}"' in text
+    assert "owned_app_pid" in text
     assert "launchd_is_ours" in restart, "a redirected HOME must not touch the app"
     # A failure to launch is reported, not swallowed into a silent success.
     assert "could not launch the app" in restart
     # And `open` exiting 0 is not proof: it reported success once with nothing
     # left running, so the pid is looked for before the log claims it.
-    assert 'pgrep -x "${APP_NAME}"' in restart
+    assert "owned_app_pid" in restart
     assert "app did not stay running" in restart
     # pgrep exits 1 when nothing matches, which under `set -e` with `pipefail`
     # would abort the installer on the loop's first turn.
@@ -309,12 +398,29 @@ def test_build_signs_the_backend_launcher_before_sealing_the_bundle() -> None:
     assert 'cp "${BACKEND_BIN}" "${CONTENTS}/MacOS/TranslatorBackend"' in text
     # A second Mach-O in Contents/MacOS is nested code, not a sealed resource, so an
     # unsigned one leaves the bundle seal broken and the login item unattributable.
+    assert '"${ROOT_DIR}/scripts/sign_macos_app.sh"' in text
+    text = (REPO_ROOT / "scripts/sign_macos_app.sh").read_text(encoding="utf-8")
     signing = text.index("TranslatorBackend" + '"', text.index("codesign"))
     sealing = text.index(
-        'codesign "${SIGN_FLAGS[@]}" --identifier "${BUNDLE_ID}" "${APP_DIR}"'
+        'codesign "${SIGN_FLAGS[@]}" --identifier com.translator.desktop "${APP}"'
     )
     assert signing < sealing, "the launcher must be signed before the bundle is sealed"
-    assert '--identifier "${BUNDLE_ID}.backend"' in text
+    assert "--identifier com.translator.desktop.backend" in text
+
+
+def test_account_home_lookup_failure_cannot_mutate_launchd(tmp_path: Path) -> None:
+    """A failed dscl must not turn redirected HOME into authority over the real uid."""
+    stub = tmp_path / "dscl"
+    stub.write_text("#!/bin/sh\nexit 1\n", encoding="utf-8")
+    stub.chmod(0o755)
+    text = _text()
+    functions = text[text.index("real_home()") : text.index("agent_load()")]
+    # Exercise just the pure guard; never source the installer main() or call launchctl.
+    script = (
+        f'PATH="{tmp_path}:$PATH"\nHOME="{tmp_path}"\n{functions}\nlaunchd_is_ours\n'
+    )
+    result = subprocess.run(["bash", "-c", script], capture_output=True, check=False)
+    assert result.returncode != 0, "unknown account home must fail closed"
 
 
 AGENT_INSTALLER = REPO_ROOT / "scripts" / "agent_install_macos.sh"
