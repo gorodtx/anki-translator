@@ -908,3 +908,23 @@ Source5ecba75 normal commit gates PASS (Ruff/format130+14legacy/mypy108/Swift re
 Выполнен **только** `tccutil reset Accessibility com.translator.desktop` exit0 для stale named grant; receipt translator-scoped-tcc-reset.log. Это supported macOS reset конкретного приложения; нет TCC database writes, global reset, signature requirement bypass или автоматического grant. Native permission предоставляется пользователем/macOS. First normal launch через Launch Services **без debug env**: accessibilityPermissionRequested=1, accessibilityTrusted=0. Main через CUA лично прочитал native Translator permission dialog и просмотрел screenshot в tool output до любого shortcut input. A31 startup request PASS в этом host scope; grant/capture A27 WAITING_USER. Orca CLI save попытки не нашли accessory helper (app_not_found), current CUA screenshot на диск не сохранён и не подменяется старой картинкой. Его AX текст совпадает с native OS dialog на user302 screenshot выше.
 
 Fresh304 ping: backend85833, DB3true/pendingbytes0, Applepairinstalled/helperstalefalse. Original DB files/history/config/Anki не очищались, DB downloads/uploads0; одна canonical app /Applications. Пользователь получил concrete native approval steps для304; A28 physical menu result ещё UNKNOWN. Предыдущий mac push a34e4cc remote SHA verified; новый5ecba75 ожидает delivery.
+
+
+### G118 — 2026-10-04T21:19:53.384559+00:00: пользователь подтвердил fixes, native alert cleanup
+
+**A27 PASS user+runtime:** прямой ответ пользователя на304 — перевод появился, исходные fixes сделаны. Main лично просмотрел screenshot popup «gools → голы» ниже; это положительный capture/popup результат, не общая оценка семантического качества всех переводов. Actual native stderr current304: `accessibility granted=true` at00:10:26.798MSK; cached preferences1. Доказательство user304-acceptance-receipt.json. **A28 PASS_USER_REPORT** по ответу на bundled repeated-Settings вопрос; Main не присваивает себе physical click trace.
+
+Новый хвост A32 на втором screenshot — **system universalAccessAuthWarn dialog**, принадлежащий macOS. Main лично прочитал его current AX, нажал только native «Открыть Системные настройки», проверил Translator toggle ON и отсутствие alert в WindowServer: helper42292 onscreen windows0, positive System Settings windows2. API/preferences grant остался1. Не нажимал «Запретить», не менял signature/binary, не завершал system helper и не добавлял недокументированный auto-dismiss. Поддерживаемый первый путь — native request → его Open System Settings button → toggle/TouchID. Автоматическое закрытие чужого OS dialog после обходного ручного изменения grant приложением не обещается.
+
+Первый запуск request уже реализован один раз; текущий working304 сохраняется без нового rebuild/signature/reset. Все historical FAIL и ошибочный AX критерий выше оставлены. Source+docs6f87283 normal push PASS/remote SHA verified at21:15:06UTC; новый public DMG/release ещё не опубликован, общий Epic2 не объявлен полностью закрытым (DeveloperID/notarization и остальные явно открытые gates).
+
+![Пользователь: перевод работает на304](/Users/den/Documents/dev/translator-evidence/2026-10-04/native-hotfix/user304-translation-working.png)
+
+![Пользователь: оставшийся native OS alert](/Users/den/Documents/dev/translator-evidence/2026-10-04/native-hotfix/user304-native-alert-left-open.png)
+
+Apple API [AXIsProcessTrustedWithOptions](https://developer.apple.com/documentation/applicationservices/1459186-axisprocesstrustedwithoptions) определяет process trust и асинхронный request; [Apple Support](https://support.apple.com/guide/mac-help/allow-accessibility-apps-to-access-your-mac-mh43185/mac) требует native Open System Settings + явный user toggle. Нельзя обещать app auto-grant или одну кнопку, заменяющую обязательное OS подтверждение.
+
+
+### G119 — 2026-10-04T21:22:32.192858+00:00: normal relaunch после grant
+
+Working304 перезапущен через normal Launch Services без debug flags, rebuild/signature/TCC reset. Перед relaunch получен реальный shutdown ACK, exact old app processes завершились. Native SHA495ff7ab0b786017fd0e8a23c587401c84f0f7b4f132b00ca31b6eddac055ea2 неизменен. Новый shell4577 → backend4579 (owned=yes); API при startup `accessibility granted=true`. OS alert on-screen0 после normal relaunch, нового запроса нет. History before/after: count1, screenshot word presenttrue, persistence capabilitytrue; raw personal history не выводилась и не сохранялась в отчёт. Receipt granted-relaunch-receipt.json/log. A27/A31 повторный нормальный запуск PASS в этом host scope.

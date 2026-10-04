@@ -49,3 +49,13 @@ Installed0.3.0(300)/source30adcf27/nativebyte-match/sealPASS; oldexactPID69352 �
 ### M006 — 2026-10-04T21:08:35.297461+00:00: current304 и обязательный native grant
 
 User302 FAIL screenshot сохранён как original user-build302-permission-prompt.png и лично просмотрен. Current304 = source5ecba75/source digest684767cd256ad4692c2381152f29c559144a9c29949346031e7e32439c45556d, authoritative trust (без AX override), native first-launch request. Exact old processes остановлены с shutdown ack; named stale grant reset exit0. New normal launch без debug env реально показал native OS dialog, personally viewed CUA. Startup request PASS; grant/capture WAITING_USER и Settings repeated physical menu UNKNOWN. Новое UI screenshot на disk не экспортировалось; historical302 image не считается current304 screenshot.
+
+
+### M007 — 2026-10-04T21:19:53.384559+00:00: подтверждение пользователя для304
+
+A27 PASS_USER+NATIVE_TRUST (translation screenshot + authoritative granted=true); A28 PASS_USER_REPORT по прямому сообщению «в целом ты исправил то, что должен был». Original screenshots сохранены и лично просмотрены. Оставшееся окно идентифицировано как native OS permission alert; Open System Settings action его закрыла, onscreen alert0 при positive Settings2 и grant1. Source304/hash не менялись, повторного reset/запроса пользователю не было. Общая release-ready приёмка не выводится из этих двух сценариев.
+
+
+### M008 — 2026-10-04T21:22:32.192858+00:00: same-build normal relaunch PASS
+
+Current304 после genuine Launch Services restart/no debug flags: API granted=true, owned backend, native permission alert0. History count1/screenshot word retained before/after; source/hash неизменны. Новый grant/reset и изменения личных данных не выполнялись.

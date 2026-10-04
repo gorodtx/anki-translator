@@ -303,3 +303,19 @@ A27 build302 **FAIL** по новому user screenshot: shortcut показыв
 **Native request PASS:** production304 обычным Launch Services стартом без debug flags показал системный Translator Accessibility prompt; Main лично прочитал AX и просмотрел screenshot через CUA. Flag accessibilityPermissionRequested=1 ограничивает повторные автоматические запросы, explicit Setup/shortcut сохраняют повторную возможность. User/macOS grant остаётся обязательным; macOS native button ведёт к штатному toggle/TouchID. Scope «одна кнопка приложения + обязательные действия ОС», не обещать auto-grant.
 
 Доказанный stale Translator grant удалён supported scoped tccutil reset exit0; прочие приложения не включались и credentials не вводились. Current trust criterion исправлен по Apple API contract. A27 capture ждёт real grant + selection, A28 ждёт physical repeated menu result. Failed AX availability criterion и failed intermediate relaunch сохраняются в истории.
+
+
+### A27/A28/A30/A31/A32 — 2026-10-04T21:19:53.384559+00:00: принятый текущий scope
+
+- **A27 PASS:** пользователь304 подтвердил перевод; screenshot personally viewed, actual native trust=true.
+- **A28 PASS_USER_REPORT:** пользователь подтвердил исходные исправления в ответ на два manual сценария; automation focus SKIP остаётся исторически отдельным.
+- **A30 PASS:** один canonical /Applications/Translator.app,18 duplicates удалены, grant/DB/history сохранены.
+- **A31 PASS_HOST_REQUEST:** first normal launch native request observed; app не может выставить OS toggle за пользователя.
+- **A32 scoped host cleanup PASS:** зависший OS Accessibility alert закрыт через native Open System Settings; WindowServer alert0/positive control2 и grant1. Это не новый app menu bug; unsupported OS auto-dismiss/kill не добавлять. Working304/binary/signature оставить стабильными во время приёмки.
+
+Общий эпик остаётся открытым по своим прежним external/hardware/distribution gates. Новый пользовательский scope фиксировать накопительно, не заменять этим фактами ранние FAIL и непроверенное.
+
+
+### A27/A31 — 2026-10-04T21:22:32.192858+00:00: permission сохраняется при normal relaunch
+
+Тот же immutable working304/nativeSHA495ff7ab0b786017fd0e8a23c587401c84f0f7b4f132b00ca31b6eddac055ea2 после normal Launch Services restart сразу сообщает authoritative granted=true и поднимает owned backend4579. Native alert on-screen0; повторного запроса нет. История пользовательского перевода сохранена. Эти PASS не распространяются на будущую ad-hoc пересборку с другой подписью или полный public release readiness.
