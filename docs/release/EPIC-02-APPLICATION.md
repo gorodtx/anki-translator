@@ -253,3 +253,20 @@ Correctedbranch37191306389/7894abf полнымCI завершёнSUCCESS (Pytho
 [Final branch CI](https://github.com/gorodtx/selection_translator_anki/actions/runs/37192925740) завершён SUCCESS. [Tag CI](https://github.com/gorodtx/selection_translator_anki/actions/runs/37193352407) завершён FAILURE только из-за notarization: пять других jobs прошли, Check notarization secrets остановился на обязательных сертификате и credentials. [Точная граница проверки](/Users/den/Documents/dev/translator-evidence/2026-10-03/delivery/final-tag-ci-signing-boundary-review.json). D06 выполнен в объёме ad-hoc prerelease; D05 остаётся BLOCKED. Прежние screenshots, guest setup, Services, History, offline и isolated Anki результаты сохраняют дату и собственный scope.
 
 Очистка P029 уменьшила занятое место собственных тестовых данных на 28 718 694 400 allocated bytes. Main дополнительно удалил две старые app-копии, 124 821 504 allocated bytes, сохранив их manifest и уникальные DMG. Exclusive APFS free space отдельно не измерен. Пользовательские Anki-профили сохранены. A08/A15/A17 и точный рабочий Anki-профиль A16 остаются открытыми; вопрос A16 отправлен, ответ ещё не получен. Результат отдельного отчётного commit/push фиксируется в [delivery receipt](/Users/den/Documents/dev/translator-evidence/2026-10-03/delivery/final-report-delivery-review.json) и [живом журнале](/Users/den/Documents/dev/translator-evidence/2026-10-03/delivery/FINAL-DELIVERY-LIVE-PROGRESS.md). Tag и опубликованный DMG при отправке отчёта остаются неизменными. Эпик целиком не объявлен выполненным.
+
+## A27/A28 — 2026-10-04T20:07:18.003943+00:00 — дефекты ручной приёмки, Main alone
+
+Пользователь предоставил два actual screenshots: Accessibility toggle для Translator включён, Setup приложения показывает denied; перевод не запускается. Второй report: menu bar Settings не поднимает уже открытое окно поверх других. Исправляет только Main в этой сессии, без делегирования. Действующий native дизайн сохраняется.
+
+| ID | Требование | Приёмка | Статус |
+|---|---|---|---|
+| A27 | Правдивый актуальный Accessibility state и работа capture после grant/revoke | Проверять actual AX operation вместе с nonprompt trust, refresh в видимом Settings и перед capture; stale-denial/actual-denial регрессии, запуск текущего build и physical selected-text scenario | IN_PROGRESS |
+| A28 | Повторный menu Settings поднимает то же окно | После закрытия menu activation/order, сохраняются pane/window/focus; native hidden/reopen probe и actual screenshot, physical menu check отдельно | IN_PROGRESS |
+
+Read-only установлен running build282, com.translator.desktop; stored accessibilityTrusted=0. TCC DB denied/unreadable, поэтому причина signature mismatch/cache ещё не доказана. Ad-hoc DR включает cdhash и обновление не гарантирует перенос старого grant; TCC не сбрасывать, approval не подделывать, DeveloperID blocker сохраняется. Evidence: /Users/den/Documents/dev/translator-evidence/2026-10-04/native-hotfix/.
+
+### A27/A28 — 2026-10-04T20:31:06.625879+00:00 — текущая граница
+
+A27 code/regression PASS; actual installed build300 nonprompt access state пока denied, macOS row observed enabled. User requested refresh/re-add only Translator via штатный UI и actual shortcut capture; результат ещё WAITING_USER_REPLY, A27 целиком не PASS. A28 source/actual window-server order2themes PASS, reuse/pane сохранены; физический menu/focus WAITING_USER_REPLY, unattended focus2SKIP. Native design unchanged.
+
+A29 новый backlog: legacy host installer после успешного atomic swap/current3DBhashes получил launchctl bootstrap exit5; сервис absent. Ordinary current app300 запущена через LaunchServices, owned backendPID28866 pingPASS/3DBtrue/pendingbytes0/AppleENRUinstalled. Legacy background-registration failure не скрывается и не доказывает невозможность обычного запуска; root/sudo/BTM resets не выполнялись. Сохраняется для отдельного bounded diagnosis после двух native bugs.

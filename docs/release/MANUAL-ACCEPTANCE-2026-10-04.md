@@ -26,3 +26,11 @@ Main read-only прочитал Info.plist: `/Users/den/Library/Application Supp
 Для приёмки опубликованного кандидата нужен 0.3.0 (295). Локальный проверенный образ: [Translator-0.3.0-macos-arm64.dmg](/Users/den/Documents/dev/translator-evidence/2026-10-03/delivery/final-assets-tag-clean/Translator-0.3.0-macos-arm64.dmg). Это уже проверенные release bytes; отдельный браузерный quarantined download/Gatekeeper сценарий остаётся D05.
 
 Пользователь сам выполняет normal Quit старой копии, открывает локальный образ, физически переносит Translator.app в Applications и запускает новую копию. Main не закрывал приложение, не копировал app, не менял Settings/профили и не открывал Anki. После действий пользователя записать фактическую версию, наблюдения первого запуска и readiness.
+
+## M002 — 2026-10-04T20:07:18.003943+00:00 — пользовательский FAIL Accessibility и Settings
+
+Пользователь подтвердил два дефекта на текущей установке: разрешение видно включённым в macOS, Setup сообщает denied/capture не запускается; уже открытые Settings не выходят вперёд при выборе из menu bar. Actual screenshots сохранены без редактирования в native-hotfix/user-accessibility-enabled.png и user-app-accessibility-denied.png. Main выполняет исправления самостоятельно; это новая явная инструкция, прежняя граница read-only сайта не запрещает native hotfix/restart. Live installed Info.plist build282 подтверждён. Actual grant/selected text/menu acceptance после исправления пока не выполнены.
+
+## M003 — 2026-10-04T20:31:06.625879+00:00 — новая копия реально запущена
+
+Installed0.3.0(300)/source30adcf27/nativebyte-match/sealPASS; oldexactPID69352 остановлен, new shell28849/backend28866/helper28867 подтверждены. Current UDS ping подтверждает3DB и AppleENRUinstalled. История не очищалась, базы повторно не скачивались. System Settings row Translator=1 лично прочитан; appstoredtrust=0. UI changed between observation/click: stale element action rejected, toggle не был изменён Main. User получил два конкретных native test вопроса; не считаем отсутствие ответа согласием/успехом. Legacy bootstrap5 отмечен A29, ordinary app runtime recovered.

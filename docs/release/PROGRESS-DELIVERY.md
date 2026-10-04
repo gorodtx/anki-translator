@@ -834,3 +834,37 @@
 ## G113 — подготовка отдельного финального отчёта
 
 Сверены актуальные GitHub release metadata, восемь assets и точный текст release notes. Финальные четыре документа обновлены без изменения старых датированных RED/PASS записей и без изменения кода приложения. Перед коммитом выполняется installed docs gate и проверка стабильности входных файлов. Затем normal commit/push проверяет финальное дерево; новый app/DMG не собирается. [Delivery receipt](/Users/den/Documents/dev/translator-evidence/2026-10-03/delivery/final-report-delivery-review.json) и [живой журнал](/Users/den/Documents/dev/translator-evidence/2026-10-03/delivery/FINAL-DELIVERY-LIVE-PROGRESS.md) дополняются фактическими SHA, выходами gates и CI после каждой операции. До появления успешного receipt отправка отчётного коммита не считается выполненной.
+
+## G113 — 2026-10-04T20:07:18.003943+00:00 — native hotfix по пользовательской приёмке
+
+A27/A28 добавлены накопительно в эпик. Main прочитал native capture/Settings/menu и проверил actual running build282/defaults denied. Исторические continuity/index и текущие source сопоставлены. TCC databases unreadable; Orca native provider не перечисляет accessory Translator, cua getApp timeout; UI access не заявлен PASS. Изменения: bounded AX capability probe/nonprompt trust resolution, actual-denial precedence, visible Settings refresh, deferred menu action и explicit ordinary-window raise/focus preservation. Unit и targeted native snapshot проверки ещё IN_PROGRESS. Native style не меняется; SQLite не копируется/загружается; Presentation peer уведомлён о Root-only ownership msg_2f073fcb2d52.
+
+### G113 — проверки и реальные ограничения, 2026-10-04T20:13:34.840485+00:00
+
+Swift targeted3 PASS; полный Swift172/31suites PASS (native-hotfix/swift-tests.log). Первые bare/bundle-direct window probes сохранили FAIL: окно unhidden/reused, но unattended activation не получила active/key. По Apple cooperative activation это запрос, не гарантия; deprecated ignoringOtherApps не используется. Новый check отделяет измеренный window-server Z-order/pane/reuse от physical menu focus и не объявляет автоматизацию physical acceptance. Debug process reported=true/AX0 и может наследовать доверие терминала: это не proof grant реально установленной копии. TCC state actual old app ещё не доказан.
+
+![Пользователь: доступ включён](/Users/den/Documents/dev/translator-evidence/2026-10-04/native-hotfix/user-accessibility-enabled.png)
+
+![Пользователь: приложение показывает denied](/Users/den/Documents/dev/translator-evidence/2026-10-04/native-hotfix/user-app-accessibility-denied.png)
+
+Main лично просмотрел dark Sources actual PNG из window-bundle-check: native style/controls сохранены, grey titlebar отражает inactive; это не focus PASS. Presentation18/18freeze hashes подтверждены, peer edits frozen; preview stopped новым прямым user указанием, Main не поднимает его.
+
+### G113 — 2026-10-04T20:18:10.419913+00:00 — window-server проверка
+
+Targeted native window-order-check: две actual темы PASS front=true/hiddenBefore=true/hiddenAfter=false/reused=true/pane=sources. Две focus probes SKIP: macOS не дала active/key unattended action; physical menu click не подменяется. Main лично просмотрел оба актуальных PNG ниже: сохранён исходный native стиль. Новый syntax error harness был исправлен до этой сборки; native-bundle-final-build.log и stale window-final-check сохранены как FAILED, а не актуальный PASS. Корректный build native-bundle-corrected-build.log exit0.
+
+![Settings повторно поднят: light](/Users/den/Documents/dev/translator-evidence/2026-10-04/native-hotfix/window-order-check/window-settings-reopen-light.png)
+
+![Settings повторно поднят: dark](/Users/den/Documents/dev/translator-evidence/2026-10-04/native-hotfix/window-order-check/window-settings-reopen-dark.png)
+
+### G113 — 2026-10-04T20:21:30.645506+00:00 — commit и stale-artifact gate
+
+Source commit54da692 / regression commitcc160b9 прошли normal pre-commit/commit-msg: Ruff/format gate/strict types/Swift release build без bypass. Python full execution сохранил1FAIL/331PASS: tests читают существующий dist/Translator.app build282, в котором нет NSRequiredContext, при том что current source/Resources template содержит этот entry. preexisting-dist-build282-Info.plist сохранён, process guard подтвердил отсутствие использования dist app. Это stale generated artifact; до установки он пересобирается из current source и packaging test повторяется, FAIL не скрыт/не пропущен.
+
+### G113 — 2026-10-04T20:25:33.221780+00:00 — real production и host update
+
+Current production build300/source30adcf27b21bc0746862cb84682e9be714f62199af819f60ee0486ecd4c9c266/revisione00ff39 собран: ad-hoc seal PASS; fresh packaging18PASS закрывает stale dist282FAIL; real native/shell embedded launchers PASS (production-runtime-check.json), own temporary sockets/processes fixture cleanup documented checker. Host updater swapped current/previous и подтвердил3DB existing hashes без download/upload, затем launchctl bootstrap exit5. Launchd exactservice absent; root/sudo/BTM reset/permission bypass не выполнялись. Main остановил только exact old shell69352 с comm guard и запустил current app через normal LaunchServices. Installed Info/build-info/native SHA соответствует current tested build300. Actual new PID/backend/AX state и user input проверяются далее, installation не объявлена полностью PASS до них.
+
+### G113 — 2026-10-04T20:31:06.625879+00:00 — host positive control и user gate
+
+Normal launch current300 реально поднял shell28849/backend28866/helper28867. Actual IPC pingPASS:3DBtrue/pendingbytes0/Applepairinstalled/history_persistencetrue. Root current production SHA сверил с установленным binary; receipt native-hotfix/host-hotfix-receipt.json. macOS Translator permissionrow1 реально наблюдён, apptrust0; delayedclick был отклонён element_not_found безmutation, следующаяpage уже LoginItems — Main не вмешивается в чужую GUI navigation. Async user requests native shortcut+menu tests; A27/A28 physical acceptance не объявлена PASS. Source/tests/presentation normalcommits54da692/cc160b9/e00ff39; docs и actual push/gates завершаются.
