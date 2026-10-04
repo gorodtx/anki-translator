@@ -24,6 +24,7 @@ from translate_logic.models import SourceToggles
 from desktop_app.application.use_cases.anki_upsert import AnkiUpsertPreview
 from desktop_app.config import AppConfig, load_config, save_config
 from desktop_app.infrastructure.services.container import AppServices
+from desktop_app.infrastructure.services.history_persistence import HistoryPersistence
 from desktop_app.platform import paths
 from desktop_app.platform.macos.ipc.protocol import (
     PROTOCOL_VERSION,
@@ -321,6 +322,7 @@ class BackendApi:
         return {
             "version": BACKEND_VERSION,
             "protocol": PROTOCOL_VERSION,
+            "capabilities": {"history_persistence": True},
             "pid": os.getpid(),
             "platform": sys.platform,
             "socket": str(self._socket_path),
@@ -369,6 +371,10 @@ class Daemon:
         self._stop_event = asyncio.Event()
         config: AppConfig = load_config()
         services = AppServices.create(sources=config.sources)
+        history = HistoryPersistence(
+            services.history, paths.config_dir() / "history.json"
+        )
+        await history.start()
         services.start()
 
         def dispatch(callback: Callable[[], None]) -> None:
@@ -437,17 +443,59 @@ class Daemon:
                 loop.add_signal_handler(signum, self.request_stop)
         try:
             await server.start()
-            pid_path = _write_pid_file(self._socket_path)
+            pid_path = await asyncio.to_thread(_write_pid_file, self._socket_path)
             logger.info("backend %s ready (pid %d)", BACKEND_VERSION, os.getpid())
-            await self._stop_event.wait()
+            parent_pid = _configured_parent_pid()
+            parent_watch = (
+                asyncio.create_task(_monitor_parent(parent_pid, self.request_stop))
+                if parent_pid is not None
+                else None
+            )
+            try:
+                await self._stop_event.wait()
+            finally:
+                if parent_watch is not None:
+                    parent_watch.cancel()
+                    with contextlib.suppress(asyncio.CancelledError):
+                        await parent_watch
         finally:
             logger.info("backend shutting down")
             await server.stop()
             session.cancel()
+            await history.close()
             await _close_services(services)
             with contextlib.suppress(OSError):
                 if pid_path is not None and pid_path.exists():
                     pid_path.unlink()
+
+
+def _configured_parent_pid() -> int | None:
+    raw = os.environ.get("TRANSLATOR_PARENT_PID", "").strip()
+    if not raw:
+        return None
+    try:
+        pid = int(raw)
+        if pid > 1:
+            return pid
+    except ValueError:
+        pass
+    logger.warning("Ignoring invalid backend parent PID")
+    return None
+
+
+async def _monitor_parent(
+    expected_pid: int, request_stop: Callable[[], None], *, interval: float = 0.5
+) -> None:
+    """Opt-in child ownership: shutdown ourselves if our app parent disappears.
+
+    Compare actual parent identity instead of probing/signalling an arbitrary
+    PID. Launchd/external daemons have no opt-in and keep their existing life.
+    A parent that already died during startup also triggers a clean shutdown.
+    """
+    while os.getppid() == expected_pid:
+        await asyncio.sleep(interval)
+    logger.info("owning app exited; backend shutting down")
+    request_stop()
 
 
 def _log_engine_refresh(
@@ -482,7 +530,7 @@ async def _close_services(services: AppServices) -> None:
 
 
 def _write_pid_file(socket_path: Path) -> Path | None:
-    pid_path = socket_path.with_name("backend.pid")
+    pid_path = socket_path.with_suffix(".pid")
     try:
         pid_path.parent.mkdir(parents=True, exist_ok=True)
         pid_path.write_text(str(os.getpid()), encoding="utf-8")

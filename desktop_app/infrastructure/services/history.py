@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+from collections.abc import Callable, Sequence
 from dataclasses import dataclass, field
 from typing import Final
 
@@ -19,6 +20,18 @@ class HistoryStore:
     max_entries: int = DEFAULT_HISTORY_MAX_ENTRIES
     _items: list[HistoryItem] = field(default_factory=_default_items)
     _next_entry_id: int = 1
+    on_change: Callable[[], None] | None = field(default=None, repr=False)
+
+    def restore(self, newest_first: Sequence[HistoryItem]) -> None:
+        """Load a persisted snapshot without triggering another write."""
+        self._items = list(reversed(newest_first[: self.max_entries]))
+        self._next_entry_id = (
+            max((item.entry_id for item in self._items), default=0) + 1
+        )
+
+    def _changed(self) -> None:
+        if self.on_change is not None:
+            self.on_change()
 
     def add(
         self,
@@ -41,6 +54,7 @@ class HistoryStore:
                 ),
             )
             self._items[index] = updated
+            self._changed()
             return updated
         created = HistoryItem(
             entry_id=self._next_entry_id,
@@ -56,6 +70,7 @@ class HistoryStore:
         self._items.append(created)
         while len(self._items) > self.max_entries:
             self._items.pop(0)
+        self._changed()
         return created
 
     def get(self, entry_id: int) -> HistoryItem | None:
@@ -86,6 +101,7 @@ class HistoryStore:
                 examples_state=examples_state,
             )
             self._items[index] = updated
+            self._changed()
             return updated
         return None
 
