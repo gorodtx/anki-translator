@@ -22,6 +22,7 @@ from translate_logic.infrastructure.http.transport import (
     MAX_FAILURE_BACKOFF_ENTRIES,
     AsyncFetcher,
     FailureBackoffStore,
+    FetchError,
     build_async_fetcher,
 )
 from translate_logic.infrastructure.language_base.base import LanguageBase
@@ -115,6 +116,15 @@ _CYRILLIC_RE: Final[re.Pattern[str]] = re.compile(r"[А-Яа-яЁё]")
 _ACTIVE_SOURCES: ContextVar[SourceToggles] = ContextVar(
     "translate_active_sources", default=SourceToggles()
 )
+_PROVIDER_FAILURES: ContextVar[list[str] | None] = ContextVar(
+    "translation_provider_failures", default=None
+)
+
+
+def _record_provider_failure(provider: str) -> None:
+    failures = _PROVIDER_FAILURES.get()
+    if failures is not None and provider not in failures:
+        failures.append(provider)
 
 
 def active_sources() -> SourceToggles:
@@ -148,31 +158,45 @@ async def translate_async(
     on_partial: Callable[[TranslationResult], None] | None = None,
     sources: SourceToggles | None = None,
 ) -> TranslationResult:
-    if sources is not None:
-        _ACTIVE_SOURCES.set(sources)
-    if fetcher is not None:
-        return await _translate_with_fetcher_async(
-            text,
-            source_lang,
-            target_lang,
-            lookup_text,
-            fetcher,
-            language_base,
-            definitions_base,
-            on_partial,
-        )
-    async with aiohttp.ClientSession() as session:
-        async_fetcher = build_latency_fetcher(session, cache=DEFAULT_CACHE)
-        return await _translate_with_fetcher_async(
-            text,
-            source_lang,
-            target_lang,
-            lookup_text,
-            async_fetcher,
-            language_base,
-            definitions_base,
-            on_partial,
-        )
+    sources_token = _ACTIVE_SOURCES.set(sources or SourceToggles())
+    failures: list[str] = []
+    failures_token = _PROVIDER_FAILURES.set(failures)
+    try:
+        if fetcher is not None:
+            result = await _translate_with_fetcher_async(
+                text,
+                source_lang,
+                target_lang,
+                lookup_text,
+                fetcher,
+                language_base,
+                definitions_base,
+                on_partial,
+            )
+        else:
+            async with aiohttp.ClientSession() as session:
+                async_fetcher = build_latency_fetcher(session, cache=DEFAULT_CACHE)
+                result = await _translate_with_fetcher_async(
+                    text,
+                    source_lang,
+                    target_lang,
+                    lookup_text,
+                    async_fetcher,
+                    language_base,
+                    definitions_base,
+                    on_partial,
+                )
+        # Wait for Apple/local and alternate-source fallbacks before surfacing
+        # a provider outage. A valid empty response remains a normal no-match.
+        if not result.translation_ru.is_present and failures:
+            raise FetchError(
+                "Enabled online translation sources are unavailable. "
+                "Check your connection and try again."
+            )
+        return result
+    finally:
+        _PROVIDER_FAILURES.reset(failures_token)
+        _ACTIVE_SOURCES.reset(sources_token)
 
 
 async def _translate_with_fetcher_async(
@@ -264,7 +288,17 @@ async def _translate_with_fetcher_async(
             watcher.cancel()
             with suppress(asyncio.CancelledError):
                 await watcher
-    apple_lookup = await _resolve_apple_lookup(apple_task)
+    # A local-only or fallback result is primary work, not optional enrichment.
+    # Cold on-device responses still get the enabled engine's bounded budget.
+    apple_wait_s = (
+        _APPLE_FINAL_WAIT_S
+        if result.translation_ru.is_present
+        else max(
+            apple.DEFAULT_DEFINE_TIMEOUT_S if toggles.apple_dictionary else 0.0,
+            apple.DEFAULT_TRANSLATE_TIMEOUT_S if toggles.apple_translation else 0.0,
+        )
+    )
+    apple_lookup = await _resolve_apple_lookup(apple_task, timeout_s=apple_wait_s)
     return merge_apple_lookup(
         result, apple_lookup, query=resolved_lookup_text, target_lang=target_lang
     )
@@ -272,9 +306,11 @@ async def _translate_with_fetcher_async(
 
 async def _resolve_apple_lookup(
     task: asyncio.Task[apple.AppleLookup],
+    *,
+    timeout_s: float = _APPLE_FINAL_WAIT_S,
 ) -> apple.AppleLookup | None:
     try:
-        return await asyncio.wait_for(asyncio.shield(task), _APPLE_FINAL_WAIT_S)
+        return await asyncio.wait_for(asyncio.shield(task), timeout_s)
     except (TimeoutError, asyncio.CancelledError):
         await _cancel_lookup_task(task)
         return None
@@ -555,6 +591,7 @@ async def _translate_network_async(
             prefetched_google_result = await _await_google_prefetch(
                 google_prefetch_task,
                 timeout_s=_GOOGLE_AUGMENT_TIMEOUT_S,
+                cancel_on_timeout=False,
             )
             if prefetched_google_result is None:
                 cambridge_completed_result = await _await_cambridge_completion(
@@ -685,7 +722,11 @@ async def _translate_network_async(
         if _needs_more_variants(cambridge_non_meta):
             google_augment_result = await _await_google_prefetch(
                 google_prefetch_task,
-                timeout_s=_GOOGLE_AUGMENT_TIMEOUT_S,
+                # Without a Cambridge translation, Google is the primary,
+                # not optional enrichment. Let its own provider budget finish.
+                timeout_s=(
+                    _GOOGLE_AUGMENT_TIMEOUT_S if cambridge_result.translations else None
+                ),
             )
             if google_augment_result is not None:
                 google_result_for_defs = google_augment_result
@@ -911,15 +952,18 @@ async def _await_google_prefetch(
     task: asyncio.Task[GoogleResult],
     *,
     timeout_s: float | None = None,
+    cancel_on_timeout: bool = True,
 ) -> GoogleResult | None:
     try:
         if timeout_s is None:
             return await task
-        return await asyncio.wait_for(task, timeout=timeout_s)
+        awaitable = task if cancel_on_timeout else asyncio.shield(task)
+        return await asyncio.wait_for(awaitable, timeout=timeout_s)
     except TimeoutError:
-        task.cancel()
-        with suppress(asyncio.CancelledError):
-            await task
+        if cancel_on_timeout:
+            task.cancel()
+            with suppress(asyncio.CancelledError):
+                await task
         return None
     except asyncio.CancelledError:
         return None
@@ -964,12 +1008,16 @@ async def _run_cambridge_with_budget(
     started = time.perf_counter()
     timed_out = False
     try:
-        return await asyncio.wait_for(
+        result = await asyncio.wait_for(
             translate_cambridge(text, fetcher),
             timeout=_PROVIDER_BUDGET.cambridge_en_ru_timeout_s,
         )
+        if result.failed:
+            _record_provider_failure("cambridge")
+        return result
     except TimeoutError:
         timed_out = True
+        _record_provider_failure("cambridge")
         return CambridgeResult(
             found=False,
             translations=[],
@@ -977,6 +1025,7 @@ async def _run_cambridge_with_budget(
             definitions_en=[],
         )
     except Exception:
+        _record_provider_failure("cambridge")
         return CambridgeResult(
             found=False,
             translations=[],
@@ -998,14 +1047,19 @@ async def _run_google_with_budget(
     started = time.perf_counter()
     timed_out = False
     try:
-        return await asyncio.wait_for(
+        result = await asyncio.wait_for(
             translate_google(text, source_lang, target_lang, fetcher),
             timeout=_PROVIDER_BUDGET.google_timeout_s,
         )
+        if result.failed:
+            _record_provider_failure("google")
+        return result
     except TimeoutError:
         timed_out = True
+        _record_provider_failure("google")
         return GoogleResult(translations=[], definitions_en=[])
     except Exception:
+        _record_provider_failure("google")
         return GoogleResult(translations=[], definitions_en=[])
     finally:
         _log_provider_elapsed("google", _elapsed_ms(started), timed_out)
@@ -1042,10 +1096,14 @@ async def _recover_empty_translation_async(
             ),
             timeout=timeout_s,
         )
+        if recovery.failed:
+            _record_provider_failure("google")
     except TimeoutError:
         timed_out = True
+        _record_provider_failure("google")
         return current_translation
     except Exception:
+        _record_provider_failure("google")
         return current_translation
     finally:
         _log_provider_elapsed("google_recovery", _elapsed_ms(started), timed_out)

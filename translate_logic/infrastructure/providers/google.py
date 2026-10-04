@@ -25,6 +25,7 @@ JsonValue: TypeAlias = (
 class GoogleResult:
     translations: list[str]
     definitions_en: list[str]
+    failed: bool = False
 
 
 def build_google_url(text: str, source_lang: str, target_lang: str) -> str:
@@ -70,11 +71,11 @@ async def translate_google(
     try:
         payload = await fetcher(url)
     except FetchError:
-        return GoogleResult(translations=[], definitions_en=[])
+        return GoogleResult(translations=[], definitions_en=[], failed=True)
     try:
         parsed = parse_google_payload(payload)
     except Exception:
-        return GoogleResult(translations=[], definitions_en=[])
+        return GoogleResult(translations=[], definitions_en=[], failed=True)
     return parsed
 
 

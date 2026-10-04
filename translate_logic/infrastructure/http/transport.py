@@ -7,7 +7,11 @@ from urllib.parse import parse_qsl, urlencode, urlparse, urlsplit
 
 import aiohttp
 
-from translate_logic.infrastructure.http.cache import HttpCache, HttpCacheStats, ProviderKind
+from translate_logic.infrastructure.http.cache import (
+    HttpCache,
+    HttpCacheStats,
+    ProviderKind,
+)
 
 DEFAULT_TIMEOUT_SECONDS = 10.0
 DEFAULT_FAILURE_BACKOFF_SECONDS = 30.0
@@ -148,7 +152,7 @@ def build_async_fetcher(
             try:
                 payload = await fetch_text_async(url, session, effective_timeout)
             except FetchError as exc:
-                if backoff_store is not None:
+                if backoff_store is not None and _is_negative_candidate(exc):
                     backoff_store.mark_failure(key)
                 if cache is not None and _is_negative_candidate(exc):
                     cache.set_negative(key)
@@ -182,9 +186,7 @@ def normalize_url_cache_key(url: str) -> str:
     path = parsed.path
     pairs = parse_qsl(parsed.query, keep_blank_values=True)
     filtered = [
-        (key, value)
-        for key, value in pairs
-        if not _should_ignore_query_key(host, key)
+        (key, value) for key, value in pairs if not _should_ignore_query_key(host, key)
     ]
     filtered.sort(key=lambda item: (item[0], item[1]))
     query = urlencode(filtered, doseq=True)

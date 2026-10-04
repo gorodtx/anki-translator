@@ -13,9 +13,17 @@ from translate_logic.infrastructure.http.html_parser import (
     has_ancestor_with_class,
     parse_html,
 )
-from translate_logic.infrastructure.http.transport import AsyncFetcher, FetchError
+from translate_logic.infrastructure.http.transport import (
+    AsyncFetcher,
+    FetchError,
+    FetchStatusError,
+)
 from translate_logic.models import Example
-from translate_logic.shared.text import normalize_text, normalize_whitespace, to_cambridge_slug
+from translate_logic.shared.text import (
+    normalize_text,
+    normalize_whitespace,
+    to_cambridge_slug,
+)
 from translate_logic.shared.translation import clean_translations
 
 CAMBRIDGE_BASE_URL = "https://dictionary.cambridge.org"
@@ -47,6 +55,13 @@ class CambridgeResult:
     translations: list[str]
     examples: list[Example]
     definitions_en: list[str]
+    failed: bool = False
+
+
+@dataclass(frozen=True, slots=True)
+class _FetchedPage:
+    html: str | None
+    failed: bool = False
 
 
 def build_cambridge_urls(query: str) -> CambridgeUrls:
@@ -69,12 +84,15 @@ async def translate_cambridge(text: str, fetcher: AsyncFetcher) -> CambridgeResu
         )
 
     best_fallback: CambridgeResult | None = None
+    failed = False
     for query in queries:
         urls = build_cambridge_urls(query)
-        english_html, russian_html = await asyncio.gather(
+        english_page, russian_page = await asyncio.gather(
             _try_fetch(fetcher, urls.english),
             _try_fetch(fetcher, urls.english_russian),
         )
+        failed = failed or english_page.failed or russian_page.failed
+        english_html, russian_html = english_page.html, russian_page.html
 
         if english_html is None and russian_html is None:
             continue
@@ -93,6 +111,7 @@ async def translate_cambridge(text: str, fetcher: AsyncFetcher) -> CambridgeResu
                 else _empty_page_data()
             )
         except Exception:
+            failed = True
             continue
 
         translations = russian_data.translations or english_data.translations
@@ -104,6 +123,7 @@ async def translate_cambridge(text: str, fetcher: AsyncFetcher) -> CambridgeResu
             translations=translations,
             examples=examples,
             definitions_en=definitions_en,
+            failed=failed,
         )
         if result.found:
             return result
@@ -111,20 +131,30 @@ async def translate_cambridge(text: str, fetcher: AsyncFetcher) -> CambridgeResu
             best_fallback = result
 
     if best_fallback is not None:
-        return best_fallback
+        return CambridgeResult(
+            found=best_fallback.found,
+            translations=best_fallback.translations,
+            examples=best_fallback.examples,
+            definitions_en=best_fallback.definitions_en,
+            failed=failed,
+        )
     return CambridgeResult(
         found=False,
         translations=[],
         examples=[],
         definitions_en=[],
+        failed=failed,
     )
 
 
-async def _try_fetch(fetcher: AsyncFetcher, url: str) -> str | None:
+async def _try_fetch(fetcher: AsyncFetcher, url: str) -> _FetchedPage:
     try:
-        return await fetcher(url)
+        return _FetchedPage(await fetcher(url))
+    except FetchStatusError as exc:
+        # A missing dictionary entry is a valid no-match, not an outage.
+        return _FetchedPage(None, failed=exc.status_code != 404)
     except FetchError:
-        return None
+        return _FetchedPage(None, failed=True)
 
 
 def parse_cambridge_page(
