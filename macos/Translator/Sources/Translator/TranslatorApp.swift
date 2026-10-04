@@ -161,6 +161,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         // is recorded where the installer report can see it.
         model.refreshAccessibilityTrust()
         applyHotKey(model.hotKey)
+        SelectionCapture.requestInitialTrust()
         openSetupIfUnfinished()
         model.start()
         openDebugTargets()

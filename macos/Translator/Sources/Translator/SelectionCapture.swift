@@ -14,24 +14,12 @@ enum SelectionCapture {
     static let copySettleTimeout: TimeInterval = 0.3
 
     static var isTrusted: Bool {
-        // The trust boolean can lag behind a grant/revocation. Probe AX itself without
-        // reading any text or raising a permission dialog; never persist a previous yes.
+        // macOS's trust check is authoritative. Some AX requests can succeed without
+        // this app's grant (for example when inspecting itself); that is not permission
+        // to read another app's selection or post a copy keystroke.
         let options = [kAXTrustedCheckOptionPrompt.takeUnretainedValue() as String: false] as CFDictionary
-        let reportedTrust = AXIsProcessTrustedWithOptions(options)
-        let system = AXUIElementCreateSystemWide()
-        AXUIElementSetMessagingTimeout(system, 0.15)
-        var application: CFTypeRef?
-        let result = AXUIElementCopyAttributeValue(
-            system, kAXFocusedApplicationAttribute as CFString, &application
-        )
-        let probe: AccessibilityProbe
-        switch result {
-        case .success: probe = .available
-        case .apiDisabled: probe = .disabled
-        default: probe = .inconclusive
-        }
-        let granted = AccessibilityPermission.isGranted(reportedTrust: reportedTrust, probe: probe)
-        let report = "reported=\(reportedTrust) ax=\(result.rawValue) granted=\(granted)"
+        let granted = AXIsProcessTrustedWithOptions(options)
+        let report = "granted=\(granted)"
         if report != lastTrustReport {
             lastTrustReport = report
             NSLog("[translator] accessibility %@ bundle=%@", report, Bundle.main.bundleURL.path)
@@ -46,6 +34,17 @@ enum SelectionCapture {
     static func requestTrust() -> Bool {
         let options = [kAXTrustedCheckOptionPrompt.takeUnretainedValue() as String: true] as CFDictionary
         return AXIsProcessTrustedWithOptions(options)
+    }
+
+    /// Request the only system permission required for the shortcut on the first normal
+    /// launch. Isolated tests must never raise a host permission dialog; a refusal must
+    /// not produce a new prompt on every launch. Explicit setup/shortcut actions can
+    /// still request it later.
+    static func requestInitialTrust() {
+        let key = "accessibilityPermissionRequested"
+        guard !AppDefaults.isIsolated, !AppDefaults.store.bool(forKey: key) else { return }
+        AppDefaults.store.set(true, forKey: key)
+        if !isTrusted { requestTrust() }
     }
 
     static func openAccessibilitySettings() {
