@@ -38,7 +38,9 @@ setenv("PYTHONUNBUFFERED", "1", 1)
 setenv("TRANSLATOR_APPLE_HELPER", resources.appendingPathComponent("bin/TranslatorLookup").path, 1)
 
 var argv: [UnsafeMutablePointer<CChar>?] = [
-    strdup(python.path), strdup("-m"), strdup("desktop_app.platform.macos.daemon"),
+    // -P prevents the current directory from overriding modules shipped in the app.
+    // Preserve our explicit PYTHONPATH: -I would ignore the bundle's module roots.
+    strdup(python.path), strdup("-P"), strdup("-m"), strdup("desktop_app.platform.macos.daemon"),
 ]
 argv += CommandLine.arguments.dropFirst().map { strdup($0) }
 argv.append(nil)

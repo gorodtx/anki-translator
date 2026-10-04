@@ -168,11 +168,12 @@ public enum SetupPlanner {
         shortcutRegistered: Bool,
         shortcut: String,
         loginItem: LoginItemState,
-        anki: AnkiStatus
+        anki: AnkiStatus,
+        backendFailure: String? = nil
     ) -> SetupPlan {
         var steps: [SetupStep] = []
 
-        steps.append(backendStep(connected: connected, ping: ping))
+        steps.append(backendStep(connected: connected, ping: ping, failure: backendFailure))
         steps.append(databaseStep(ping: ping, connected: connected))
         steps.append(accessibilityStep(trusted: accessibilityTrusted))
         steps.append(shortcutStep(registered: shortcutRegistered, shortcut: shortcut))
@@ -186,25 +187,26 @@ public enum SetupPlanner {
 
     // MARK: - Steps
 
-    private static func backendStep(connected: Bool, ping: PingInfo?) -> SetupStep {
+    private static func backendStep(connected: Bool, ping: PingInfo?, failure: String?) -> SetupStep {
         if connected, ping != nil {
             return SetupStep(
                 id: .backend,
                 title: "Backend",
-                detail: "Runs at login, listed in Login Items as Translator; it holds the dictionaries open.",
+                detail: "Runs with the app and holds the dictionaries open.",
                 state: .done,
                 isOptional: false
             )
         }
-        // The login agent is set to restart only after a crash, so a clean stop — a
-        // manual one, or a test — leaves it down until the next login. Offer to start it
-        // rather than telling the user to wait for something that will not happen.
+        // The app owns startup and can retry a failed launch. A known failure stays
+        // visible while the IPC client retries; opening Settings must say why.
+        let reason = failure?.trimmingCharacters(in: .whitespacesAndNewlines)
         return SetupStep(
             id: .backend,
             title: "Backend",
             detail: connected
                 ? "Connected, waiting for its first answer."
-                : "Not running. It starts at login; start it now if it stopped.",
+                : ((reason?.isEmpty == false ? reason : nil)
+                    ?? "Not running. Translator starts its backend when you open the app; try again if it stopped."),
             state: .waiting,
             isOptional: false,
             action: connected ? .recheck : .startBackend,

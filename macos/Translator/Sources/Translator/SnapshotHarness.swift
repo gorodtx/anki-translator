@@ -105,6 +105,7 @@ final class SnapshotRunner {
     private func stopIfScreenLocked(_ place: String) {
         guard Self.screenIsLocked else { return }
         NSLog("[snapshot] the screen is locked (\(place)): windows cannot become key and captures are blank; unlock it and run again")
+        BackendBootstrap.shared.stop()
         exit(Self.screenLockedStatus)
     }
 
@@ -123,6 +124,7 @@ final class SnapshotRunner {
                 if scenes.contains("probes") { await popupProbes() }
             }
             NSLog("[snapshot] done")
+            BackendBootstrap.shared.stop()
             exit(0)
         }
     }
@@ -414,14 +416,14 @@ final class SnapshotRunner {
             NSLog("PROBE recorder-refuses-menu-shortcut FAIL no recorder in the window")
             return true
         }
-        let storedRaw = UserDefaults.standard.string(forKey: "hotKey")
+        let storedRaw = AppDefaults.store.string(forKey: "hotKey")
         let before = delegate.model.hotKey
         defer {
             delegate.model.updateHotKey(before)
             if let storedRaw {
-                UserDefaults.standard.set(storedRaw, forKey: "hotKey")
+                AppDefaults.store.set(storedRaw, forKey: "hotKey")
             } else {
-                UserDefaults.standard.removeObject(forKey: "hotKey")
+                AppDefaults.store.removeObject(forKey: "hotKey")
             }
         }
 

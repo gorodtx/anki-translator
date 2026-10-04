@@ -104,8 +104,10 @@ final class SettingsWindowController: NSWindowController, NSToolbarDelegate, NSW
         if !hasBeenShown {
             hasBeenShown = true
             window.center()
-            window.setFrameUsingName(Self.frameName)
-            window.setFrameAutosaveName(Self.frameName)
+            if !AppDefaults.isIsolated {
+                window.setFrameUsingName(Self.frameName)
+                window.setFrameAutosaveName(Self.frameName)
+            }
             // The saved frame carries the height of whichever pane was open last.
             fitWindow(animated: false)
         }
@@ -139,13 +141,13 @@ final class SettingsWindowController: NSWindowController, NSToolbarDelegate, NSW
         selectedPane = pane
         window.title = pane.title
         window.toolbar?.selectedItemIdentifier = pane.toolbarIdentifier
-        UserDefaults.standard.set(pane.rawValue, forKey: Self.selectedPaneKey)
+        AppDefaults.store.set(pane.rawValue, forKey: Self.selectedPaneKey)
         fitWindow(animated: animated && window.isVisible)
         if window.isVisible { window.makeFirstResponder(nil) }
     }
 
     private static var storedPane: SettingsPaneID? {
-        UserDefaults.standard.string(forKey: selectedPaneKey).flatMap(SettingsPaneID.init(rawValue:))
+        AppDefaults.store.string(forKey: selectedPaneKey).flatMap(SettingsPaneID.init(rawValue:))
     }
 
     // MARK: - Panes

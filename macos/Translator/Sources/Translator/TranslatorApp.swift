@@ -140,6 +140,12 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
 
     func applicationDidFinishLaunching(_ notification: Notification) {
         NSApp.setActivationPolicy(.accessory)   // menu-bar app: no Dock icon
+        BackendBootstrap.shared.onFailure = { [weak self] message in
+            self?.model.backendFailure = message
+            self?.model.show(banner: message, level: .error)
+            self?.showSettings(pane: .general)
+        }
+        Task { await BackendBootstrap.shared.start(socketPath: IPCClient.defaultSocketPath()) }
         // Snapshot runs must not claim the hot key or the Services entry: the installed
         // app may be running beside them, and a clash would put a banner in every image.
         if let dir = ProcessInfo.processInfo.environment["TRANSLATOR_DEBUG_SNAPSHOT"], !dir.isEmpty {
@@ -212,6 +218,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     }
 
     func applicationWillTerminate(_ notification: Notification) {
+        BackendBootstrap.shared.stop()
         hotKeys.unregister()
         model.stop()
     }
@@ -277,7 +284,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     /// Settings. Once the required steps are done it stops appearing, so it never
     /// becomes a nag; the flag remembers that across launches.
     private func openSetupIfUnfinished() {
-        guard !UserDefaults.standard.bool(forKey: Self.setupSeenKey) else { return }
+        guard !AppDefaults.store.bool(forKey: Self.setupSeenKey) else { return }
         Task { @MainActor in
             // Give the backend its retry burst, so the stages show real state and not
             // "unknown" for everything.
@@ -286,7 +293,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
             model.refreshLoginItem()
             await model.refreshAll()
             if model.setupPlan.isReady {
-                UserDefaults.standard.set(true, forKey: Self.setupSeenKey)
+                AppDefaults.store.set(true, forKey: Self.setupSeenKey)
             } else {
                 // The checklist is on the General pane.
                 showSettings(pane: .general)
@@ -597,7 +604,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
             }
         }
         window.center()
-        if let name = chrome.autosaveName {
+        if let name = chrome.autosaveName, !AppDefaults.isIsolated {
             window.setFrameUsingName(name)
             window.setFrameAutosaveName(name)
         }

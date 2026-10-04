@@ -203,7 +203,13 @@ struct SettingsStatus: View {
         }
         .accessibilityElement(children: .combine)
         // The symbol is hidden from VoiceOver; the state it shows is said instead.
-        .accessibilityValue(level.spokenName)
+        .accessibilityLabel(title)
+        .accessibilityValue(
+            [level.spokenName, note?.trimmingCharacters(in: .whitespacesAndNewlines)]
+                .compactMap { $0 }
+                .filter { !$0.isEmpty }
+                .joined(separator: ". ")
+        )
     }
 }
 

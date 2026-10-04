@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 from pathlib import Path
+import sys
 
 import pytest
 
@@ -9,8 +10,8 @@ from translate_logic.infrastructure.language_base import locations
 
 
 def _force_platform(monkeypatch: pytest.MonkeyPatch, platform: str) -> None:
-    monkeypatch.setattr(locations.sys, "platform", platform)
-    monkeypatch.setattr(paths.sys, "platform", platform)
+    # Both modules use the same stdlib sys object; avoid private imported attributes.
+    monkeypatch.setattr(sys, "platform", platform)
 
 
 @pytest.fixture(autouse=True)
@@ -38,8 +39,8 @@ def test_macos_defaults_live_in_application_support(
     assert paths.config_dir() == support
     assert paths.data_dir() == support
     assert paths.db_dir() == support / "db"
-    assert paths.runtime_dir() == support / "run"
-    assert paths.socket_path() == support / "run" / "backend.sock"
+    assert paths.runtime_dir() == support / "run-app"
+    assert paths.socket_path() == support / "run-app" / "backend.sock"
     assert paths.log_dir() == tmp_path / "Library" / "Logs" / "Translator"
 
 

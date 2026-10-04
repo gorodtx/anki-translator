@@ -11,6 +11,9 @@ final class AppModel {
     // Connection
     var connection: IPCClient.ConnectionState = .idle
     var ping: PingInfo?
+    /// Last startup/connection failure for Settings, retained between IPC retries.
+    /// A successful connection clears it; a popup banner alone is not visible there.
+    var backendFailure: String?
 
     // Current translation
     var state = ViewState()
@@ -161,10 +164,16 @@ final class AppModel {
 
     private func handle(connection state: IPCClient.ConnectionState) {
         switch state {
-        case .connected: connectionRoundFailed = false
+        case .connected:
+            connectionRoundFailed = false
+            backendFailure = nil
         case let .failed(message):
             if !connectionRoundFailed { NSLog("[translator] \(message)") }
             connectionRoundFailed = true
+            // A generic retry must not replace the bootstrap's specific diagnosis.
+            if backendFailure == nil || message == BackendCompatibility.failureMessage {
+                backendFailure = message
+            }
         case .idle, .connecting: break
         }
         connection = state
@@ -780,11 +789,11 @@ final class AppModel {
     /// Records a new shortcut, or nil for none.
     func updateHotKey(_ combo: KeyCombo?) {
         hotKey = combo
-        UserDefaults.standard.set(combo?.storageString ?? Self.noHotKey, forKey: "hotKey")
+        AppDefaults.store.set(combo?.storageString ?? Self.noHotKey, forKey: "hotKey")
     }
 
     func loadStoredHotKey() {
-        guard let raw = UserDefaults.standard.string(forKey: "hotKey") else { return }
+        guard let raw = AppDefaults.store.string(forKey: "hotKey") else { return }
         if raw == Self.noHotKey {
             hotKey = nil
         } else if let combo = KeyCombo(storageString: raw) {
@@ -799,7 +808,7 @@ final class AppModel {
         accessibilityTrusted = SelectionCapture.isTrusted
         // Written so scripts can read it: asking from a script answers for the script's
         // own parent process, never for this app.
-        UserDefaults.standard.set(accessibilityTrusted, forKey: "accessibilityTrusted")
+        AppDefaults.store.set(accessibilityTrusted, forKey: "accessibilityTrusted")
     }
 
     /// The one place a failed request becomes a sentence for the user (see

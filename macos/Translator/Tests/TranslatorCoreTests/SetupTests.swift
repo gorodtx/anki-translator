@@ -12,7 +12,8 @@ private func plan(
     shortcutRegistered: Bool = true,
     shortcut: String = "⌥⌘T",
     loginItem: LoginItemState = .enabled,
-    anki: AnkiStatus = readyAnki()
+    anki: AnkiStatus = readyAnki(),
+    backendFailure: String? = nil
 ) -> SetupPlan {
     SetupPlanner.plan(
         connected: connected,
@@ -21,7 +22,8 @@ private func plan(
         shortcutRegistered: shortcutRegistered,
         shortcut: shortcut,
         loginItem: loginItem,
-        anki: anki
+        anki: anki,
+        backendFailure: backendFailure
     )
 }
 
@@ -84,7 +86,7 @@ private func step(_ plan: SetupPlan, _ id: SetupStepID) -> SetupStep {
         let result = plan(connected: false, ping: nil)
         #expect(!result.isReady)
         #expect(step(result, .backend).state == .waiting)
-        // Its KeepAlive only covers a crash, so a clean stop needs a push, not patience.
+        // The app owns this backend and can retry a failed start.
         #expect(step(result, .backend).action == .startBackend)
         #expect(step(result, .databases).state == .waiting)
         #expect(step(result, .dictionary).state == .waiting)
@@ -94,11 +96,29 @@ private func step(_ plan: SetupPlan, _ id: SetupStepID) -> SetupStep {
         #expect(step(result, .shortcut).state == .done)
     }
 
-    /// The backend can fetch the databases now, so the stage is a button rather than an
-    /// instruction to go and run a shell script.
-    /// The backend's launchd agent covers only the backend. After a restart the daemon
-    /// answered and the databases were open while the shortcut, the popup and Settings
-    /// did not exist — which is why the gap read as a working install.
+    @Test func backendFailureSaysWhyWithoutHidingTheRetry() {
+        let reason = BackendCompatibility.failureMessage
+        let result = plan(connected: false, ping: nil, backendFailure: reason)
+        let backend = step(result, .backend)
+        #expect(backend.detail == reason)
+        #expect(backend.action == .startBackend)
+        #expect(result.checklist.map(\.id) == [.backend])
+        #expect(!result.isReady)
+    }
+
+    @Test func aConnectedBackendDoesNotKeepAnEarlierFailure() {
+        let backend = step(plan(backendFailure: BackendCompatibility.failureMessage), .backend)
+        #expect(backend.state == .done)
+        #expect(!backend.detail.contains("incompatible"))
+        #expect(backend.detail.contains("app"))
+        #expect(!backend.detail.contains("login"))
+        let absent = step(plan(connected: false, ping: nil, backendFailure: "  "), .backend)
+        #expect(absent.detail.contains("open the app"))
+        #expect(!absent.detail.contains("login"))
+    }
+
+    /// Opening at login starts the entire app, which owns its backend. Opening it by
+    /// hand still works, so choosing no login item remains an optional setup step.
     @Test func openAtLoginIsAStageWithItsOwnStates() {
         let off = plan(loginItem: .notRegistered)
         #expect(step(off, .loginItem).state == .actionNeeded)

@@ -383,6 +383,7 @@ def test_backend_api_dispatches_translate_and_rejects_unknown_method(
         )
         ping = await api.handle(Request(id=1, method="ping", params={}))
         assert ping["protocol"] == protocol.PROTOCOL_VERSION
+        assert ping["capabilities"] == {"history_persistence": True}
         assert ping["engines"] == {"apple_dictionary": True, "apple_translation": False}
 
         result = await api.handle(

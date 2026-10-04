@@ -12,7 +12,8 @@ extension AppModel {
             shortcutRegistered: shortcutRegistered,
             shortcut: hotKey?.displayString ?? "",
             loginItem: loginItem,
-            anki: ankiStatus
+            anki: ankiStatus,
+            backendFailure: backendFailure
         )
     }
 }
@@ -147,39 +148,11 @@ enum SetupActions {
         }
     }
 
-    /// Ask launchd to run the login agent now.
-    ///
-    /// Its KeepAlive only covers a crash, so a backend stopped cleanly stays down until
-    /// the next login. `kickstart` restarts a service that is still loaded; one that was
-    /// booted out is not there to kick, so that case bootstraps the agent first.
+    /// Start the embedded backend, or attach to an existing responding daemon.
     private static func startBackendAgent(model: AppModel) {
-        let label = "com.translator.desktop"
-        let domain = "gui/\(getuid())"
-        if launchctl(["kickstart", "-k", "\(domain)/\(label)"]) != 0 {
-            let plist = FileManager.default.homeDirectoryForCurrentUser
-                .appendingPathComponent("Library/LaunchAgents/\(label).plist")
-            _ = launchctl(["bootstrap", domain, plist.path])
-        }
         Task {
-            // It opens three SQLite bases and warms the sidecar before it answers.
-            try? await Task.sleep(for: .seconds(8))
+            await BackendBootstrap.shared.start(socketPath: IPCClient.defaultSocketPath())
             await model.refreshAll()
-        }
-    }
-
-    @discardableResult
-    private static func launchctl(_ arguments: [String]) -> Int32 {
-        let process = Process()
-        process.executableURL = URL(fileURLWithPath: "/bin/launchctl")
-        process.arguments = arguments
-        process.standardOutput = FileHandle.nullDevice
-        process.standardError = FileHandle.nullDevice
-        do {
-            try process.run()
-            process.waitUntilExit()
-            return process.terminationStatus
-        } catch {
-            return -1
         }
     }
 }

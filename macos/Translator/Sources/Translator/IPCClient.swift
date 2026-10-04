@@ -48,12 +48,10 @@ final class IPCClient: @unchecked Sendable {
     }
 
     static func defaultSocketPath() -> String {
-        if let override = ProcessInfo.processInfo.environment["TRANSLATOR_SOCKET_PATH"], !override.isEmpty {
-            return (override as NSString).expandingTildeInPath
-        }
         let support = FileManager.default.urls(for: .applicationSupportDirectory, in: .userDomainMask).first
             ?? URL(fileURLWithPath: NSHomeDirectory()).appendingPathComponent("Library/Application Support")
-        return support.appendingPathComponent("Translator/run/backend.sock").path
+        return BackendPaths.socketPath(environment: ProcessInfo.processInfo.environment,
+                                       applicationSupportDirectory: support)
     }
 
     // MARK: - Lifecycle
@@ -187,12 +185,31 @@ final class IPCClient: @unchecked Sendable {
                 state = .failed(policy.waitingMessage(socketPath: socketPath))
                 continue
             }
+            let validation = Self.validateBackend(socket)
+            let validated: ValidatedConnection
+            switch validation {
+            case let .ready(connection): validated = connection
+            case .incompatible:
+                Darwin.close(socket)
+                state = .failed(BackendCompatibility.failureMessage)
+                continue
+            case .unavailable:
+                Darwin.close(socket)
+                state = .failed(policy.waitingMessage(socketPath: socketPath))
+                continue
+            }
             round = 0
             lock.lock()
+            if stopping {
+                lock.unlock()
+                Darwin.close(socket)
+                return
+            }
             fd = socket
-            framer = LineFramer()
+            framer = validated.framer
             lock.unlock()
             state = .connected
+            for line in validated.queued { handle(line: line) }
 
             readUntilClosed(socket)
 
@@ -261,6 +278,64 @@ final class IPCClient: @unchecked Sendable {
     }
 
     // MARK: - POSIX helpers
+
+    private struct ValidatedConnection {
+        let framer: LineFramer
+        let queued: [Data]
+    }
+
+    private enum Validation {
+        case ready(ValidatedConnection)
+        case incompatible
+        case unavailable
+    }
+
+    /// No app request/event is exposed until this listener proves compatibility.
+    /// Preserve every initial event, including a partial frame following the reply.
+    private static func validateBackend(_ socket: Int32) -> Validation {
+        var timeout = timeval(tv_sec: 1, tv_usec: 0)
+        let length = socklen_t(MemoryLayout<timeval>.size)
+        guard setsockopt(socket, SOL_SOCKET, SO_RCVTIMEO, &timeout, length) == 0,
+              setsockopt(socket, SOL_SOCKET, SO_SNDTIMEO, &timeout, length) == 0 else {
+            return .unavailable
+        }
+        defer {
+            var blocking = timeval(tv_sec: 0, tv_usec: 0)
+            _ = setsockopt(socket, SOL_SOCKET, SO_RCVTIMEO, &blocking, length)
+            _ = setsockopt(socket, SOL_SOCKET, SO_SNDTIMEO, &blocking, length)
+        }
+        guard let request = try? IPCFraming.request(id: 0, method: IPCMethod.ping, params: [:]),
+              writeAll(socket, request) else { return .unavailable }
+        var framer = LineFramer()
+        var queued: [Data] = []
+        var receivedBytes = 0
+        var chunk = [UInt8](repeating: 0, count: 16 * 1024)
+        let deadline = Date().addingTimeInterval(3)
+        while Date() < deadline, receivedBytes < 262_144, queued.count < 1024 {
+            let count = chunk.withUnsafeMutableBytes { buffer in
+                Darwin.recv(socket, buffer.baseAddress, buffer.count, 0)
+            }
+            if count < 0, errno == EINTR { continue }
+            guard count > 0 else { return .unavailable }
+            receivedBytes += count
+            guard receivedBytes <= 262_144 else { return .unavailable }
+            var accepted = false
+            for line in framer.append(Data(chunk.prefix(count))) {
+                if let incoming = try? IPCFraming.parse(line: line),
+                   case let .response(response) = incoming, response.id == "0" {
+                    guard response.ok, let data = response.result,
+                          let ping = try? IPCCoding.decoder.decode(BackendCompatibility.Ping.self, from: data),
+                          ping.isCompatible else { return .incompatible }
+                    accepted = true
+                } else {
+                    queued.append(line)
+                }
+            }
+            guard queued.count < 1024 else { return .unavailable }
+            if accepted { return .ready(ValidatedConnection(framer: framer, queued: queued)) }
+        }
+        return .unavailable
+    }
 
     private static func connect(to path: String) -> Int32 {
         guard path.utf8.count < MemoryLayout.size(ofValue: sockaddr_un().sun_path) else { return -1 }

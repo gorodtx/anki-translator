@@ -51,7 +51,9 @@ def runtime_dir() -> Path:
     if override is not None:
         return override
     if is_macos():
-        return data_dir() / "run"
+        # The old launchd backend used run/backend.sock without durable history.
+        # Keep its listener untouched while the self-contained app starts its backend.
+        return data_dir() / "run-app"
     xdg_runtime = os.environ.get("XDG_RUNTIME_DIR")
     if xdg_runtime:
         return Path(xdg_runtime) / _LINUX_DIR_NAME
