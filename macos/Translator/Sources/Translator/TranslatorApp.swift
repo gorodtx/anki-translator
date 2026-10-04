@@ -449,9 +449,13 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     }
 
     func showSettingsFromMenu() {
-        // Let menu tracking finish before requesting activation. Otherwise closing
-        // the menu can restore the previous app over an already-open Settings window.
-        DispatchQueue.main.async { [weak self] in self?.showSettings() }
+        // Request activation during the user's menu action, while macOS can attribute
+        // the request to that action. A dispatched block can run inside menu tracking;
+        // order the window only when the run loop returns to its ordinary mode.
+        NSApp.activate()
+        RunLoop.main.perform(inModes: [.default]) { [weak self] in
+            MainActor.assumeIsolated { self?.showSettings() }
+        }
     }
 
     private lazy var settingsWindow = SettingsWindowController(

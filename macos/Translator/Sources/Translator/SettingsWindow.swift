@@ -56,6 +56,8 @@ final class SettingsWindowController: NSWindowController, NSToolbarDelegate, NSW
     private(set) var selectedPane: SettingsPaneID?
     private var hasBeenShown = false
     private var permissionRefresh: Timer?
+    private var activationObserver: NSObjectProtocol?
+    private var pendingActivation: TimeInterval?
 
     init(
         model: AppModel,
@@ -76,6 +78,7 @@ final class SettingsWindowController: NSWindowController, NSToolbarDelegate, NSW
         window.isReleasedWhenClosed = false
         window.tabbingMode = .disallowed
         window.toolbarStyle = .preference
+        window.collectionBehavior = [.moveToActiveSpace, .fullScreenAuxiliary]
         let content = NSView(frame: window.contentLayoutRect)
         // A pane caught mid-resize must not draw under the toolbar.
         content.clipsToBounds = true
@@ -88,6 +91,19 @@ final class SettingsWindowController: NSWindowController, NSToolbarDelegate, NSW
         toolbar.allowsUserCustomization = false
         toolbar.displayMode = .iconAndLabel
         window.toolbar = toolbar
+        activationObserver = NotificationCenter.default.addObserver(
+            forName: NSApplication.didBecomeActiveNotification, object: NSApp, queue: .main
+        ) { [weak self] _ in
+            MainActor.assumeIsolated {
+                guard let self, let requestedAt = self.pendingActivation else { return }
+                self.pendingActivation = nil
+                // Finish this show request after asynchronous activation. Do not raise
+                // Settings during an unrelated activation much later (e.g. a lookup).
+                guard ProcessInfo.processInfo.systemUptime - requestedAt < 2,
+                      let window = self.window, window.isVisible else { return }
+                window.makeKeyAndOrderFront(nil)
+            }
+        }
     }
 
     @available(*, unavailable)
@@ -114,6 +130,8 @@ final class SettingsWindowController: NSWindowController, NSToolbarDelegate, NSW
         }
         let wasVisible = window.isVisible
         if window.isMiniaturized { window.deminiaturize(nil) }
+        NSApp.unhideWithoutActivation()
+        pendingActivation = NSApp.isActive ? nil : ProcessInfo.processInfo.systemUptime
         window.makeKeyAndOrderFront(nil)
         NSApp.activate()
         // Activation is asynchronous, and an accessory app may already be active while
@@ -270,6 +288,7 @@ final class SettingsWindowController: NSWindowController, NSToolbarDelegate, NSW
     func windowWillClose(_ notification: Notification) {
         permissionRefresh?.invalidate()
         permissionRefresh = nil
+        pendingActivation = nil
     }
 
     func windowDidBecomeKey(_ notification: Notification) {
