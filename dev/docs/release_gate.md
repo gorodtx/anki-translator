@@ -18,9 +18,17 @@ What it enforces:
 - clean tracked git tree,
 - valid release tag format,
 - tag does not exist locally/remotely,
-- DB bundle lock matches local sqlite files,
+- existing published DB assets match the pinned lock (names, sizes and SHA256),
 - code release assets are built from tracked files only,
 - checksums verified.
+
+The default preflight is code-only: it checks small GitHub asset metadata and
+never copies, hashes or uploads SQLite. GitHub access must already be configured;
+an inaccessible or mismatched DB release fails instead of assuming a tag is enough.
+For an intentional DB update, run `dev/scripts/release_preflight.sh vX.Y.Z --build-db`.
+This explicit mode builds and verifies local DB bytes and requires publishing
+the new immutable DB bundle separately. A code release reuses the pinned bundle.
+Checksum checks support both Linux `sha256sum` and macOS `shasum`.
 
 ## 3) Stable Linux production gate
 

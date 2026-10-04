@@ -55,6 +55,11 @@ def test_build_db_bundle_cli_emits_lock_and_assets(tmp_path: Path) -> None:
     assert payload["manifest_asset"] == "db-assets.sha256"
     assert (assets_dir / "db-assets.sha256").is_file()
     assert json.loads(lock_file.read_text(encoding="utf-8")) == payload
+    assert {name: entry["size"] for name, entry in payload["assets"].items()} == {
+        "primary.sqlite3": len(b"primary-db"),
+        "fallback.sqlite3": len(b"fallback-db"),
+        "definitions_pack.sqlite3": len(b"definitions-db"),
+    }
 
 
 def test_build_release_manifest_cli_includes_db_bundle_reference(

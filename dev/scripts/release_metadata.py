@@ -4,7 +4,9 @@ from __future__ import annotations
 import argparse
 import hashlib
 import json
+import re
 import shutil
+import subprocess
 import sys
 from collections.abc import Mapping
 from pathlib import Path
@@ -89,10 +91,47 @@ def build_db_bundle_metadata(
             name: {
                 "name": name,
                 "sha256": digests[name],
+                "size": asset_paths[name].stat().st_size,
             }
             for name in OFFLINE_BASE_FILES
         },
     }
+
+
+def verify_published_db_bundle(
+    lock: Mapping[str, Any], release: Mapping[str, Any]
+) -> None:
+    """Check published asset metadata without downloading or hashing SQLite."""
+    if release.get("tag_name") != lock["tag"] or release.get("draft") is not False:
+        raise ValueError("DB release must be published at the pinned tag")
+    assets = {item["name"]: item for item in release.get("assets", [])}
+    hashes: dict[str, str] = {}
+    for name in OFFLINE_BASE_FILES:
+        expected = lock["assets"][name]
+        sha = expected["sha256"]
+        if not isinstance(sha, str) or re.fullmatch(r"[a-f0-9]{64}", sha) is None:
+            raise ValueError(f"Invalid pinned DB hash: {name}")
+        actual = assets.get(name)
+        if (
+            actual is None
+            or actual.get("digest") != f"sha256:{sha}"
+            or actual.get("size") != expected.get("size")
+            or type(expected.get("size")) is not int
+            or expected["size"] <= 0
+        ):
+            raise ValueError(f"Published DB asset differs from lock: {name}")
+        hashes[name] = sha
+    manifest = build_db_assets_manifest_text(hashes).encode("utf-8")
+    manifest_digest = hashlib.sha256(manifest).hexdigest()
+    if lock["tag"] != f"db-{manifest_digest[:12]}":
+        raise ValueError("Pinned DB tag differs from its content hashes")
+    actual_manifest = assets.get(lock["manifest_asset"])
+    if (
+        actual_manifest is None
+        or actual_manifest.get("digest") != f"sha256:{manifest_digest}"
+        or actual_manifest.get("size") != len(manifest)
+    ):
+        raise ValueError("Published DB checksum manifest differs from lock")
 
 
 def build_release_manifest(
@@ -198,6 +237,25 @@ def cmd_build_release_manifest(args: argparse.Namespace) -> int:
     return 0
 
 
+def cmd_verify_db_release(args: argparse.Namespace) -> int:
+    lock = json.loads(Path(args.db_lock).read_text(encoding="utf-8"))
+    if re.fullmatch(r"[A-Za-z0-9_.-]+/[A-Za-z0-9_.-]+", lock["repo"]) is None:
+        raise ValueError("Invalid pinned DB repository")
+    if re.fullmatch(r"db-[a-f0-9]{12}", lock["tag"]) is None:
+        raise ValueError("Invalid pinned DB tag")
+    result = subprocess.run(
+        ["gh", "api", f"repos/{lock['repo']}/releases/tags/{lock['tag']}"],
+        capture_output=True,
+        text=True,
+        check=False,
+    )
+    if result.returncode:
+        raise RuntimeError("Cannot verify published DB release; GitHub API failed")
+    verify_published_db_bundle(lock, json.loads(result.stdout))
+    print(f"{lock['tag']}: existing published DB bundle verified; no SQLite copied")
+    return 0
+
+
 def _parse_args(argv: list[str]) -> argparse.Namespace:
     parser = argparse.ArgumentParser(description=__doc__)
     sub = parser.add_subparsers(dest="command", required=True)
@@ -219,6 +277,10 @@ def _parse_args(argv: list[str]) -> argparse.Namespace:
     release_manifest.add_argument("--db-lock", required=True)
     release_manifest.add_argument("--out-file", required=True)
     release_manifest.set_defaults(func=cmd_build_release_manifest)
+
+    verify_release = sub.add_parser("verify-db-release")
+    verify_release.add_argument("--db-lock", required=True)
+    verify_release.set_defaults(func=cmd_verify_db_release)
 
     return parser.parse_args(argv)
 
