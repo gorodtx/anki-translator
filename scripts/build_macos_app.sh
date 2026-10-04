@@ -44,8 +44,10 @@ while [[ $# -gt 0 ]]; do
 done
 
 [[ "$(uname -s)" == "Darwin" ]] || fail "macOS only"
+[[ "$(uname -m)" == "arm64" ]] || fail "this release supports Apple Silicon (arm64) only"
 command -v swift >/dev/null || fail "swift toolchain not found (install Command Line Tools)"
 command -v uv >/dev/null || fail "uv not found"
+SOURCE_DIGEST="$(uv run --no-project python "${ROOT_DIR}/scripts/macos_bundle_manifest.py" --source-digest)"
 
 resolve_python_root() {
   if [[ -n "${PYTHON_ROOT}" ]]; then
@@ -75,12 +77,8 @@ mkdir -p "${CONTENTS}/MacOS" "${RESOURCES}/bin" "${RESOURCES}/app" "${STAGE}"
 if [[ "${SKIP_SWIFT}" -eq 0 ]]; then
   log "building apple-lang-helper"
   (cd "${ROOT_DIR}/macos/AppleLangHelper" && swift build -c release 2>&1 | tail -3 >&2)
-  if [[ -d "${ROOT_DIR}/macos/Translator" ]]; then
-    log "building Translator shell"
-    (cd "${ROOT_DIR}/macos/Translator" && swift build -c release 2>&1 | tail -3 >&2)
-  else
-    log "macos/Translator not present yet; shell binary will be a placeholder launcher"
-  fi
+  log "building Translator shell"
+  (cd "${ROOT_DIR}/macos/Translator" && swift build -c release 2>&1 | tail -3 >&2)
 fi
 
 HELPER_BIN="${ROOT_DIR}/macos/AppleLangHelper/.build/release/apple-lang-helper"
@@ -96,24 +94,17 @@ ln -sf apple-lang-helper "${RESOURCES}/bin/TranslatorLookup"
 # so the system could not attribute the background item to this app and showed the user a
 # bare "run-backend" from an unidentified developer.
 BACKEND_BIN="${ROOT_DIR}/macos/Translator/.build/release/TranslatorBackend"
-[[ -x "${BACKEND_BIN}" ]] && cp "${BACKEND_BIN}" "${CONTENTS}/MacOS/TranslatorBackend"
+[[ -x "${BACKEND_BIN}" ]] || fail "native backend launcher missing: ${BACKEND_BIN}"
+cp "${BACKEND_BIN}" "${CONTENTS}/MacOS/TranslatorBackend"
 
 SHELL_BIN="${ROOT_DIR}/macos/Translator/.build/release/Translator"
+[[ -x "${SHELL_BIN}" ]] || fail "SwiftUI shell binary missing: ${SHELL_BIN}"
 if [[ -x "${SHELL_BIN}" ]]; then
   cp "${SHELL_BIN}" "${CONTENTS}/MacOS/${APP_NAME}"
   # Swift resource bundles produced by SwiftPM (if any)
   for bundle in "${ROOT_DIR}"/macos/Translator/.build/release/*.bundle; do
     [[ -d "${bundle}" ]] && cp -R "${bundle}" "${RESOURCES}/"
   done
-else
-  # Headless placeholder: keeps the bundle runnable (backend only) until the
-  # SwiftUI shell lands.
-  cat > "${CONTENTS}/MacOS/${APP_NAME}" <<'LAUNCHER'
-#!/bin/bash
-HERE="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
-exec "${HERE}/Resources/bin/run-backend"
-LAUNCHER
-  chmod +x "${CONTENTS}/MacOS/${APP_NAME}"
 fi
 
 # --- Python runtime ------------------------------------------------------------------
@@ -169,7 +160,8 @@ find "${RESOURCES}/python/lib" -maxdepth 1 -type f -name 'libtcl*' -delete
 find "${RESOURCES}/python/lib" -maxdepth 1 -type f -name 'libtk*' -delete
 
 log "byte-compiling backend"
-"${BUNDLED_PY}" -m compileall -q -j 0 "${RESOURCES}/app" "${RESOURCES}/site-packages" >/dev/null
+uv run --no-project --python "${BUNDLED_PY}" python -m compileall -q -j 0 \
+  -s "${RESOURCES}" -p /TranslatorResources "${RESOURCES}/app" "${RESOURCES}/site-packages" >/dev/null
 
 # --- Launch helpers -------------------------------------------------------------------------
 cat > "${RESOURCES}/bin/run-backend" <<'RUNNER'
@@ -180,7 +172,7 @@ export PYTHONPATH="${RES}/app:${RES}/site-packages"
 export PYTHONDONTWRITEBYTECODE=1
 export PYTHONUNBUFFERED=1
 export TRANSLATOR_APPLE_HELPER="${RES}/bin/TranslatorLookup"
-exec "${RES}/bin/TranslatorEngine" -m desktop_app.platform.macos.daemon "$@"
+exec "${RES}/bin/TranslatorEngine" -P -m desktop_app.platform.macos.daemon "$@"
 RUNNER
 ln -sf ../python/bin/python3.13 "${RESOURCES}/bin/TranslatorEngine"
 chmod +x "${RESOURCES}/bin/run-backend"
@@ -219,6 +211,7 @@ cat > "${CONTENTS}/Info.plist" <<PLIST
       <key>NSMessage</key><string>translateSelection</string>
       <key>NSPortName</key><string>${APP_NAME}</string>
       <key>NSSendTypes</key><array><string>NSStringPboardType</string></array>
+      <key>NSRequiredContext</key><dict/>
     </dict>
   </array>
 </dict>
@@ -226,30 +219,14 @@ cat > "${CONTENTS}/Info.plist" <<PLIST
 PLIST
 
 # --- Signing -----------------------------------------------------------------------------------
+uv run --no-project python "${ROOT_DIR}/scripts/macos_bundle_manifest.py" \
+  --app "${APP_DIR}" --expected-source-digest "${SOURCE_DIGEST}"
 log "signing (${SIGN_IDENTITY})"
 # Notarisation requires the hardened runtime, so a real identity must get
 # `--options runtime --timestamp` or Apple rejects the upload. Ad-hoc builds
 # stay unhardened on purpose: with no team identity, library validation would
 # refuse to load the embedded Python's extension modules.
-SIGN_FLAGS=(--force --sign "${SIGN_IDENTITY}")
-if [[ "${SIGN_IDENTITY}" != "-" ]]; then
-  SIGN_FLAGS+=(--options runtime --timestamp)
-fi
-# A nested signature that fails silently yields a bundle whose seal is broken
-# only discovered at notarisation time, so let failures stop the build.
-find "${RESOURCES}/python" "${RESOURCES}/site-packages" -type f \
-  \( -name '*.so' -o -name '*.dylib' \) -print0 \
-  | xargs -0 -r codesign "${SIGN_FLAGS[@]}"
-codesign "${SIGN_FLAGS[@]}" "${RESOURCES}/python/bin/python3.13"
-codesign "${SIGN_FLAGS[@]}" "${RESOURCES}/bin/apple-lang-helper"
-# A second Mach-O in Contents/MacOS is nested code, not a sealed resource, so it needs its
-# own signature before the bundle is sealed around it.
-# The identifier is what the system shows and what it attributes the login item to, so
-# name it after the app rather than leaving SwiftPM's hash.
-[[ -f "${CONTENTS}/MacOS/TranslatorBackend" ]] \
-  && codesign "${SIGN_FLAGS[@]}" --identifier "${BUNDLE_ID}.backend" \
-       "${CONTENTS}/MacOS/TranslatorBackend"
-codesign "${SIGN_FLAGS[@]}" --identifier "${BUNDLE_ID}" "${APP_DIR}"
+"${ROOT_DIR}/scripts/sign_macos_app.sh" "${APP_DIR}" "${SIGN_IDENTITY}"
 
 rm -rf "${STAGE}"
 

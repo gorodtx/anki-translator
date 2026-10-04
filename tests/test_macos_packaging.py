@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 from pathlib import Path
+import os
 import plistlib
 import re
 import subprocess
@@ -10,6 +11,9 @@ import pytest
 REPO_ROOT = Path(__file__).resolve().parents[1]
 BUILD_SCRIPT = REPO_ROOT / "scripts" / "build_macos_app.sh"
 RUN_SCRIPT = REPO_ROOT / "scripts" / "run_backend_macos.sh"
+BUNDLE_ROOT = Path(
+    os.environ.get("TRANSLATOR_TEST_APP", str(REPO_ROOT / "dist" / "Translator.app"))
+)
 
 
 def _script() -> str:
@@ -83,6 +87,7 @@ def test_info_plist_declares_agent_service_and_minimum_os() -> None:
     assert service["NSMessage"] == "translateSelection"
     assert service["NSSendTypes"] == ["NSStringPboardType"]
     assert service["NSPortName"] == "Translator"
+    assert service["NSRequiredContext"] == {}
 
 
 @pytest.mark.parametrize("directory", ["dist/", "macos/**/.build/"])
@@ -130,7 +135,7 @@ def test_pytest_never_collects_from_build_output() -> None:
 
 
 @pytest.mark.skipif(
-    not (REPO_ROOT / "dist" / "Translator.app").exists(),
+    not BUNDLE_ROOT.exists(),
     reason="no bundle built (scripts/build_macos_app.sh)",
 )
 def test_built_bundle_seal_is_intact() -> None:
@@ -141,7 +146,7 @@ def test_built_bundle_seal_is_intact() -> None:
             "--verify",
             "--deep",
             "--strict",
-            str(REPO_ROOT / "dist" / "Translator.app"),
+            str(BUNDLE_ROOT),
         ],
         capture_output=True,
         text=True,
@@ -152,16 +157,15 @@ def test_built_bundle_seal_is_intact() -> None:
 
 
 def test_service_is_offered_on_any_selection() -> None:
-    """`NSRequiredContext` with `NSTextContent: Word` hides the Service on
-
-    anything but a single word, and the app translates phrases and sentences
-    too — a selected sentence produces a popup just as a word does.
-    """
+    """An empty required context makes Services visible without filtering text."""
     text = _script()
-
-    assert "NSSendTypes" in text
-    assert "NSRequiredContext" not in text
-    assert "NSTextContent" not in text
+    match = re.search(r"<\?xml.*?</plist>", text, re.DOTALL)
+    assert match is not None
+    # Dollar substitutions are valid XML text, so this checks the actual plist
+    # template rather than merely finding the key in a comment or another entry.
+    service = plistlib.loads(match.group(0).encode("utf-8"))["NSServices"][0]
+    assert service["NSSendTypes"] == ["NSStringPboardType"]
+    assert service["NSRequiredContext"] == {}
 
 
 def test_bundle_identifier_matches_the_project_identity() -> None:
@@ -186,32 +190,29 @@ def test_bundle_identifier_matches_the_project_identity() -> None:
 
 
 def test_dev_plist_declares_the_service_without_a_context_filter() -> None:
-    # NSRequiredContext narrows where the Service appears; the app translates words,
-    # phrases and sentences alike, so both bundles declare send types and nothing else.
+    # Apple requires this key even with no filters; omitting it registers the
+    # service but does not automatically show it in the Services menu.
     dev_plist = REPO_ROOT / "macos" / "Translator" / "Resources" / "Info.plist"
-    text = dev_plist.read_text(encoding="utf-8")
-
-    assert "NSServices" in text
-    assert "NSStringPboardType" in text
-    assert "NSRequiredContext" not in text
-    assert "NSTextContent" not in text
+    service = plistlib.loads(dev_plist.read_bytes())["NSServices"][0]
+    assert "NSStringPboardType" in service["NSSendTypes"]
+    assert service["NSMessage"] == "translateSelection"
+    assert service["NSPortName"] == "Translator"
+    assert service["NSRequiredContext"] == {}
 
 
 @pytest.mark.skipif(
-    not (REPO_ROOT / "dist" / "Translator.app" / "Contents" / "Info.plist").exists(),
+    not (BUNDLE_ROOT / "Contents" / "Info.plist").exists(),
     reason="no bundle built (scripts/build_macos_app.sh)",
 )
 def test_built_plist_declares_the_service_without_a_context_filter() -> None:
-    plist = plistlib.loads(
-        (REPO_ROOT / "dist" / "Translator.app" / "Contents" / "Info.plist").read_bytes()
-    )
+    plist = plistlib.loads((BUNDLE_ROOT / "Contents" / "Info.plist").read_bytes())
 
     assert plist["CFBundleIdentifier"] == "com.translator.desktop"
     assert plist["LSUIElement"] is True
     service = plist["NSServices"][0]
     assert service["NSSendTypes"] == ["NSStringPboardType"]
     assert service["NSMessage"] == "translateSelection"
-    assert "NSRequiredContext" not in service
+    assert service["NSRequiredContext"] == {}
 
 
 def test_a_real_identity_gets_the_hardened_runtime() -> None:
@@ -222,9 +223,9 @@ def test_a_real_identity_gets_the_hardened_runtime() -> None:
     checks. Ad-hoc builds stay unhardened on purpose: with no team identity,
     library validation refuses the embedded Python's extension modules.
     """
-    text = _script()
+    text = (REPO_ROOT / "scripts/sign_macos_app.sh").read_text(encoding="utf-8")
 
-    assert 'if [[ "${SIGN_IDENTITY}" != "-" ]]; then' in text
+    assert "if [[ \"${IDENTITY}\" != '-' ]]; then" in text
     assert "SIGN_FLAGS+=(--options runtime --timestamp)" in text
 
 
@@ -234,4 +235,7 @@ def test_nested_signing_failures_stop_the_build() -> None:
     text = _script()
 
     assert "|| true" not in text.split('log "signing')[1].split('log "verifying')[0]
-    assert "xargs -0 -r codesign" in text
+    signing = (REPO_ROOT / "scripts/sign_macos_app.sh").read_text(encoding="utf-8")
+    assert "set -euo pipefail" in signing
+    assert "file -b" in signing and "Mach-O" in signing
+    assert "|| true" not in signing

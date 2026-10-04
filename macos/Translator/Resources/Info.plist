@@ -48,6 +48,8 @@
 				<string>NSStringPboardType</string>
 				<string>public.utf8-plain-text</string>
 			</array>
+			<key>NSRequiredContext</key>
+			<dict/>
 		</dict>
 	</array>
 </dict>
