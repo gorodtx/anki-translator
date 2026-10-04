@@ -13,7 +13,33 @@ import TranslatorCore
 enum SelectionCapture {
     static let copySettleTimeout: TimeInterval = 0.3
 
-    static var isTrusted: Bool { AXIsProcessTrusted() }
+    static var isTrusted: Bool {
+        // The trust boolean can lag behind a grant/revocation. Probe AX itself without
+        // reading any text or raising a permission dialog; never persist a previous yes.
+        let options = [kAXTrustedCheckOptionPrompt.takeUnretainedValue() as String: false] as CFDictionary
+        let reportedTrust = AXIsProcessTrustedWithOptions(options)
+        let system = AXUIElementCreateSystemWide()
+        AXUIElementSetMessagingTimeout(system, 0.15)
+        var application: CFTypeRef?
+        let result = AXUIElementCopyAttributeValue(
+            system, kAXFocusedApplicationAttribute as CFString, &application
+        )
+        let probe: AccessibilityProbe
+        switch result {
+        case .success: probe = .available
+        case .apiDisabled: probe = .disabled
+        default: probe = .inconclusive
+        }
+        let granted = AccessibilityPermission.isGranted(reportedTrust: reportedTrust, probe: probe)
+        let report = "reported=\(reportedTrust) ax=\(result.rawValue) granted=\(granted)"
+        if report != lastTrustReport {
+            lastTrustReport = report
+            NSLog("[translator] accessibility %@ bundle=%@", report, Bundle.main.bundleURL.path)
+        }
+        return granted
+    }
+
+    private static var lastTrustReport: String?
 
     /// Prompts for the Accessibility grant (system dialog, once per app build).
     @discardableResult

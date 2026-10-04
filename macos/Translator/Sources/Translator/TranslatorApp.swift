@@ -56,7 +56,7 @@ private struct MenuBarContent: View {
         Divider()
         // An accessory app never shows its app menu, so About has to live here.
         Button("About Translator") { delegate.showAbout() }
-        Button("Settings…") { delegate.showSettings() }
+        Button("Settings…") { delegate.showSettingsFromMenu() }
             .keyboardShortcut(",")
         Divider()
         Button("Quit Translator") { NSApplication.shared.terminate(nil) }
@@ -446,6 +446,12 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     /// its panes are made once and kept, like any Mac settings window.
     func showSettings(pane: SettingsPaneID? = nil) {
         settingsWindow.show(pane: pane)
+    }
+
+    func showSettingsFromMenu() {
+        // Let menu tracking finish before requesting activation. Otherwise closing
+        // the menu can restore the previous app over an already-open Settings window.
+        DispatchQueue.main.async { [weak self] in self?.showSettings() }
     }
 
     private lazy var settingsWindow = SettingsWindowController(

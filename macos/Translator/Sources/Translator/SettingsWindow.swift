@@ -55,6 +55,7 @@ final class SettingsWindowController: NSWindowController, NSToolbarDelegate, NSW
     private var measured: [SettingsPaneID: CGSize] = [:]
     private(set) var selectedPane: SettingsPaneID?
     private var hasBeenShown = false
+    private var permissionRefresh: Timer?
 
     init(
         model: AppModel,
@@ -111,11 +112,30 @@ final class SettingsWindowController: NSWindowController, NSToolbarDelegate, NSW
             // The saved frame carries the height of whichever pane was open last.
             fitWindow(animated: false)
         }
-        NSApp.activate()
+        let wasVisible = window.isVisible
+        if window.isMiniaturized { window.deminiaturize(nil) }
         window.makeKeyAndOrderFront(nil)
+        NSApp.activate()
+        // Activation is asynchronous, and an accessory app may already be active while
+        // another app covers its window. Explicitly raise this ordinary window as well.
+        window.orderFrontRegardless()
+        model.refreshAccessibilityTrust()
+        startPermissionRefresh()
         // Nothing is focused on open, as in System Settings: a focused shortcut field
         // would start listening for keys the moment the window appears.
-        window.makeFirstResponder(nil)
+        if !wasVisible { window.makeFirstResponder(nil) }
+    }
+
+    /// Settings may remain visible while permission changes in System Settings. Poll
+    /// only for this window's lifetime; opening/returning to it also checks immediately.
+    private func startPermissionRefresh() {
+        guard permissionRefresh == nil, !AppDefaults.isIsolated else { return }
+        permissionRefresh = Timer.scheduledTimer(withTimeInterval: 1, repeats: true) { [weak self] _ in
+            MainActor.assumeIsolated {
+                guard let self, self.window?.isVisible == true else { return }
+                self.model.refreshAccessibilityTrust()
+            }
+        }
     }
 
     /// Switches to `pane`, resizing the window to it with the top edge fixed.
@@ -246,6 +266,11 @@ final class SettingsWindowController: NSWindowController, NSToolbarDelegate, NSW
     private var isAnimatingFrame = false
 
     // MARK: - NSWindowDelegate
+
+    func windowWillClose(_ notification: Notification) {
+        permissionRefresh?.invalidate()
+        permissionRefresh = nil
+    }
 
     func windowDidBecomeKey(_ notification: Notification) {
         // Read from the system every time: a permission or a login item can change in
