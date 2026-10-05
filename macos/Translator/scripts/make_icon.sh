@@ -18,7 +18,7 @@ if [ "${1:-}" = "--compile-appearances" ]; then
   xcrun --find actool > "$OUTPUT/compiler-path.txt"
   xcodebuild -version > "$OUTPUT/xcode-version.txt"
   xcrun --sdk macosx --show-sdk-version > "$OUTPUT/sdk-version.txt"
-  if ! xcrun actool Resources/AppIcon.icon \
+  if ! CORESVG_VERBOSE=1 xcrun actool Resources/AppIcon.icon \
     --compile "$OUTPUT" \
     --app-icon AppIcon \
     --platform macosx \
@@ -42,8 +42,12 @@ import subprocess
 import sys
 
 output = Path(sys.argv[1])
+compiler_log = (output / "actool.log").read_text()
+if "CoreSVG Error:" in compiler_log or "CoreSVG has logged an error" in compiler_log:
+    raise SystemExit("native SVG parser errors; generated resources remain unaccepted")
 resources = Path("Resources")
 source_files = sorted((resources / "AppIcon.icon").rglob("*"))
+source_files += sorted((resources / "AppIcon-layer-sources").rglob("*"))
 source_files += [resources / "AppIcon-source.json", resources / "AppIcon.icns"]
 source_hashes = {
     str(path.relative_to(resources)): hashlib.sha256(path.read_bytes()).hexdigest()

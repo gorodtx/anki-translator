@@ -1,45 +1,132 @@
 {
-  "version": 1,
+  "version": 2,
   "source": "design/translator-icon/master/logo-master.svg",
   "source_sha256": "20d2f29060a00f45f7d3c1fd5be5219b64977790fbad984b4150fa5b138d546b",
   "schema_reference": "https://developer.apple.com/documentation/swiftui/landmarks-building-an-app-with-liquid-glass",
   "fallback_icns_sha256": "ca1f8328df7395ca05066fbeff9449e6ead4df2dbfefecf4c473ca7f43e3a4b3",
+  "renderer": {
+    "aom": "3.13.1",
+    "archive": "3.8.2",
+    "cairo": "1.18.4",
+    "cgif": "0.5.0",
+    "exif": "0.6.25",
+    "expat": "2.7.3",
+    "ffi": "3.5.2",
+    "fontconfig": "2.17.1",
+    "freetype": "2.14.1",
+    "fribidi": "1.0.16",
+    "glib": "2.86.1",
+    "harfbuzz": "12.1.0",
+    "heif": "1.20.2",
+    "highway": "1.3.0",
+    "imagequant": "2.4.1",
+    "lcms": "2.17",
+    "mozjpeg": "0826579",
+    "pango": "1.57.0",
+    "pixman": "0.46.4",
+    "png": "1.6.50",
+    "proxy-libintl": "0.5",
+    "rsvg": "2.61.2",
+    "spng": "0.7.4",
+    "tiff": "4.7.1",
+    "vips": "8.17.3",
+    "webp": "1.6.0",
+    "xml2": "2.15.1",
+    "zlib-ng": "2.2.5",
+    "sharp": "0.34.5"
+  },
+  "raster_method": "same approved kit renderer: density72, resize1024x1024, withIccProfile(srgb), PNG; no geometry/color edits",
   "layers": [
     {
-      "file": "Assets/back-panel.svg",
-      "source": "design/translator-icon/master/logo-master.svg",
       "semantic_id": "back-panel",
-      "subtree_preserved": true,
-      "sha256": "f3807f4689dd718390b503b8ac9c3b1faa4c657ee361a18b4ae623d19db06e7a"
+      "vector_file": "AppIcon-layer-sources/back-panel.svg",
+      "vector_sha256": "f3807f4689dd718390b503b8ac9c3b1faa4c657ee361a18b4ae623d19db06e7a",
+      "file": "AppIcon.icon/Assets/back-panel.png",
+      "sha256": "997e92287d3182f8a1bf4086b239a2a9215772d0d4955f93719a50c796763ace",
+      "rgba_sha256": "3dc705b630e086dbbc4e221b9218a47781784f9377f4935a82e9ad6fa4237ed7",
+      "width": 1024,
+      "height": 1024,
+      "alpha_pixels": 245305,
+      "alpha_bbox": [
+        108,
+        130,
+        643,
+        793
+      ],
+      "exact_master_subtree": true
     },
     {
-      "file": "Assets/chaos.svg",
-      "source": "design/translator-icon/master/logo-master.svg",
       "semantic_id": "chaos",
-      "subtree_preserved": true,
-      "sha256": "ed7895524b492913b43066ce7ef129229888a0cc9d86aab037a0c8842c169be8"
+      "vector_file": "AppIcon-layer-sources/chaos.svg",
+      "vector_sha256": "ed7895524b492913b43066ce7ef129229888a0cc9d86aab037a0c8842c169be8",
+      "file": "AppIcon.icon/Assets/chaos.png",
+      "sha256": "d0c13c4541da8c5c4926377486ce2660fbc0239f3fec74d94e99b2eeb080b8c6",
+      "rgba_sha256": "ea7bfa0a082cd88cf4917611a902a946fe54c181eae451f397b767c752f97a79",
+      "width": 1024,
+      "height": 1024,
+      "alpha_pixels": 95825,
+      "alpha_bbox": [
+        162,
+        334,
+        542,
+        695
+      ],
+      "exact_master_subtree": true
     },
     {
-      "file": "Assets/front-panel.svg",
-      "source": "design/translator-icon/master/logo-master.svg",
       "semantic_id": "front-panel",
-      "subtree_preserved": true,
-      "sha256": "7bce9996433d3b38e2fbc734251c57e063b001f59c1f0296055eeb27cb7c3184"
+      "vector_file": "AppIcon-layer-sources/front-panel.svg",
+      "vector_sha256": "7bce9996433d3b38e2fbc734251c57e063b001f59c1f0296055eeb27cb7c3184",
+      "file": "AppIcon.icon/Assets/front-panel.png",
+      "sha256": "db8f24c0862bf2a117cab9d1f1cf6832be2b86efcf0fbb8d77c0fe77636e2ed3",
+      "rgba_sha256": "d564fd5cd6fa3a5f0901af3cb281d2314699f0a9a56951e210f2483855a29d77",
+      "width": 1024,
+      "height": 1024,
+      "alpha_pixels": 196907,
+      "alpha_bbox": [
+        451,
+        302,
+        931,
+        896
+      ],
+      "exact_master_subtree": true
     },
     {
-      "file": "Assets/text.svg",
-      "source": "design/translator-icon/master/logo-master.svg",
       "semantic_id": "text",
-      "subtree_preserved": true,
-      "sha256": "9f78df56c14aa3744e48ca25858b4d6ecf332197cc81d1dcd1c6e359fd7d2531"
+      "vector_file": "AppIcon-layer-sources/text.svg",
+      "vector_sha256": "9f78df56c14aa3744e48ca25858b4d6ecf332197cc81d1dcd1c6e359fd7d2531",
+      "file": "AppIcon.icon/Assets/text.png",
+      "sha256": "cc24d0779a8c79575d8d9911a0d890c2d43f50311938b2f27c114d74dbabf402",
+      "rgba_sha256": "518ecce8726ce835d37c17b251293a019b42562030bf3e803cc42e5a0be53e5a",
+      "width": 1024,
+      "height": 1024,
+      "alpha_pixels": 31784,
+      "alpha_bbox": [
+        553,
+        542,
+        846,
+        759
+      ],
+      "exact_master_subtree": true
     },
     {
-      "file": "Assets/highlights.svg",
-      "source": "design/translator-icon/master/logo-master.svg",
       "semantic_id": "highlights",
-      "subtree_preserved": true,
-      "sha256": "3162a7f339c886bb058c45283dc9d7bd224927f1d53b9e32896f1e798a9bfb63"
+      "vector_file": "AppIcon-layer-sources/highlights.svg",
+      "vector_sha256": "3162a7f339c886bb058c45283dc9d7bd224927f1d53b9e32896f1e798a9bfb63",
+      "file": "AppIcon.icon/Assets/highlights.png",
+      "sha256": "0595791806d9995b372d33bd3bdab9ed36d7325ad56cf7a9eff3444c29346f9e",
+      "rgba_sha256": "7021b386da19030b79f611e893eeef45132bef9ee931f04985c7600567e9640a",
+      "width": 1024,
+      "height": 1024,
+      "alpha_pixels": 3476,
+      "alpha_bbox": [
+        236,
+        134,
+        931,
+        452
+      ],
+      "exact_master_subtree": true
     }
   ],
-  "status": "compiler-and-native-appearance-verification-pending"
+  "status": "positive-PNG-inputs; official-compiler-and-small-native-appearance-verification-pending"
 }

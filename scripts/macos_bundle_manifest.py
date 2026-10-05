@@ -27,6 +27,7 @@ def source_digest() -> str:
     # exports and reports outside these production resource directories are excluded.
     for folder in (
         "macos/Translator/Resources/AppIcon.icon",
+        "macos/Translator/Resources/AppIcon-layer-sources",
         "macos/Translator/Resources/CompiledAppIcon",
     ):
         paths.extend(path for path in (ROOT / folder).rglob("*") if path.is_file())

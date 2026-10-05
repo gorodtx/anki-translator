@@ -27,7 +27,7 @@
       "layers": [
         {
           "name": "back-panel",
-          "image-name": "back-panel.svg",
+          "image-name": "back-panel.png",
           "fill": "automatic",
           "fill-specializations": [
             {
@@ -64,7 +64,7 @@
       "layers": [
         {
           "name": "chaos",
-          "image-name": "chaos.svg",
+          "image-name": "chaos.png",
           "fill": "automatic",
           "fill-specializations": [
             {
@@ -101,7 +101,7 @@
       "layers": [
         {
           "name": "front-panel",
-          "image-name": "front-panel.svg",
+          "image-name": "front-panel.png",
           "fill": "automatic",
           "fill-specializations": [
             {
@@ -118,27 +118,10 @@
           "glass": false,
           "hidden": false,
           "opacity": 1
-        }
-      ],
-      "lighting": "individual",
-      "shadow": {
-        "kind": "neutral",
-        "opacity": 0
-      },
-      "specular": false,
-      "translucency": {
-        "enabled": false,
-        "value": 0
-      }
-    },
-    {
-      "name": "text",
-      "blend-mode": "normal",
-      "hidden": false,
-      "layers": [
+        },
         {
           "name": "text",
-          "image-name": "text.svg",
+          "image-name": "text.png",
           "fill": "automatic",
           "fill-specializations": [
             {
@@ -155,27 +138,10 @@
           "glass": false,
           "hidden": false,
           "opacity": 1
-        }
-      ],
-      "lighting": "individual",
-      "shadow": {
-        "kind": "neutral",
-        "opacity": 0
-      },
-      "specular": false,
-      "translucency": {
-        "enabled": false,
-        "value": 0
-      }
-    },
-    {
-      "name": "highlights",
-      "blend-mode": "normal",
-      "hidden": false,
-      "layers": [
+        },
         {
           "name": "highlights",
-          "image-name": "highlights.svg",
+          "image-name": "highlights.png",
           "fill": "automatic",
           "fill-specializations": [
             {
