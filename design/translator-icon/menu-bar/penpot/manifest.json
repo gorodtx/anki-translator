@@ -1,0 +1,83 @@
+{
+  "fileId": "76adeac8-81da-81cd-8008-be13d9a96e83",
+  "pageId": "76adeac8-81da-81cd-8008-be13d9a96e84",
+  "name": "Translator · Mono icon system",
+  "legacyLayersUnchanged": true,
+  "legacyIds": [
+    "652bcae8-da1b-8033-8008-be187c8d83dd",
+    "652bcae8-da1b-8033-8008-be1978804ac2",
+    "652bcae8-da1b-8033-8008-be197a0d4ea2",
+    "652bcae8-da1b-8033-8008-be197b4e0f0b",
+    "652bcae8-da1b-8033-8008-be197c27b28e",
+    "652bcae8-da1b-8033-8008-be197cef7e4d",
+    "652bcae8-da1b-8033-8008-be197d698378",
+    "652bcae8-da1b-8033-8008-be1d6f58fd5a",
+    "652bcae8-da1b-8033-8008-be197e4fc562",
+    "652bcae8-da1b-8033-8008-be1981fdf590",
+    "652bcae8-da1b-8033-8008-be197efe945f",
+    "652bcae8-da1b-8033-8008-be1980776677",
+    "652bcae8-da1b-8033-8008-be1dcff8308e",
+    "652bcae8-da1b-8033-8008-be1dd1517e04",
+    "652bcae8-da1b-8033-8008-be1dd24497ab",
+    "652bcae8-da1b-8033-8008-be1f24df3612"
+  ],
+  "totalBoardCount": 19,
+  "boards": [
+    {
+      "id": "0121e6bb-e9d3-80ba-8008-be31b05ee6c3",
+      "name": "MENU BAR · White · 28 × 18",
+      "role": "white",
+      "pathId": "0121e6bb-e9d3-80ba-8008-be31b06e82d2",
+      "pathCount": 1,
+      "bounds": {
+        "x": 4550,
+        "y": 0,
+        "width": 560,
+        "height": 360
+      },
+      "transparent": true
+    },
+    {
+      "id": "0121e6bb-e9d3-80ba-8008-be31b08b24de",
+      "name": "MENU BAR · Template · 28 × 18",
+      "role": "template",
+      "pathId": "0121e6bb-e9d3-80ba-8008-be31b08fd6dc",
+      "pathCount": 1,
+      "bounds": {
+        "x": 4550,
+        "y": 500,
+        "width": 560,
+        "height": 360
+      },
+      "transparent": true
+    },
+    {
+      "id": "0121e6bb-e9d3-80ba-8008-be31b0add91d",
+      "name": "MENU BAR · Tiny · 20 × 18",
+      "role": "tiny",
+      "pathId": "0121e6bb-e9d3-80ba-8008-be31b0b285f1",
+      "pathCount": 1,
+      "bounds": {
+        "x": 4550,
+        "y": 1000,
+        "width": 400,
+        "height": 360
+      },
+      "transparent": true
+    },
+    {
+      "id": "0121e6bb-e9d3-80ba-8008-be31b0ed6a03",
+      "name": "MENU BAR · Preview · Graphite",
+      "role": "preview",
+      "pathId": "0121e6bb-e9d3-80ba-8008-be31b0f464cd",
+      "pathCount": 1,
+      "bounds": {
+        "x": 4550,
+        "y": 1500,
+        "width": 560,
+        "height": 360
+      },
+      "transparent": false
+    }
+  ]
+}

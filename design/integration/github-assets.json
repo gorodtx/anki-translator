@@ -1,0 +1,96 @@
+{
+  "verified_at": "2026-10-05T13:27:28.178087+00:00",
+  "final_asset_count": 12,
+  "files": [
+    {
+      "file": "translator-logo.png",
+      "sha256": "55b4a24dc4fa406d51ed31ce85381afcb2a9ba91f086fb369b143b3a0382d55b",
+      "manifest_matches": true,
+      "source_matches": true,
+      "bytes_match": true
+    },
+    {
+      "file": "translator-logo-1024.png",
+      "sha256": "f03ec4613c4c05c86ddde54441b46bec8e016519c27a362442b24979d9ffbcf7",
+      "manifest_matches": true,
+      "source_matches": true,
+      "bytes_match": true
+    },
+    {
+      "file": "translator-logo-dark.png",
+      "sha256": "a0fd298594187b653183f5bffc7f00c539cbbde3f45d519b7c510fb59f93087b",
+      "manifest_matches": true,
+      "source_matches": true,
+      "bytes_match": true
+    },
+    {
+      "file": "translator-logo.svg",
+      "sha256": "20d2f29060a00f45f7d3c1fd5be5219b64977790fbad984b4150fa5b138d546b",
+      "manifest_matches": true,
+      "source_matches": true,
+      "bytes_match": true
+    },
+    {
+      "file": "translator-logo-dark.svg",
+      "sha256": "38e9ac288914503af6f76d18b6da0ac9f1be182b9098946a7d1ac1e0002db4d3",
+      "manifest_matches": true,
+      "source_matches": true,
+      "bytes_match": true
+    },
+    {
+      "file": "translator-line-white.png",
+      "sha256": "f1adfdc9040ac3b52c9f420cce77d3d06f6c4fd1605861a7e66ca1f11eb6eca3",
+      "manifest_matches": true,
+      "source_matches": true,
+      "bytes_match": true
+    },
+    {
+      "file": "translator-line-white.svg",
+      "sha256": "22d484f982e6449c70a4c9bb33c55ab04abdc42580b4e3cbf9b74b7f9b385625",
+      "manifest_matches": true,
+      "source_matches": true,
+      "bytes_match": true
+    },
+    {
+      "file": "github-avatar.png",
+      "sha256": "9f9fbfa8eb3efd62e5811f37aabb46b2b29dc24fca296f05f0ac4d0297860bb9",
+      "manifest_matches": true,
+      "source_matches": true,
+      "bytes_match": true
+    },
+    {
+      "file": "github-avatar-dark.png",
+      "sha256": "9df638ddf927a5056262ac111e33fa08eac53dfe827686a298129346f7a574b3",
+      "manifest_matches": true,
+      "source_matches": true,
+      "bytes_match": true
+    },
+    {
+      "file": "github-repo-card.png",
+      "sha256": "78e5d0c85926e507ee4ce7fa808111e3acda6db5c2d3db4836b7f60630af2deb",
+      "manifest_matches": true,
+      "source_matches": true,
+      "bytes_match": true
+    },
+    {
+      "file": "github-repo-card-en.png",
+      "sha256": "7cb571390c2add495569beeb07f72dfc1584570d27bc725d88e75a3eeeb8de07",
+      "manifest_matches": true,
+      "source_matches": true,
+      "bytes_match": true
+    },
+    {
+      "file": "macos-AppIcon.icns",
+      "sha256": "ca1f8328df7395ca05066fbeff9449e6ead4df2dbfefecf4c473ca7f43e3a4b3",
+      "manifest_matches": true,
+      "source_matches": true,
+      "bytes_match": true
+    }
+  ],
+  "published_social_preview": {
+    "path": "/Users/den/Documents/dev/translator-evidence/2026-10-05/brand/github/published-social-preview.png",
+    "bytes": 104880,
+    "sha256": "78e5d0c85926e507ee4ce7fa808111e3acda6db5c2d3db4836b7f60630af2deb",
+    "exact_source_match": true
+  }
+}

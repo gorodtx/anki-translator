@@ -1,0 +1,709 @@
+{
+  "version": "1.0.0",
+  "fileId": "76adeac8-81da-81cd-8008-be13d9a96e83",
+  "pageId": "76adeac8-81da-81cd-8008-be13d9a96e84",
+  "geometrySource": "geometry.json",
+  "assets": [
+    {
+      "path": "master/logo-master.svg",
+      "bytes": 49693,
+      "sha256": "20d2f29060a00f45f7d3c1fd5be5219b64977790fbad984b4150fa5b138d546b",
+      "source": "svg/master-light.svg"
+    },
+    {
+      "path": "master/logo-master-dark.svg",
+      "bytes": 49291,
+      "sha256": "38e9ac288914503af6f76d18b6da0ac9f1be182b9098946a7d1ac1e0002db4d3",
+      "source": "svg/master-dark.svg"
+    },
+    {
+      "path": "master/app-icon-master.png",
+      "bytes": 596914,
+      "sha256": "55b4a24dc4fa406d51ed31ce85381afcb2a9ba91f086fb369b143b3a0382d55b",
+      "width": 2048,
+      "height": 2048,
+      "source": "svg/master-light.svg"
+    },
+    {
+      "path": "master/app-icon-master-dark.png",
+      "bytes": 581609,
+      "sha256": "a0fd298594187b653183f5bffc7f00c539cbbde3f45d519b7c510fb59f93087b",
+      "width": 2048,
+      "height": 2048,
+      "source": "svg/master-dark.svg"
+    },
+    {
+      "path": "macOS/png/light/16.png",
+      "bytes": 868,
+      "sha256": "d2ada15166726aec5b4602929a94e1215d720c9a7f5b2f4523bd1d050610caeb",
+      "width": 16,
+      "height": 16,
+      "source": "svg/app-icon-light-16.svg"
+    },
+    {
+      "path": "macOS/png/light/32.png",
+      "bytes": 1403,
+      "sha256": "672044d188b598a3f6c5d6443875ea1d9e0e58a6bd9aa9fe2fa87b731e01399a",
+      "width": 32,
+      "height": 32,
+      "source": "svg/app-icon-light-32.svg"
+    },
+    {
+      "path": "macOS/png/light/64.png",
+      "bytes": 2592,
+      "sha256": "13a741f964af29873a96b993cbe9394f7c2523d244e3ac8f2fe39223a45047a8",
+      "width": 64,
+      "height": 64,
+      "source": "svg/app-icon-light-64.svg"
+    },
+    {
+      "path": "macOS/png/light/128.png",
+      "bytes": 12891,
+      "sha256": "67461ee718a2501e9cb04d2e7a1d8680283e26cdb6423a738ceb5f0e93e7892b",
+      "width": 128,
+      "height": 128,
+      "source": "svg/app-icon-light-256.svg"
+    },
+    {
+      "path": "macOS/png/light/256.png",
+      "bytes": 30642,
+      "sha256": "2c9d1966a4821c8675f9a9f52fde82eb3c20d0b1cc94ceb34e17237033da5edb",
+      "width": 256,
+      "height": 256,
+      "source": "svg/app-icon-light-256.svg"
+    },
+    {
+      "path": "macOS/png/light/512.png",
+      "bytes": 79153,
+      "sha256": "0730efa3ee32ea72729785ce6b04ebe7bb9b975f0507ef61b79a00fea444c851",
+      "width": 512,
+      "height": 512,
+      "source": "svg/master-light.svg"
+    },
+    {
+      "path": "macOS/png/light/1024.png",
+      "bytes": 213345,
+      "sha256": "f03ec4613c4c05c86ddde54441b46bec8e016519c27a362442b24979d9ffbcf7",
+      "width": 1024,
+      "height": 1024,
+      "source": "svg/master-light.svg"
+    },
+    {
+      "path": "macOS/AppIcon.iconset/icon_16x16.png",
+      "bytes": 868,
+      "sha256": "d2ada15166726aec5b4602929a94e1215d720c9a7f5b2f4523bd1d050610caeb",
+      "width": 16,
+      "height": 16,
+      "source": "svg/app-icon-light-16.svg"
+    },
+    {
+      "path": "macOS/AppIcon.appiconset/icon_16x16.png",
+      "bytes": 868,
+      "sha256": "d2ada15166726aec5b4602929a94e1215d720c9a7f5b2f4523bd1d050610caeb",
+      "width": 16,
+      "height": 16,
+      "source": "svg/app-icon-light-16.svg",
+      "logicalSize": 16
+    },
+    {
+      "path": "macOS/AppIcon.iconset/icon_16x16@2x.png",
+      "bytes": 1334,
+      "sha256": "be191eabe676a5d040de6f31ce335663c369780b3c4e760a53e28d9acf503f2d",
+      "width": 32,
+      "height": 32,
+      "source": "svg/app-icon-light-16.svg"
+    },
+    {
+      "path": "macOS/AppIcon.appiconset/icon_16x16@2x.png",
+      "bytes": 1334,
+      "sha256": "be191eabe676a5d040de6f31ce335663c369780b3c4e760a53e28d9acf503f2d",
+      "width": 32,
+      "height": 32,
+      "source": "svg/app-icon-light-16.svg",
+      "logicalSize": 16
+    },
+    {
+      "path": "macOS/AppIcon.iconset/icon_32x32.png",
+      "bytes": 1403,
+      "sha256": "672044d188b598a3f6c5d6443875ea1d9e0e58a6bd9aa9fe2fa87b731e01399a",
+      "width": 32,
+      "height": 32,
+      "source": "svg/app-icon-light-32.svg"
+    },
+    {
+      "path": "macOS/AppIcon.appiconset/icon_32x32.png",
+      "bytes": 1403,
+      "sha256": "672044d188b598a3f6c5d6443875ea1d9e0e58a6bd9aa9fe2fa87b731e01399a",
+      "width": 32,
+      "height": 32,
+      "source": "svg/app-icon-light-32.svg",
+      "logicalSize": 32
+    },
+    {
+      "path": "macOS/AppIcon.iconset/icon_32x32@2x.png",
+      "bytes": 2404,
+      "sha256": "78656d82793d0147692fc3367c2096ddb1b7ab4f0307a2de96399466f6207ae8",
+      "width": 64,
+      "height": 64,
+      "source": "svg/app-icon-light-32.svg"
+    },
+    {
+      "path": "macOS/AppIcon.appiconset/icon_32x32@2x.png",
+      "bytes": 2404,
+      "sha256": "78656d82793d0147692fc3367c2096ddb1b7ab4f0307a2de96399466f6207ae8",
+      "width": 64,
+      "height": 64,
+      "source": "svg/app-icon-light-32.svg",
+      "logicalSize": 32
+    },
+    {
+      "path": "macOS/AppIcon.iconset/icon_128x128.png",
+      "bytes": 12891,
+      "sha256": "67461ee718a2501e9cb04d2e7a1d8680283e26cdb6423a738ceb5f0e93e7892b",
+      "width": 128,
+      "height": 128,
+      "source": "svg/app-icon-light-256.svg"
+    },
+    {
+      "path": "macOS/AppIcon.appiconset/icon_128x128.png",
+      "bytes": 12891,
+      "sha256": "67461ee718a2501e9cb04d2e7a1d8680283e26cdb6423a738ceb5f0e93e7892b",
+      "width": 128,
+      "height": 128,
+      "source": "svg/app-icon-light-256.svg",
+      "logicalSize": 128
+    },
+    {
+      "path": "macOS/AppIcon.iconset/icon_128x128@2x.png",
+      "bytes": 30642,
+      "sha256": "2c9d1966a4821c8675f9a9f52fde82eb3c20d0b1cc94ceb34e17237033da5edb",
+      "width": 256,
+      "height": 256,
+      "source": "svg/app-icon-light-256.svg"
+    },
+    {
+      "path": "macOS/AppIcon.appiconset/icon_128x128@2x.png",
+      "bytes": 30642,
+      "sha256": "2c9d1966a4821c8675f9a9f52fde82eb3c20d0b1cc94ceb34e17237033da5edb",
+      "width": 256,
+      "height": 256,
+      "source": "svg/app-icon-light-256.svg",
+      "logicalSize": 128
+    },
+    {
+      "path": "macOS/AppIcon.iconset/icon_256x256.png",
+      "bytes": 30642,
+      "sha256": "2c9d1966a4821c8675f9a9f52fde82eb3c20d0b1cc94ceb34e17237033da5edb",
+      "width": 256,
+      "height": 256,
+      "source": "svg/app-icon-light-256.svg"
+    },
+    {
+      "path": "macOS/AppIcon.appiconset/icon_256x256.png",
+      "bytes": 30642,
+      "sha256": "2c9d1966a4821c8675f9a9f52fde82eb3c20d0b1cc94ceb34e17237033da5edb",
+      "width": 256,
+      "height": 256,
+      "source": "svg/app-icon-light-256.svg",
+      "logicalSize": 256
+    },
+    {
+      "path": "macOS/AppIcon.iconset/icon_256x256@2x.png",
+      "bytes": 76922,
+      "sha256": "f4425851d869a8d45b9f92d910dc8dcb0d45ab0a815231405526f144990ea37d",
+      "width": 512,
+      "height": 512,
+      "source": "svg/app-icon-light-256.svg"
+    },
+    {
+      "path": "macOS/AppIcon.appiconset/icon_256x256@2x.png",
+      "bytes": 76922,
+      "sha256": "f4425851d869a8d45b9f92d910dc8dcb0d45ab0a815231405526f144990ea37d",
+      "width": 512,
+      "height": 512,
+      "source": "svg/app-icon-light-256.svg",
+      "logicalSize": 256
+    },
+    {
+      "path": "macOS/AppIcon.iconset/icon_512x512.png",
+      "bytes": 79153,
+      "sha256": "0730efa3ee32ea72729785ce6b04ebe7bb9b975f0507ef61b79a00fea444c851",
+      "width": 512,
+      "height": 512,
+      "source": "svg/master-light.svg"
+    },
+    {
+      "path": "macOS/AppIcon.appiconset/icon_512x512.png",
+      "bytes": 79153,
+      "sha256": "0730efa3ee32ea72729785ce6b04ebe7bb9b975f0507ef61b79a00fea444c851",
+      "width": 512,
+      "height": 512,
+      "source": "svg/master-light.svg",
+      "logicalSize": 512
+    },
+    {
+      "path": "macOS/AppIcon.iconset/icon_512x512@2x.png",
+      "bytes": 213345,
+      "sha256": "f03ec4613c4c05c86ddde54441b46bec8e016519c27a362442b24979d9ffbcf7",
+      "width": 1024,
+      "height": 1024,
+      "source": "svg/master-light.svg"
+    },
+    {
+      "path": "macOS/AppIcon.appiconset/icon_512x512@2x.png",
+      "bytes": 213345,
+      "sha256": "f03ec4613c4c05c86ddde54441b46bec8e016519c27a362442b24979d9ffbcf7",
+      "width": 1024,
+      "height": 1024,
+      "source": "svg/master-light.svg",
+      "logicalSize": 512
+    },
+    {
+      "path": "macOS/AppIcon.appiconset/Contents.json",
+      "bytes": 1262,
+      "sha256": "d3a3a08f9cff4fd1814514ccbd349afdceb4e7c1b21b316d7a44f22bb42dff22"
+    },
+    {
+      "path": "macOS/AppIcon.icns",
+      "bytes": 452677,
+      "sha256": "ca1f8328df7395ca05066fbeff9449e6ead4df2dbfefecf4c473ca7f43e3a4b3"
+    },
+    {
+      "path": "macOS/png/dark/16.png",
+      "bytes": 907,
+      "sha256": "b7ca07c32c721c2dcf5ea7f9afc6a1ca27d138db0eaa73df7938a2e7b722e73f",
+      "width": 16,
+      "height": 16,
+      "source": "svg/app-icon-dark-16.svg"
+    },
+    {
+      "path": "macOS/png/dark/32.png",
+      "bytes": 1545,
+      "sha256": "7c0f334ce9f38d67e158b2d6655972ee2deebfe218794558ffc2b112fb66199d",
+      "width": 32,
+      "height": 32,
+      "source": "svg/app-icon-dark-32.svg"
+    },
+    {
+      "path": "macOS/png/dark/64.png",
+      "bytes": 2820,
+      "sha256": "f4ac4b9568962ac238183c3bfb2d813c7addb5dcb607a2db083d018dbc65a71f",
+      "width": 64,
+      "height": 64,
+      "source": "svg/app-icon-dark-64.svg"
+    },
+    {
+      "path": "macOS/png/dark/128.png",
+      "bytes": 11823,
+      "sha256": "f7b867036285a98a2581bafcec38bb476fd43b8f40bf64f83950126cb1804c1c",
+      "width": 128,
+      "height": 128,
+      "source": "svg/app-icon-dark-256.svg"
+    },
+    {
+      "path": "macOS/png/dark/256.png",
+      "bytes": 28049,
+      "sha256": "6f13a352a99fdfc8e50728a92ad7ac84a1d53999186f95ec7a63ebfdd5bad657",
+      "width": 256,
+      "height": 256,
+      "source": "svg/app-icon-dark-256.svg"
+    },
+    {
+      "path": "macOS/png/dark/512.png",
+      "bytes": 73665,
+      "sha256": "61ccca192dfb259df5ca7a4bef5d87ae01e9d765e15973b0d5bbf09170830fde",
+      "width": 512,
+      "height": 512,
+      "source": "svg/master-dark.svg"
+    },
+    {
+      "path": "macOS/png/dark/1024.png",
+      "bytes": 204907,
+      "sha256": "0dfdb7a023d5867382ac28de35d95f75d06bf207aba6ed576e14ba495743ed38",
+      "width": 1024,
+      "height": 1024,
+      "source": "svg/master-dark.svg"
+    },
+    {
+      "path": "macOS/AppIcon-Dark.iconset/icon_16x16.png",
+      "bytes": 907,
+      "sha256": "b7ca07c32c721c2dcf5ea7f9afc6a1ca27d138db0eaa73df7938a2e7b722e73f",
+      "width": 16,
+      "height": 16,
+      "source": "svg/app-icon-dark-16.svg"
+    },
+    {
+      "path": "macOS/AppIcon-Dark.appiconset/icon_16x16.png",
+      "bytes": 907,
+      "sha256": "b7ca07c32c721c2dcf5ea7f9afc6a1ca27d138db0eaa73df7938a2e7b722e73f",
+      "width": 16,
+      "height": 16,
+      "source": "svg/app-icon-dark-16.svg",
+      "logicalSize": 16
+    },
+    {
+      "path": "macOS/AppIcon-Dark.iconset/icon_16x16@2x.png",
+      "bytes": 1487,
+      "sha256": "270d7cac014e287e305c78cf01b08ad7d27c5d9273382b313fff0c2610446bc4",
+      "width": 32,
+      "height": 32,
+      "source": "svg/app-icon-dark-16.svg"
+    },
+    {
+      "path": "macOS/AppIcon-Dark.appiconset/icon_16x16@2x.png",
+      "bytes": 1487,
+      "sha256": "270d7cac014e287e305c78cf01b08ad7d27c5d9273382b313fff0c2610446bc4",
+      "width": 32,
+      "height": 32,
+      "source": "svg/app-icon-dark-16.svg",
+      "logicalSize": 16
+    },
+    {
+      "path": "macOS/AppIcon-Dark.iconset/icon_32x32.png",
+      "bytes": 1545,
+      "sha256": "7c0f334ce9f38d67e158b2d6655972ee2deebfe218794558ffc2b112fb66199d",
+      "width": 32,
+      "height": 32,
+      "source": "svg/app-icon-dark-32.svg"
+    },
+    {
+      "path": "macOS/AppIcon-Dark.appiconset/icon_32x32.png",
+      "bytes": 1545,
+      "sha256": "7c0f334ce9f38d67e158b2d6655972ee2deebfe218794558ffc2b112fb66199d",
+      "width": 32,
+      "height": 32,
+      "source": "svg/app-icon-dark-32.svg",
+      "logicalSize": 32
+    },
+    {
+      "path": "macOS/AppIcon-Dark.iconset/icon_32x32@2x.png",
+      "bytes": 2653,
+      "sha256": "7ebcd9cca77f1e6e0f46d8341e2c61c0a252aec4c65dfd129f34dab48c1a19f4",
+      "width": 64,
+      "height": 64,
+      "source": "svg/app-icon-dark-32.svg"
+    },
+    {
+      "path": "macOS/AppIcon-Dark.appiconset/icon_32x32@2x.png",
+      "bytes": 2653,
+      "sha256": "7ebcd9cca77f1e6e0f46d8341e2c61c0a252aec4c65dfd129f34dab48c1a19f4",
+      "width": 64,
+      "height": 64,
+      "source": "svg/app-icon-dark-32.svg",
+      "logicalSize": 32
+    },
+    {
+      "path": "macOS/AppIcon-Dark.iconset/icon_128x128.png",
+      "bytes": 11823,
+      "sha256": "f7b867036285a98a2581bafcec38bb476fd43b8f40bf64f83950126cb1804c1c",
+      "width": 128,
+      "height": 128,
+      "source": "svg/app-icon-dark-256.svg"
+    },
+    {
+      "path": "macOS/AppIcon-Dark.appiconset/icon_128x128.png",
+      "bytes": 11823,
+      "sha256": "f7b867036285a98a2581bafcec38bb476fd43b8f40bf64f83950126cb1804c1c",
+      "width": 128,
+      "height": 128,
+      "source": "svg/app-icon-dark-256.svg",
+      "logicalSize": 128
+    },
+    {
+      "path": "macOS/AppIcon-Dark.iconset/icon_128x128@2x.png",
+      "bytes": 28049,
+      "sha256": "6f13a352a99fdfc8e50728a92ad7ac84a1d53999186f95ec7a63ebfdd5bad657",
+      "width": 256,
+      "height": 256,
+      "source": "svg/app-icon-dark-256.svg"
+    },
+    {
+      "path": "macOS/AppIcon-Dark.appiconset/icon_128x128@2x.png",
+      "bytes": 28049,
+      "sha256": "6f13a352a99fdfc8e50728a92ad7ac84a1d53999186f95ec7a63ebfdd5bad657",
+      "width": 256,
+      "height": 256,
+      "source": "svg/app-icon-dark-256.svg",
+      "logicalSize": 128
+    },
+    {
+      "path": "macOS/AppIcon-Dark.iconset/icon_256x256.png",
+      "bytes": 28049,
+      "sha256": "6f13a352a99fdfc8e50728a92ad7ac84a1d53999186f95ec7a63ebfdd5bad657",
+      "width": 256,
+      "height": 256,
+      "source": "svg/app-icon-dark-256.svg"
+    },
+    {
+      "path": "macOS/AppIcon-Dark.appiconset/icon_256x256.png",
+      "bytes": 28049,
+      "sha256": "6f13a352a99fdfc8e50728a92ad7ac84a1d53999186f95ec7a63ebfdd5bad657",
+      "width": 256,
+      "height": 256,
+      "source": "svg/app-icon-dark-256.svg",
+      "logicalSize": 256
+    },
+    {
+      "path": "macOS/AppIcon-Dark.iconset/icon_256x256@2x.png",
+      "bytes": 71436,
+      "sha256": "71906940a3532590d019602b855592d85199e9bd62d93cecf9f64089cd4f6d19",
+      "width": 512,
+      "height": 512,
+      "source": "svg/app-icon-dark-256.svg"
+    },
+    {
+      "path": "macOS/AppIcon-Dark.appiconset/icon_256x256@2x.png",
+      "bytes": 71436,
+      "sha256": "71906940a3532590d019602b855592d85199e9bd62d93cecf9f64089cd4f6d19",
+      "width": 512,
+      "height": 512,
+      "source": "svg/app-icon-dark-256.svg",
+      "logicalSize": 256
+    },
+    {
+      "path": "macOS/AppIcon-Dark.iconset/icon_512x512.png",
+      "bytes": 73665,
+      "sha256": "61ccca192dfb259df5ca7a4bef5d87ae01e9d765e15973b0d5bbf09170830fde",
+      "width": 512,
+      "height": 512,
+      "source": "svg/master-dark.svg"
+    },
+    {
+      "path": "macOS/AppIcon-Dark.appiconset/icon_512x512.png",
+      "bytes": 73665,
+      "sha256": "61ccca192dfb259df5ca7a4bef5d87ae01e9d765e15973b0d5bbf09170830fde",
+      "width": 512,
+      "height": 512,
+      "source": "svg/master-dark.svg",
+      "logicalSize": 512
+    },
+    {
+      "path": "macOS/AppIcon-Dark.iconset/icon_512x512@2x.png",
+      "bytes": 204907,
+      "sha256": "0dfdb7a023d5867382ac28de35d95f75d06bf207aba6ed576e14ba495743ed38",
+      "width": 1024,
+      "height": 1024,
+      "source": "svg/master-dark.svg"
+    },
+    {
+      "path": "macOS/AppIcon-Dark.appiconset/icon_512x512@2x.png",
+      "bytes": 204907,
+      "sha256": "0dfdb7a023d5867382ac28de35d95f75d06bf207aba6ed576e14ba495743ed38",
+      "width": 1024,
+      "height": 1024,
+      "source": "svg/master-dark.svg",
+      "logicalSize": 512
+    },
+    {
+      "path": "macOS/AppIcon-Dark.appiconset/Contents.json",
+      "bytes": 1262,
+      "sha256": "d3a3a08f9cff4fd1814514ccbd349afdceb4e7c1b21b316d7a44f22bb42dff22"
+    },
+    {
+      "path": "macOS/AppIcon-Dark.icns",
+      "bytes": 427413,
+      "sha256": "9b59858804f257751c5c0be607028e9cb05c53d442738e123b89bf3a3b14189f"
+    },
+    {
+      "path": "symbol/logo-symbol.svg",
+      "bytes": 6531,
+      "sha256": "63fb9817c067c118e0a3a642080858022f88c20dd9ac80493339aac00c094cfc",
+      "source": "svg/symbol-full.svg"
+    },
+    {
+      "path": "symbol/logo-symbol-small.svg",
+      "bytes": 4570,
+      "sha256": "655362b1188d15123aa45f4236b559cff0132db8a93b13dca9d68778cb8f6a58",
+      "source": "svg/symbol-small.svg"
+    },
+    {
+      "path": "symbol/logo-symbol-tiny.svg",
+      "bytes": 2935,
+      "sha256": "f49615436130cb1e442e6c14d33fbdf1eea65643bac854076147282db3292a17",
+      "source": "svg/symbol-tiny.svg"
+    },
+    {
+      "path": "symbol/logo-symbol-dark.svg",
+      "bytes": 7300,
+      "sha256": "2b166102a3a64a27b023ea5546fd6af39bfeaa7f89abcb0f0abfe6b570fd9f80",
+      "source": "svg/symbol-dark.svg"
+    },
+    {
+      "path": "symbol/logo-symbol-mono.svg",
+      "bytes": 15232,
+      "sha256": "af794efe6afa2d13aee2249d32c38463ae42f78bc401d9045da5dbf2bdba2e13",
+      "source": "svg/symbol-mono.svg"
+    },
+    {
+      "path": "web/logo.svg",
+      "bytes": 4570,
+      "sha256": "655362b1188d15123aa45f4236b559cff0132db8a93b13dca9d68778cb8f6a58",
+      "source": "svg/symbol-small.svg"
+    },
+    {
+      "path": "web/logo-dark.svg",
+      "bytes": 7300,
+      "sha256": "2b166102a3a64a27b023ea5546fd6af39bfeaa7f89abcb0f0abfe6b570fd9f80",
+      "source": "svg/symbol-dark.svg"
+    },
+    {
+      "path": "web/logo-dark-small.svg",
+      "bytes": 4570,
+      "sha256": "a078aaf19256818a7fc6d174b9aac198561892aec31959cd4d9d0e2ec659ab16",
+      "source": "svg/symbol-small.svg",
+      "appearance": "dark, graphite rear panel"
+    },
+    {
+      "path": "web/logo-32.png",
+      "bytes": 1385,
+      "sha256": "c0ddaade0520b20f4f4b4c12363437f9979972a799f4e0ff77f71a369db385a0",
+      "width": 32,
+      "height": 32,
+      "source": "svg/symbol-small.svg"
+    },
+    {
+      "path": "web/logo-64.png",
+      "bytes": 2388,
+      "sha256": "ff35a8a41390da25b3cc38eb3988f9aaf0447c5b7b2509d8d250fb1bfa7f317a",
+      "width": 64,
+      "height": 64,
+      "source": "svg/symbol-small.svg"
+    },
+    {
+      "path": "web/favicon.svg",
+      "bytes": 2935,
+      "sha256": "f49615436130cb1e442e6c14d33fbdf1eea65643bac854076147282db3292a17",
+      "source": "svg/symbol-tiny.svg"
+    },
+    {
+      "path": "web/favicon-16.png",
+      "bytes": 851,
+      "sha256": "fc71c1435c69322553e91d84eccb0ef09bf967506c66678c37903d46d17a69c0",
+      "width": 16,
+      "height": 16,
+      "source": "svg/symbol-tiny.svg"
+    },
+    {
+      "path": "web/favicon-32.png",
+      "bytes": 1385,
+      "sha256": "c0ddaade0520b20f4f4b4c12363437f9979972a799f4e0ff77f71a369db385a0",
+      "width": 32,
+      "height": 32,
+      "source": "svg/symbol-small.svg"
+    },
+    {
+      "path": "web/favicon.ico",
+      "bytes": 2274,
+      "sha256": "383ad0195e51803c4ce96cf028b289dffaa6fd3d478b1bcca05527fa6b516ee5"
+    },
+    {
+      "path": "web/apple-touch-icon.png",
+      "bytes": 19109,
+      "sha256": "24ef250c79f97b883db9abe2fb9e0b8c1b6904ef3a7cdf0bc14e2c2c18e2bc8a",
+      "width": 180,
+      "height": 180,
+      "source": "svg/app-icon-light-256.svg"
+    },
+    {
+      "path": "web/app-icon-light.png",
+      "bytes": 213345,
+      "sha256": "f03ec4613c4c05c86ddde54441b46bec8e016519c27a362442b24979d9ffbcf7",
+      "width": 1024,
+      "height": 1024,
+      "source": "svg/master-light.svg"
+    },
+    {
+      "path": "web/app-icon-dark.png",
+      "bytes": 204907,
+      "sha256": "0dfdb7a023d5867382ac28de35d95f75d06bf207aba6ed576e14ba495743ed38",
+      "width": 1024,
+      "height": 1024,
+      "source": "svg/master-dark.svg"
+    },
+    {
+      "path": "pwa/pwa-192.png",
+      "bytes": 20561,
+      "sha256": "65e6667bfe075f95a46ac0e38871aa36c41e64033f73656a3839cbf7a189d82f",
+      "width": 192,
+      "height": 192,
+      "source": "svg/app-icon-light-256.svg"
+    },
+    {
+      "path": "pwa/pwa-512.png",
+      "bytes": 75390,
+      "sha256": "f92c04e453ac9c417ba16ba115abdd9bb6921823277587ccf48b54eb28c0ec4a",
+      "width": 512,
+      "height": 512,
+      "source": "svg/master-light.svg"
+    },
+    {
+      "path": "pwa/pwa-maskable.svg",
+      "bytes": 1813,
+      "sha256": "4e6d89d7ab629e4391d069be02a7cdfb9b0972adc3131d558b536fe496077703"
+    },
+    {
+      "path": "pwa/pwa-maskable-512.png",
+      "bytes": 17787,
+      "sha256": "0a58ca19295886930dfe2f4ca05b4991b089665e9114bf02f5f9a3dfbd7d92f6",
+      "width": 512,
+      "height": 512,
+      "foregroundScale": 0.72,
+      "safeArea": "central circle, radius 40%"
+    },
+    {
+      "path": "pwa/manifest.webmanifest",
+      "bytes": 527,
+      "sha256": "bd05f02d9d334d72218ea2d47647861a5a1c8043e5d5c79ed29cc468d1bf6fe3"
+    },
+    {
+      "path": "android/android-foreground.svg",
+      "bytes": 1769,
+      "sha256": "c47038487bf72fdf21fd5b1fe61b7575ce7c3bfcb797c96c8e3c6a8b8651cdc1"
+    },
+    {
+      "path": "android/android-background.svg",
+      "bytes": 201,
+      "sha256": "7fe83d84d6af970dc4a6b90daf5460ab3993657c0a5ee86734b7c1a63ca83eee"
+    },
+    {
+      "path": "android/res/drawable/icon_foreground.xml",
+      "bytes": 3013,
+      "sha256": "2a4b8febe2c32eac5ee876c8ddcd7afaeac76cd488b924b7f00cda521cba7a65"
+    },
+    {
+      "path": "android/res/values/colors.xml",
+      "bytes": 108,
+      "sha256": "7e75fc3a50971f72c80ab72e7c04868c53850a7723119d06a6cc5337f4b4cb58"
+    },
+    {
+      "path": "android/res/mipmap-anydpi-v26/ic_launcher.xml",
+      "bytes": 243,
+      "sha256": "bd8b5d5928e8cb0f7b76600ec3b40f38e53ff33e241eead48846e02394b178c8"
+    },
+    {
+      "path": "animation/animation.css",
+      "bytes": 949,
+      "sha256": "bad3d6d95f1b5ed15fdb43a94050b467f225c909e229bfbee12bc810daf309bb"
+    },
+    {
+      "path": "animation/animation-ready.svg",
+      "bytes": 6531,
+      "sha256": "63fb9817c067c118e0a3a642080858022f88c20dd9ac80493339aac00c094cfc"
+    },
+    {
+      "path": "animation/logo-animated.svg",
+      "bytes": 7495,
+      "sha256": "9cdb80278ef4d51ac90bb8a5f94841da3386ded30f6ed596280560ad24325909"
+    },
+    {
+      "path": "animation/demo.html",
+      "bytes": 8300,
+      "sha256": "ba210f902bc90b3d72bb99260923c69cdc2ed9e6261cbaeb103514aefb90a3fa"
+    },
+    {
+      "path": "preview/index.html",
+      "bytes": 3790,
+      "sha256": "b93b728a1e406dc6adddf83d054867d136409563ad7b1e7ac8f7e2782e82d5b5"
+    }
+  ]
+}

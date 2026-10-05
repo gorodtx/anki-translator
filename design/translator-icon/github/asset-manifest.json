@@ -1,0 +1,62 @@
+{
+  "createdAt": "2026-10-05T11:36:26.207Z",
+  "fileId": "76adeac8-81da-81cd-8008-be13d9a96e83",
+  "pageId": "76adeac8-81da-81cd-8008-be13d9a96e84",
+  "safeInsetPixels": 80,
+  "files": [
+    {
+      "file": "repo-card-ru.png",
+      "width": 1280,
+      "height": 640,
+      "bytes": 104880,
+      "under1MB": true,
+      "opaque": true,
+      "sha256": "78e5d0c85926e507ee4ce7fa808111e3acda6db5c2d3db4836b7f60630af2deb"
+    },
+    {
+      "file": "repo-card-en.png",
+      "width": 1280,
+      "height": 640,
+      "bytes": 106284,
+      "under1MB": true,
+      "opaque": true,
+      "sha256": "7cb571390c2add495569beeb07f72dfc1584570d27bc725d88e75a3eeeb8de07"
+    },
+    {
+      "file": "avatar-500.png",
+      "width": 500,
+      "height": 500,
+      "bytes": 80842,
+      "under1MB": true,
+      "opaque": true,
+      "sha256": "9f9fbfa8eb3efd62e5811f37aabb46b2b29dc24fca296f05f0ac4d0297860bb9"
+    },
+    {
+      "file": "avatar-1024.png",
+      "width": 1024,
+      "height": 1024,
+      "bytes": 191774,
+      "under1MB": true,
+      "opaque": true,
+      "sha256": "8e23819865da344373ee4a29e427ece6414d98946ac9e5ab93455e4b79497218"
+    },
+    {
+      "file": "avatar-dark-500.png",
+      "width": 500,
+      "height": 500,
+      "bytes": 80064,
+      "under1MB": true,
+      "opaque": true,
+      "sha256": "9df638ddf927a5056262ac111e33fa08eac53dfe827686a298129346f7a574b3"
+    },
+    {
+      "file": "avatar-dark-1024.png",
+      "width": 1024,
+      "height": 1024,
+      "bytes": 175712,
+      "under1MB": true,
+      "opaque": true,
+      "sha256": "6c0ef82d93ca938e7117d8cff24330eb53ba7bfc014ef72580af53f03fcf97ad"
+    }
+  ]
+}

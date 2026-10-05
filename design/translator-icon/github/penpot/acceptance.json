@@ -1,0 +1,190 @@
+{
+  "fileId": "76adeac8-81da-81cd-8008-be13d9a96e83",
+  "pageId": "76adeac8-81da-81cd-8008-be13d9a96e84",
+  "totalBoards": 23,
+  "originalReferenceLocked": true,
+  "menu": [
+    {
+      "name": "MENU BAR · White · 28 × 18",
+      "pathCount": 1,
+      "pathType": "path"
+    },
+    {
+      "name": "MENU BAR · Template · 28 × 18",
+      "pathCount": 1,
+      "pathType": "path"
+    },
+    {
+      "name": "MENU BAR · Tiny · 20 × 18",
+      "pathCount": 1,
+      "pathType": "path"
+    },
+    {
+      "name": "MENU BAR · Preview · Graphite",
+      "pathCount": 1,
+      "pathType": "path"
+    }
+  ],
+  "checks": [
+    {
+      "name": "GITHUB · Repo card · RU",
+      "safeInset": 80,
+      "allImportantContentInside": true,
+      "correctSansFont": true,
+      "text": [
+        {
+          "name": "project-name",
+          "text": "Translator",
+          "font": "Inter",
+          "bounds": {
+            "x": 80,
+            "y": 91.5,
+            "width": 157.1875,
+            "height": 38.5
+          }
+        },
+        {
+          "name": "platform",
+          "text": "АНГЛИЙСКИЙ → РУССКИЙ · macOS",
+          "font": "Inter",
+          "bounds": {
+            "x": 80,
+            "y": 157.5,
+            "width": 288.8125,
+            "height": 17
+          }
+        },
+        {
+          "name": "main-promise",
+          "text": "Перевод рядом.",
+          "font": "Inter",
+          "bounds": {
+            "x": 80,
+            "y": 224.5,
+            "width": 463.9453125,
+            "height": 80
+          }
+        },
+        {
+          "name": "chaos-to-clarity",
+          "text": "Из хаоса — в ясность.",
+          "font": "Inter",
+          "bounds": {
+            "x": 82,
+            "y": 316.5,
+            "width": 385,
+            "height": 42.5
+          }
+        },
+        {
+          "name": "product-action",
+          "text": "Выделите английский текст.\nПолучите русский перевод рядом.",
+          "font": "Inter",
+          "bounds": {
+            "x": 82,
+            "y": 397,
+            "width": 426.9921875,
+            "height": 62.5
+          }
+        },
+        {
+          "name": "repository",
+          "text": "gorodtx/selection_translator_anki",
+          "font": "Inter",
+          "bounds": {
+            "x": 224,
+            "y": 512.5,
+            "width": 265.8203125,
+            "height": 20.5
+          }
+        }
+      ]
+    },
+    {
+      "name": "GITHUB · Repo card · EN",
+      "safeInset": 80,
+      "allImportantContentInside": true,
+      "correctSansFont": true,
+      "text": [
+        {
+          "name": "project-name",
+          "text": "Translator",
+          "font": "Inter",
+          "bounds": {
+            "x": 80,
+            "y": 91.5,
+            "width": 157.1875,
+            "height": 38.5
+          }
+        },
+        {
+          "name": "platform",
+          "text": "ENGLISH → RUSSIAN · macOS",
+          "font": "Inter",
+          "bounds": {
+            "x": 80,
+            "y": 157.5,
+            "width": 238.9609375,
+            "height": 17
+          }
+        },
+        {
+          "name": "main-promise",
+          "text": "Translation, nearby.",
+          "font": "Inter",
+          "bounds": {
+            "x": 80,
+            "y": 224.5,
+            "width": 586.8671875,
+            "height": 73.5
+          }
+        },
+        {
+          "name": "chaos-to-clarity",
+          "text": "From confusion to clarity.",
+          "font": "Inter",
+          "bounds": {
+            "x": 82,
+            "y": 316.5,
+            "width": 419.8984375,
+            "height": 42.5
+          }
+        },
+        {
+          "name": "product-action",
+          "text": "Select English text.\nGet the Russian translation right there.",
+          "font": "Inter",
+          "bounds": {
+            "x": 82,
+            "y": 397,
+            "width": 452.2265625,
+            "height": 62.5
+          }
+        },
+        {
+          "name": "repository",
+          "text": "gorodtx/selection_translator_anki",
+          "font": "Inter",
+          "bounds": {
+            "x": 224,
+            "y": 512.5,
+            "width": 265.8203125,
+            "height": 20.5
+          }
+        }
+      ]
+    },
+    {
+      "name": "AVATAR · Light · 1024",
+      "criticalCircleMaxRadius": 444.2889854108755,
+      "circleRadius": 512,
+      "circleSafe": true
+    },
+    {
+      "name": "AVATAR · Dark · 1024",
+      "criticalCircleMaxRadius": 444.2889854108755,
+      "circleRadius": 512,
+      "circleSafe": true
+    }
+  ]
+}

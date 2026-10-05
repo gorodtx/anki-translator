@@ -1,0 +1,123 @@
+{
+  "preparedAt": "2026-10-05T11:55:31.162093+00:00",
+  "project": "Translator · Mono icon system",
+  "base": "6931540ad76a6ab7a5abe70d49c513e93e881d36",
+  "files": [
+    {
+      "file": "translator-logo.png",
+      "source": "translator-icon/master/app-icon-master.png",
+      "bytes": 596914,
+      "sha256": "55b4a24dc4fa406d51ed31ce85381afcb2a9ba91f086fb369b143b3a0382d55b",
+      "identicalToSource": true,
+      "width": 2048,
+      "height": 2048,
+      "bitDepth": 8,
+      "colorType": 6
+    },
+    {
+      "file": "translator-logo-1024.png",
+      "source": "translator-icon/macOS/png/light/1024.png",
+      "bytes": 213345,
+      "sha256": "f03ec4613c4c05c86ddde54441b46bec8e016519c27a362442b24979d9ffbcf7",
+      "identicalToSource": true,
+      "width": 1024,
+      "height": 1024,
+      "bitDepth": 8,
+      "colorType": 6
+    },
+    {
+      "file": "translator-logo-dark.png",
+      "source": "translator-icon/master/app-icon-master-dark.png",
+      "bytes": 581609,
+      "sha256": "a0fd298594187b653183f5bffc7f00c539cbbde3f45d519b7c510fb59f93087b",
+      "identicalToSource": true,
+      "width": 2048,
+      "height": 2048,
+      "bitDepth": 8,
+      "colorType": 6
+    },
+    {
+      "file": "translator-logo.svg",
+      "source": "translator-icon/master/logo-master.svg",
+      "bytes": 49693,
+      "sha256": "20d2f29060a00f45f7d3c1fd5be5219b64977790fbad984b4150fa5b138d546b",
+      "identicalToSource": true
+    },
+    {
+      "file": "translator-logo-dark.svg",
+      "source": "translator-icon/master/logo-master-dark.svg",
+      "bytes": 49291,
+      "sha256": "38e9ac288914503af6f76d18b6da0ac9f1be182b9098946a7d1ac1e0002db4d3",
+      "identicalToSource": true
+    },
+    {
+      "file": "translator-line-white.png",
+      "source": "translator-icon/menu-bar/translator-line-white.png",
+      "bytes": 8767,
+      "sha256": "f1adfdc9040ac3b52c9f420cce77d3d06f6c4fd1605861a7e66ca1f11eb6eca3",
+      "identicalToSource": true,
+      "width": 560,
+      "height": 360,
+      "bitDepth": 8,
+      "colorType": 6
+    },
+    {
+      "file": "translator-line-white.svg",
+      "source": "translator-icon/menu-bar/translator-line-white.svg",
+      "bytes": 524,
+      "sha256": "22d484f982e6449c70a4c9bb33c55ab04abdc42580b4e3cbf9b74b7f9b385625",
+      "identicalToSource": true
+    },
+    {
+      "file": "github-avatar.png",
+      "source": "translator-icon/github/avatar-500.png",
+      "bytes": 80842,
+      "sha256": "9f9fbfa8eb3efd62e5811f37aabb46b2b29dc24fca296f05f0ac4d0297860bb9",
+      "identicalToSource": true,
+      "width": 500,
+      "height": 500,
+      "bitDepth": 8,
+      "colorType": 2
+    },
+    {
+      "file": "github-avatar-dark.png",
+      "source": "translator-icon/github/avatar-dark-500.png",
+      "bytes": 80064,
+      "sha256": "9df638ddf927a5056262ac111e33fa08eac53dfe827686a298129346f7a574b3",
+      "identicalToSource": true,
+      "width": 500,
+      "height": 500,
+      "bitDepth": 8,
+      "colorType": 2
+    },
+    {
+      "file": "github-repo-card.png",
+      "source": "translator-icon/github/repo-card-ru.png",
+      "bytes": 104880,
+      "sha256": "78e5d0c85926e507ee4ce7fa808111e3acda6db5c2d3db4836b7f60630af2deb",
+      "identicalToSource": true,
+      "width": 1280,
+      "height": 640,
+      "bitDepth": 8,
+      "colorType": 2
+    },
+    {
+      "file": "github-repo-card-en.png",
+      "source": "translator-icon/github/repo-card-en.png",
+      "bytes": 106284,
+      "sha256": "7cb571390c2add495569beeb07f72dfc1584570d27bc725d88e75a3eeeb8de07",
+      "identicalToSource": true,
+      "width": 1280,
+      "height": 640,
+      "bitDepth": 8,
+      "colorType": 2
+    },
+    {
+      "file": "macos-AppIcon.icns",
+      "source": "translator-icon/macOS/AppIcon.icns",
+      "bytes": 452677,
+      "sha256": "ca1f8328df7395ca05066fbeff9449e6ead4df2dbfefecf4c473ca7f43e3a4b3",
+      "identicalToSource": true
+    }
+  ]
+}

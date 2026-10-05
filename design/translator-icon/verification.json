@@ -1,0 +1,106 @@
+{
+  "checkedAt": "2026-10-05T10:22:12.554Z",
+  "manifestEntryCount": 94,
+  "generatedFileCount": 95,
+  "pngCount": 66,
+  "checksums": true,
+  "pngDimensions": true,
+  "icnsRoundtripCount": 10,
+  "icnsOpaqueRgbAndAlphaPreserved": true,
+  "icnsMetrics": [
+    {
+      "file": "icon_128x128.png",
+      "rgbaIdentical": true,
+      "maxAlpha": 0,
+      "maxOpaque": 0,
+      "maxPremultiplied": 0
+    },
+    {
+      "file": "icon_128x128@2x.png",
+      "rgbaIdentical": true,
+      "maxAlpha": 0,
+      "maxOpaque": 0,
+      "maxPremultiplied": 0
+    },
+    {
+      "file": "icon_16x16.png",
+      "rgbaIdentical": false,
+      "maxAlpha": 0,
+      "maxOpaque": 0,
+      "maxPremultiplied": 0.7058823529411882
+    },
+    {
+      "file": "icon_16x16@2x.png",
+      "rgbaIdentical": true,
+      "maxAlpha": 0,
+      "maxOpaque": 0,
+      "maxPremultiplied": 0
+    },
+    {
+      "file": "icon_256x256.png",
+      "rgbaIdentical": true,
+      "maxAlpha": 0,
+      "maxOpaque": 0,
+      "maxPremultiplied": 0
+    },
+    {
+      "file": "icon_256x256@2x.png",
+      "rgbaIdentical": true,
+      "maxAlpha": 0,
+      "maxOpaque": 0,
+      "maxPremultiplied": 0
+    },
+    {
+      "file": "icon_32x32.png",
+      "rgbaIdentical": false,
+      "maxAlpha": 0,
+      "maxOpaque": 0,
+      "maxPremultiplied": 0.9607843137254974
+    },
+    {
+      "file": "icon_32x32@2x.png",
+      "rgbaIdentical": true,
+      "maxAlpha": 0,
+      "maxOpaque": 0,
+      "maxPremultiplied": 0
+    },
+    {
+      "file": "icon_512x512.png",
+      "rgbaIdentical": true,
+      "maxAlpha": 0,
+      "maxOpaque": 0,
+      "maxPremultiplied": 0
+    },
+    {
+      "file": "icon_512x512@2x.png",
+      "rgbaIdentical": true,
+      "maxAlpha": 0,
+      "maxOpaque": 0,
+      "maxPremultiplied": 0
+    }
+  ],
+  "retina16DiffersFromLogical32": true,
+  "opaqueIcons": 4,
+  "maskableForegroundRadiusUpperBound": 353.3369387618885,
+  "maskableSafeRadius": 409.6,
+  "androidForegroundRadiusUpperBound": 294.44744896824045,
+  "androidSafeRadius": 312.8888888888889,
+  "referenceUnchanged": true,
+  "projectCopiesMatch": true,
+  "swiftHelperCopyMatches": true,
+  "svgXmlParsed": 31,
+  "svgUniqueIds": true,
+  "svgContainsRasterImages": false,
+  "androidXmlParsed": 3,
+  "nativePenpotZipCrc": true,
+  "darkIcns": {
+    "representations": 10,
+    "maxAlpha": 0,
+    "maxOpaque": 0,
+    "maxPremultiplied": 0.8823529411764675
+  },
+  "nativeAppKitRepresentations": {
+    "light": 10,
+    "dark": 10
+  }
+}

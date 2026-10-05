@@ -1,0 +1,4 @@
+# Local delivery archives; canonical sources and exports are versioned separately.
+/*.zip
+# Exact duplicate of translator-icon/penpot/Translator-Mono.penpot.
+/translator-icon/menu-bar/penpot/Translator-Mono-with-MenuBar.penpot

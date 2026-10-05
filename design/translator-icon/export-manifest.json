@@ -1,0 +1,111 @@
+{
+  "fileId": "76adeac8-81da-81cd-8008-be13d9a96e83",
+  "pageId": "76adeac8-81da-81cd-8008-be13d9a96e84",
+  "files": [
+    {
+      "name": "MASTER · Light · 1024",
+      "stem": "master-light",
+      "boardId": "652bcae8-da1b-8033-8008-be187c8d83dd",
+      "svg": "svg/master-light.svg",
+      "opticalSize": 1024
+    },
+    {
+      "name": "MASTER · Dark · 1024",
+      "stem": "master-dark",
+      "boardId": "652bcae8-da1b-8033-8008-be1978804ac2",
+      "svg": "svg/master-dark.svg",
+      "opticalSize": 1024
+    },
+    {
+      "name": "APP ICON · Light · 256",
+      "stem": "app-icon-light-256",
+      "boardId": "652bcae8-da1b-8033-8008-be197a0d4ea2",
+      "svg": "svg/app-icon-light-256.svg",
+      "opticalSize": 256
+    },
+    {
+      "name": "APP ICON · Light · 64",
+      "stem": "app-icon-light-64",
+      "boardId": "652bcae8-da1b-8033-8008-be197b4e0f0b",
+      "svg": "svg/app-icon-light-64.svg",
+      "opticalSize": 64
+    },
+    {
+      "name": "APP ICON · Light · 32",
+      "stem": "app-icon-light-32",
+      "boardId": "652bcae8-da1b-8033-8008-be197c27b28e",
+      "svg": "svg/app-icon-light-32.svg",
+      "opticalSize": 32
+    },
+    {
+      "name": "APP ICON · Light · 16",
+      "stem": "app-icon-light-16",
+      "boardId": "652bcae8-da1b-8033-8008-be197cef7e4d",
+      "svg": "svg/app-icon-light-16.svg",
+      "opticalSize": 16
+    },
+    {
+      "name": "SYMBOL · Full",
+      "stem": "symbol-full",
+      "boardId": "652bcae8-da1b-8033-8008-be197d698378",
+      "svg": "svg/symbol-full.svg",
+      "opticalSize": 256
+    },
+    {
+      "name": "SYMBOL · Small",
+      "stem": "symbol-small",
+      "boardId": "652bcae8-da1b-8033-8008-be197e4fc562",
+      "svg": "svg/symbol-small.svg",
+      "opticalSize": 32
+    },
+    {
+      "name": "APP ICON · Dark · 256",
+      "stem": "app-icon-dark-256",
+      "boardId": "652bcae8-da1b-8033-8008-be197efe945f",
+      "svg": "svg/app-icon-dark-256.svg",
+      "opticalSize": 256
+    },
+    {
+      "name": "APP ICON · Dark · 64",
+      "stem": "app-icon-dark-64",
+      "boardId": "652bcae8-da1b-8033-8008-be1980776677",
+      "svg": "svg/app-icon-dark-64.svg",
+      "opticalSize": 64
+    },
+    {
+      "name": "SYMBOL · Mono",
+      "stem": "symbol-mono",
+      "boardId": "652bcae8-da1b-8033-8008-be1981fdf590",
+      "svg": "svg/symbol-mono.svg",
+      "opticalSize": 32
+    },
+    {
+      "name": "SYMBOL · Dark",
+      "stem": "symbol-dark",
+      "boardId": "652bcae8-da1b-8033-8008-be1d6f58fd5a",
+      "svg": "svg/symbol-dark.svg",
+      "opticalSize": 256
+    },
+    {
+      "name": "APP ICON · Dark · 32",
+      "stem": "app-icon-dark-32",
+      "boardId": "652bcae8-da1b-8033-8008-be1dcff8308e",
+      "svg": "svg/app-icon-dark-32.svg",
+      "opticalSize": 32
+    },
+    {
+      "name": "APP ICON · Dark · 16",
+      "stem": "app-icon-dark-16",
+      "boardId": "652bcae8-da1b-8033-8008-be1dd1517e04",
+      "svg": "svg/app-icon-dark-16.svg",
+      "opticalSize": 16
+    },
+    {
+      "name": "SYMBOL · Tiny",
+      "stem": "symbol-tiny",
+      "boardId": "652bcae8-da1b-8033-8008-be1dd24497ab",
+      "svg": "svg/symbol-tiny.svg",
+      "opticalSize": 16
+    }
+  ]
+}

@@ -1,0 +1,76 @@
+{
+  "ok": true,
+  "result": {
+    "results": [
+      {
+        "dark": false,
+        "viewport": 1280,
+        "pageWidth": 1280,
+        "logoSource": "http://127.0.0.1:4385/assets/icon.png",
+        "logoNatural": [
+          64,
+          64
+        ],
+        "logoRendered": [
+          32,
+          32
+        ],
+        "emptyVideoVisible": true,
+        "videoHidden": true
+      },
+      {
+        "dark": false,
+        "viewport": 390,
+        "pageWidth": 390,
+        "logoSource": "http://127.0.0.1:4385/assets/icon.png",
+        "logoNatural": [
+          64,
+          64
+        ],
+        "logoRendered": [
+          32,
+          32
+        ],
+        "emptyVideoVisible": true,
+        "videoHidden": true
+      },
+      {
+        "dark": true,
+        "viewport": 1280,
+        "pageWidth": 1280,
+        "logoSource": "http://127.0.0.1:4385/assets/logo-dark-small.svg",
+        "logoNatural": [
+          1024,
+          1024
+        ],
+        "logoRendered": [
+          32,
+          32
+        ],
+        "emptyVideoVisible": true,
+        "videoHidden": true
+      },
+      {
+        "dark": true,
+        "viewport": 390,
+        "pageWidth": 390,
+        "logoSource": "http://127.0.0.1:4385/assets/logo-dark-small.svg",
+        "logoNatural": [
+          1024,
+          1024
+        ],
+        "logoRendered": [
+          32,
+          32
+        ],
+        "emptyVideoVisible": true,
+        "videoHidden": true
+      }
+    ],
+    "ico": {
+      "width": 32,
+      "height": 32
+    },
+    "pageErrors": 0
+  }
+}

@@ -1,0 +1,16 @@
+const target='76adeac8-81da-81cd-8008-be13d9a96e83';
+if(!page.url().includes('file-id='+target))throw Error('The owned Translator file is not active.');
+const response=await context.request.post('http://localhost:9085/api/rpc/command/export-binfile',{headers:{Accept:'text/event-stream'},data:{'file-id':target,'include-libraries':false,'embed-assets':true},timeout:60000});
+if(!response.ok())throw Error('Native Penpot export failed.');
+const body=await response.text();
+const payload=body.match(/event: end\ndata: (.+)/)?.[1];
+if(!payload)throw Error('Native export did not reach completion.');
+const uri=JSON.parse(payload)['~#uri'];
+if(typeof uri!=='string'||!uri.startsWith('http://localhost:9085/assets/by-id/'))throw Error('Unexpected native export URI.');
+const file=await context.request.get(uri);if(!file.ok())throw Error('Native archive download failed.');
+const data=await file.body();if(data[0]!==80||data[1]!==75)throw Error('Native archive is not a ZIP file.');
+const {writeFile}=await import('node:fs/promises');
+const path='/Users/den/Documents/dev/selection_translator_anki/design/translator-icon/menu-bar/penpot/Translator-Mono-with-MenuBar.penpot';
+await writeFile(path,data);
+await writeFile('/Users/den/Documents/dev/selection_translator_anki/design/translator-icon/penpot/Translator-Mono.penpot',data);
+return {exported:true,bytes:data.length,path};

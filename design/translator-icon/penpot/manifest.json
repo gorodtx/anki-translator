@@ -1,0 +1,2008 @@
+{
+  "fileId": "76adeac8-81da-81cd-8008-be13d9a96e83",
+  "pageId": "76adeac8-81da-81cd-8008-be13d9a96e84",
+  "boards": [
+    {
+      "id": "652bcae8-da1b-8033-8008-be187c8d83dd",
+      "name": "MASTER · Light · 1024",
+      "opticalSize": "1024",
+      "layers": {
+        "id": "652bcae8-da1b-8033-8008-be187c8d83dd",
+        "name": "MASTER · Light · 1024",
+        "type": "board",
+        "children": [
+          {
+            "id": "652bcae8-da1b-8033-8008-be187cb36f3c",
+            "name": "app-icon-background",
+            "type": "rectangle"
+          },
+          {
+            "id": "652bcae8-da1b-8033-8008-be187cdddc0c",
+            "name": "shadows",
+            "type": "group",
+            "children": [
+              {
+                "id": "652bcae8-da1b-8033-8008-be187cc28bca",
+                "name": "back-depth",
+                "type": "path"
+              },
+              {
+                "id": "652bcae8-da1b-8033-8008-be187ccfc01c",
+                "name": "front-depth",
+                "type": "path"
+              }
+            ]
+          },
+          {
+            "id": "652bcae8-da1b-8033-8008-be187cee8cb5",
+            "name": "back-panel",
+            "type": "group",
+            "children": [
+              {
+                "id": "652bcae8-da1b-8033-8008-be187ce4e98c",
+                "name": "back-panel-surface",
+                "type": "path"
+              }
+            ]
+          },
+          {
+            "id": "652bcae8-da1b-8033-8008-be187d7fdb5d",
+            "name": "chaos",
+            "type": "group",
+            "children": [
+              {
+                "id": "652bcae8-da1b-8033-8008-be187d091548",
+                "name": "chaos-01",
+                "type": "group",
+                "children": [
+                  {
+                    "id": "652bcae8-da1b-8033-8008-be187cf343ee",
+                    "name": "cord-body-1",
+                    "type": "path"
+                  },
+                  {
+                    "id": "652bcae8-da1b-8033-8008-be187cfbb588",
+                    "name": "cord-highlight-1",
+                    "type": "path"
+                  }
+                ]
+              },
+              {
+                "id": "652bcae8-da1b-8033-8008-be187d20a799",
+                "name": "chaos-02",
+                "type": "group",
+                "children": [
+                  {
+                    "id": "652bcae8-da1b-8033-8008-be187d0e4009",
+                    "name": "cord-body-2",
+                    "type": "path"
+                  },
+                  {
+                    "id": "652bcae8-da1b-8033-8008-be187d163fb6",
+                    "name": "cord-highlight-2",
+                    "type": "path"
+                  }
+                ]
+              },
+              {
+                "id": "652bcae8-da1b-8033-8008-be187d32e487",
+                "name": "chaos-03",
+                "type": "group",
+                "children": [
+                  {
+                    "id": "652bcae8-da1b-8033-8008-be187d2410d5",
+                    "name": "cord-body-3",
+                    "type": "path"
+                  },
+                  {
+                    "id": "652bcae8-da1b-8033-8008-be187d2b853c",
+                    "name": "cord-highlight-3",
+                    "type": "path"
+                  }
+                ]
+              },
+              {
+                "id": "652bcae8-da1b-8033-8008-be187d4186f6",
+                "name": "chaos-04",
+                "type": "group",
+                "children": [
+                  {
+                    "id": "652bcae8-da1b-8033-8008-be187d36c06a",
+                    "name": "cord-body-4",
+                    "type": "path"
+                  },
+                  {
+                    "id": "652bcae8-da1b-8033-8008-be187d3ba3ea",
+                    "name": "cord-highlight-4",
+                    "type": "path"
+                  }
+                ]
+              },
+              {
+                "id": "652bcae8-da1b-8033-8008-be187d557ea2",
+                "name": "chaos-05",
+                "type": "group",
+                "children": [
+                  {
+                    "id": "652bcae8-da1b-8033-8008-be187d464419",
+                    "name": "cord-body-5",
+                    "type": "path"
+                  },
+                  {
+                    "id": "652bcae8-da1b-8033-8008-be187d4c9c55",
+                    "name": "cord-highlight-5",
+                    "type": "path"
+                  }
+                ]
+              },
+              {
+                "id": "652bcae8-da1b-8033-8008-be187d6a26ac",
+                "name": "chaos-06",
+                "type": "group",
+                "children": [
+                  {
+                    "id": "652bcae8-da1b-8033-8008-be187d58f876",
+                    "name": "cord-body-6",
+                    "type": "path"
+                  },
+                  {
+                    "id": "652bcae8-da1b-8033-8008-be187d60c61b",
+                    "name": "cord-highlight-6",
+                    "type": "path"
+                  }
+                ]
+              },
+              {
+                "id": "652bcae8-da1b-8033-8008-be187d7d3d3f",
+                "name": "chaos-07",
+                "type": "group",
+                "children": [
+                  {
+                    "id": "652bcae8-da1b-8033-8008-be187d6fadd9",
+                    "name": "cord-body-7",
+                    "type": "path"
+                  },
+                  {
+                    "id": "652bcae8-da1b-8033-8008-be187d75f734",
+                    "name": "cord-highlight-7",
+                    "type": "path"
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "id": "652bcae8-da1b-8033-8008-be187dc2604c",
+            "name": "front-panel",
+            "type": "group",
+            "children": [
+              {
+                "id": "652bcae8-da1b-8033-8008-be187dad2aa0",
+                "name": "front-panel-surface",
+                "type": "path"
+              }
+            ]
+          },
+          {
+            "id": "652bcae8-da1b-8033-8008-be187de38c8e",
+            "name": "text",
+            "type": "group",
+            "children": [
+              {
+                "id": "652bcae8-da1b-8033-8008-be187dcb2006",
+                "name": "line-1",
+                "type": "rectangle"
+              },
+              {
+                "id": "652bcae8-da1b-8033-8008-be187dd40719",
+                "name": "line-2",
+                "type": "rectangle"
+              },
+              {
+                "id": "652bcae8-da1b-8033-8008-be187ddbfa6a",
+                "name": "line-3",
+                "type": "rectangle"
+              }
+            ]
+          },
+          {
+            "id": "652bcae8-da1b-8033-8008-be187df2391b",
+            "name": "highlights",
+            "type": "group",
+            "children": [
+              {
+                "id": "652bcae8-da1b-8033-8008-be187de6d6c0",
+                "name": "back-edge-light",
+                "type": "path"
+              },
+              {
+                "id": "652bcae8-da1b-8033-8008-be187deb3be1",
+                "name": "front-edge-light",
+                "type": "path"
+              }
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "id": "652bcae8-da1b-8033-8008-be1978804ac2",
+      "name": "MASTER · Dark · 1024",
+      "opticalSize": "1024",
+      "layers": {
+        "id": "652bcae8-da1b-8033-8008-be1978804ac2",
+        "name": "MASTER · Dark · 1024",
+        "type": "board",
+        "children": [
+          {
+            "id": "652bcae8-da1b-8033-8008-be19788cb8fa",
+            "name": "app-icon-background",
+            "type": "rectangle"
+          },
+          {
+            "id": "652bcae8-da1b-8033-8008-be1978d0cd51",
+            "name": "shadows",
+            "type": "group",
+            "children": [
+              {
+                "id": "652bcae8-da1b-8033-8008-be1978acd36a",
+                "name": "back-depth",
+                "type": "path"
+              },
+              {
+                "id": "652bcae8-da1b-8033-8008-be1978c28e34",
+                "name": "front-depth",
+                "type": "path"
+              }
+            ]
+          },
+          {
+            "id": "652bcae8-da1b-8033-8008-be1978e3185f",
+            "name": "back-panel",
+            "type": "group",
+            "children": [
+              {
+                "id": "652bcae8-da1b-8033-8008-be1978d6640e",
+                "name": "back-panel-surface",
+                "type": "path"
+              }
+            ]
+          },
+          {
+            "id": "652bcae8-da1b-8033-8008-be197994d6e0",
+            "name": "chaos",
+            "type": "group",
+            "children": [
+              {
+                "id": "652bcae8-da1b-8033-8008-be19790182a3",
+                "name": "chaos-01",
+                "type": "group",
+                "children": [
+                  {
+                    "id": "652bcae8-da1b-8033-8008-be1978e82bac",
+                    "name": "cord-body-1",
+                    "type": "path"
+                  },
+                  {
+                    "id": "652bcae8-da1b-8033-8008-be1978f3757c",
+                    "name": "cord-highlight-1",
+                    "type": "path"
+                  }
+                ]
+              },
+              {
+                "id": "652bcae8-da1b-8033-8008-be19791aa5d2",
+                "name": "chaos-02",
+                "type": "group",
+                "children": [
+                  {
+                    "id": "652bcae8-da1b-8033-8008-be1979064196",
+                    "name": "cord-body-2",
+                    "type": "path"
+                  },
+                  {
+                    "id": "652bcae8-da1b-8033-8008-be1979105051",
+                    "name": "cord-highlight-2",
+                    "type": "path"
+                  }
+                ]
+              },
+              {
+                "id": "652bcae8-da1b-8033-8008-be197936fe2d",
+                "name": "chaos-03",
+                "type": "group",
+                "children": [
+                  {
+                    "id": "652bcae8-da1b-8033-8008-be197920005c",
+                    "name": "cord-body-3",
+                    "type": "path"
+                  },
+                  {
+                    "id": "652bcae8-da1b-8033-8008-be19792ae294",
+                    "name": "cord-highlight-3",
+                    "type": "path"
+                  }
+                ]
+              },
+              {
+                "id": "652bcae8-da1b-8033-8008-be19794ccc64",
+                "name": "chaos-04",
+                "type": "group",
+                "children": [
+                  {
+                    "id": "652bcae8-da1b-8033-8008-be19793a729d",
+                    "name": "cord-body-4",
+                    "type": "path"
+                  },
+                  {
+                    "id": "652bcae8-da1b-8033-8008-be197942b3e3",
+                    "name": "cord-highlight-4",
+                    "type": "path"
+                  }
+                ]
+              },
+              {
+                "id": "652bcae8-da1b-8033-8008-be1979641046",
+                "name": "chaos-05",
+                "type": "group",
+                "children": [
+                  {
+                    "id": "652bcae8-da1b-8033-8008-be19795240ba",
+                    "name": "cord-body-5",
+                    "type": "path"
+                  },
+                  {
+                    "id": "652bcae8-da1b-8033-8008-be197959e7e9",
+                    "name": "cord-highlight-5",
+                    "type": "path"
+                  }
+                ]
+              },
+              {
+                "id": "652bcae8-da1b-8033-8008-be19797cd484",
+                "name": "chaos-06",
+                "type": "group",
+                "children": [
+                  {
+                    "id": "652bcae8-da1b-8033-8008-be1979680e70",
+                    "name": "cord-body-6",
+                    "type": "path"
+                  },
+                  {
+                    "id": "652bcae8-da1b-8033-8008-be197972db76",
+                    "name": "cord-highlight-6",
+                    "type": "path"
+                  }
+                ]
+              },
+              {
+                "id": "652bcae8-da1b-8033-8008-be19799130a5",
+                "name": "chaos-07",
+                "type": "group",
+                "children": [
+                  {
+                    "id": "652bcae8-da1b-8033-8008-be197980ad5f",
+                    "name": "cord-body-7",
+                    "type": "path"
+                  },
+                  {
+                    "id": "652bcae8-da1b-8033-8008-be197988d220",
+                    "name": "cord-highlight-7",
+                    "type": "path"
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "id": "652bcae8-da1b-8033-8008-be1979a6c35e",
+            "name": "front-panel",
+            "type": "group",
+            "children": [
+              {
+                "id": "652bcae8-da1b-8033-8008-be19799c2bc0",
+                "name": "front-panel-surface",
+                "type": "path"
+              }
+            ]
+          },
+          {
+            "id": "652bcae8-da1b-8033-8008-be1979d3d9e8",
+            "name": "text",
+            "type": "group",
+            "children": [
+              {
+                "id": "652bcae8-da1b-8033-8008-be1979aeac58",
+                "name": "line-1",
+                "type": "rectangle"
+              },
+              {
+                "id": "652bcae8-da1b-8033-8008-be1979bb296b",
+                "name": "line-2",
+                "type": "rectangle"
+              },
+              {
+                "id": "652bcae8-da1b-8033-8008-be1979c75c70",
+                "name": "line-3",
+                "type": "rectangle"
+              }
+            ]
+          },
+          {
+            "id": "652bcae8-da1b-8033-8008-be1979eae958",
+            "name": "highlights",
+            "type": "group",
+            "children": [
+              {
+                "id": "652bcae8-da1b-8033-8008-be1979d7d59e",
+                "name": "back-edge-light",
+                "type": "path"
+              },
+              {
+                "id": "652bcae8-da1b-8033-8008-be1979e1235f",
+                "name": "front-edge-light",
+                "type": "path"
+              }
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "id": "652bcae8-da1b-8033-8008-be197a0d4ea2",
+      "name": "APP ICON · Light · 256",
+      "opticalSize": "256",
+      "layers": {
+        "id": "652bcae8-da1b-8033-8008-be197a0d4ea2",
+        "name": "APP ICON · Light · 256",
+        "type": "board",
+        "children": [
+          {
+            "id": "652bcae8-da1b-8033-8008-be197a17dc41",
+            "name": "app-icon-background",
+            "type": "rectangle"
+          },
+          {
+            "id": "652bcae8-da1b-8033-8008-be197a40f706",
+            "name": "shadows",
+            "type": "group",
+            "children": [
+              {
+                "id": "652bcae8-da1b-8033-8008-be197a23ea03",
+                "name": "back-depth",
+                "type": "path"
+              },
+              {
+                "id": "652bcae8-da1b-8033-8008-be197a2f87c4",
+                "name": "front-depth",
+                "type": "path"
+              }
+            ]
+          },
+          {
+            "id": "652bcae8-da1b-8033-8008-be197a4d0d08",
+            "name": "back-panel",
+            "type": "group",
+            "children": [
+              {
+                "id": "652bcae8-da1b-8033-8008-be197a44879c",
+                "name": "back-panel-surface",
+                "type": "path"
+              }
+            ]
+          },
+          {
+            "id": "652bcae8-da1b-8033-8008-be197adc1884",
+            "name": "chaos",
+            "type": "group",
+            "children": [
+              {
+                "id": "652bcae8-da1b-8033-8008-be197a634c2d",
+                "name": "chaos-01",
+                "type": "group",
+                "children": [
+                  {
+                    "id": "652bcae8-da1b-8033-8008-be197a50f692",
+                    "name": "cord-body-1",
+                    "type": "path"
+                  },
+                  {
+                    "id": "652bcae8-da1b-8033-8008-be197a594fef",
+                    "name": "cord-highlight-1",
+                    "type": "path"
+                  }
+                ]
+              },
+              {
+                "id": "652bcae8-da1b-8033-8008-be197a76c460",
+                "name": "chaos-02",
+                "type": "group",
+                "children": [
+                  {
+                    "id": "652bcae8-da1b-8033-8008-be197a6932d4",
+                    "name": "cord-body-2",
+                    "type": "path"
+                  },
+                  {
+                    "id": "652bcae8-da1b-8033-8008-be197a6f8ecc",
+                    "name": "cord-highlight-2",
+                    "type": "path"
+                  }
+                ]
+              },
+              {
+                "id": "652bcae8-da1b-8033-8008-be197a8c60ef",
+                "name": "chaos-03",
+                "type": "group",
+                "children": [
+                  {
+                    "id": "652bcae8-da1b-8033-8008-be197a795cf1",
+                    "name": "cord-body-3",
+                    "type": "path"
+                  },
+                  {
+                    "id": "652bcae8-da1b-8033-8008-be197a82a0b6",
+                    "name": "cord-highlight-3",
+                    "type": "path"
+                  }
+                ]
+              },
+              {
+                "id": "652bcae8-da1b-8033-8008-be197aa26f52",
+                "name": "chaos-04",
+                "type": "group",
+                "children": [
+                  {
+                    "id": "652bcae8-da1b-8033-8008-be197a902a07",
+                    "name": "cord-body-4",
+                    "type": "path"
+                  },
+                  {
+                    "id": "652bcae8-da1b-8033-8008-be197a98c702",
+                    "name": "cord-highlight-4",
+                    "type": "path"
+                  }
+                ]
+              },
+              {
+                "id": "652bcae8-da1b-8033-8008-be197abc948f",
+                "name": "chaos-05",
+                "type": "group",
+                "children": [
+                  {
+                    "id": "652bcae8-da1b-8033-8008-be197aa976a0",
+                    "name": "cord-body-5",
+                    "type": "path"
+                  },
+                  {
+                    "id": "652bcae8-da1b-8033-8008-be197ab21b84",
+                    "name": "cord-highlight-5",
+                    "type": "path"
+                  }
+                ]
+              },
+              {
+                "id": "652bcae8-da1b-8033-8008-be197ad6e738",
+                "name": "chaos-06",
+                "type": "group",
+                "children": [
+                  {
+                    "id": "652bcae8-da1b-8033-8008-be197ac06019",
+                    "name": "cord-body-6",
+                    "type": "path"
+                  },
+                  {
+                    "id": "652bcae8-da1b-8033-8008-be197acb4aa1",
+                    "name": "cord-highlight-6",
+                    "type": "path"
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "id": "652bcae8-da1b-8033-8008-be197ae9d9fd",
+            "name": "front-panel",
+            "type": "group",
+            "children": [
+              {
+                "id": "652bcae8-da1b-8033-8008-be197ae1aa8a",
+                "name": "front-panel-surface",
+                "type": "path"
+              }
+            ]
+          },
+          {
+            "id": "652bcae8-da1b-8033-8008-be197b111c9e",
+            "name": "text",
+            "type": "group",
+            "children": [
+              {
+                "id": "652bcae8-da1b-8033-8008-be197aed721e",
+                "name": "line-1",
+                "type": "rectangle"
+              },
+              {
+                "id": "652bcae8-da1b-8033-8008-be197af954d2",
+                "name": "line-2",
+                "type": "rectangle"
+              },
+              {
+                "id": "652bcae8-da1b-8033-8008-be197b062f6d",
+                "name": "line-3",
+                "type": "rectangle"
+              }
+            ]
+          },
+          {
+            "id": "652bcae8-da1b-8033-8008-be197b2a2cb6",
+            "name": "highlights",
+            "type": "group",
+            "children": [
+              {
+                "id": "652bcae8-da1b-8033-8008-be197b178ae1",
+                "name": "back-edge-light",
+                "type": "path"
+              },
+              {
+                "id": "652bcae8-da1b-8033-8008-be197b2128bc",
+                "name": "front-edge-light",
+                "type": "path"
+              }
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "id": "652bcae8-da1b-8033-8008-be197b4e0f0b",
+      "name": "APP ICON · Light · 64",
+      "opticalSize": "64",
+      "layers": {
+        "id": "652bcae8-da1b-8033-8008-be197b4e0f0b",
+        "name": "APP ICON · Light · 64",
+        "type": "board",
+        "children": [
+          {
+            "id": "652bcae8-da1b-8033-8008-be197b57b7d4",
+            "name": "app-icon-background",
+            "type": "rectangle"
+          },
+          {
+            "id": "652bcae8-da1b-8033-8008-be197b6bce51",
+            "name": "back-panel",
+            "type": "group",
+            "children": [
+              {
+                "id": "652bcae8-da1b-8033-8008-be197b6267e6",
+                "name": "back-panel-surface",
+                "type": "path"
+              }
+            ]
+          },
+          {
+            "id": "652bcae8-da1b-8033-8008-be197bb5efb4",
+            "name": "chaos",
+            "type": "group",
+            "children": [
+              {
+                "id": "652bcae8-da1b-8033-8008-be197b7aeaf9",
+                "name": "chaos-01",
+                "type": "group",
+                "children": [
+                  {
+                    "id": "652bcae8-da1b-8033-8008-be197b6f92c3",
+                    "name": "cord-body-1",
+                    "type": "path"
+                  }
+                ]
+              },
+              {
+                "id": "652bcae8-da1b-8033-8008-be197b8902b8",
+                "name": "chaos-02",
+                "type": "group",
+                "children": [
+                  {
+                    "id": "652bcae8-da1b-8033-8008-be197b7f03da",
+                    "name": "cord-body-2",
+                    "type": "path"
+                  }
+                ]
+              },
+              {
+                "id": "652bcae8-da1b-8033-8008-be197b97a6d8",
+                "name": "chaos-03",
+                "type": "group",
+                "children": [
+                  {
+                    "id": "652bcae8-da1b-8033-8008-be197b8d2bc4",
+                    "name": "cord-body-3",
+                    "type": "path"
+                  }
+                ]
+              },
+              {
+                "id": "652bcae8-da1b-8033-8008-be197ba5cb12",
+                "name": "chaos-04",
+                "type": "group",
+                "children": [
+                  {
+                    "id": "652bcae8-da1b-8033-8008-be197b9abe7d",
+                    "name": "cord-body-4",
+                    "type": "path"
+                  }
+                ]
+              },
+              {
+                "id": "652bcae8-da1b-8033-8008-be197bb335ec",
+                "name": "chaos-05",
+                "type": "group",
+                "children": [
+                  {
+                    "id": "652bcae8-da1b-8033-8008-be197baa877f",
+                    "name": "cord-body-5",
+                    "type": "path"
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "id": "652bcae8-da1b-8033-8008-be197bc79691",
+            "name": "front-panel",
+            "type": "group",
+            "children": [
+              {
+                "id": "652bcae8-da1b-8033-8008-be197bb9c71a",
+                "name": "front-panel-surface",
+                "type": "path"
+              }
+            ]
+          },
+          {
+            "id": "652bcae8-da1b-8033-8008-be197bf721a6",
+            "name": "text",
+            "type": "group",
+            "children": [
+              {
+                "id": "652bcae8-da1b-8033-8008-be197bcd5c61",
+                "name": "line-1",
+                "type": "rectangle"
+              },
+              {
+                "id": "652bcae8-da1b-8033-8008-be197be13f22",
+                "name": "line-2",
+                "type": "rectangle"
+              },
+              {
+                "id": "652bcae8-da1b-8033-8008-be197bec0929",
+                "name": "line-3",
+                "type": "rectangle"
+              }
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "id": "652bcae8-da1b-8033-8008-be197c27b28e",
+      "name": "APP ICON · Light · 32",
+      "opticalSize": "32",
+      "layers": {
+        "id": "652bcae8-da1b-8033-8008-be197c27b28e",
+        "name": "APP ICON · Light · 32",
+        "type": "board",
+        "children": [
+          {
+            "id": "652bcae8-da1b-8033-8008-be197c3afd83",
+            "name": "app-icon-background",
+            "type": "rectangle"
+          },
+          {
+            "id": "652bcae8-da1b-8033-8008-be197c620c5e",
+            "name": "back-panel",
+            "type": "group",
+            "children": [
+              {
+                "id": "652bcae8-da1b-8033-8008-be197c5878ba",
+                "name": "back-panel-surface",
+                "type": "path"
+              }
+            ]
+          },
+          {
+            "id": "652bcae8-da1b-8033-8008-be197c889f91",
+            "name": "chaos",
+            "type": "group",
+            "children": [
+              {
+                "id": "652bcae8-da1b-8033-8008-be197c6d21f3",
+                "name": "chaos-01",
+                "type": "group",
+                "children": [
+                  {
+                    "id": "652bcae8-da1b-8033-8008-be197c65ae88",
+                    "name": "cord-body-1",
+                    "type": "path"
+                  }
+                ]
+              },
+              {
+                "id": "652bcae8-da1b-8033-8008-be197c79145f",
+                "name": "chaos-02",
+                "type": "group",
+                "children": [
+                  {
+                    "id": "652bcae8-da1b-8033-8008-be197c70990a",
+                    "name": "cord-body-2",
+                    "type": "path"
+                  }
+                ]
+              },
+              {
+                "id": "652bcae8-da1b-8033-8008-be197c850863",
+                "name": "chaos-03",
+                "type": "group",
+                "children": [
+                  {
+                    "id": "652bcae8-da1b-8033-8008-be197c7ce16e",
+                    "name": "cord-body-3",
+                    "type": "path"
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "id": "652bcae8-da1b-8033-8008-be197c95a195",
+            "name": "front-panel",
+            "type": "group",
+            "children": [
+              {
+                "id": "652bcae8-da1b-8033-8008-be197c8de393",
+                "name": "front-panel-surface",
+                "type": "path"
+              }
+            ]
+          },
+          {
+            "id": "652bcae8-da1b-8033-8008-be197cb9646a",
+            "name": "text",
+            "type": "group",
+            "children": [
+              {
+                "id": "652bcae8-da1b-8033-8008-be197c9a5de7",
+                "name": "line-1",
+                "type": "rectangle"
+              },
+              {
+                "id": "652bcae8-da1b-8033-8008-be197ca5581f",
+                "name": "line-2",
+                "type": "rectangle"
+              },
+              {
+                "id": "652bcae8-da1b-8033-8008-be197cae0dbc",
+                "name": "line-3",
+                "type": "rectangle"
+              }
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "id": "652bcae8-da1b-8033-8008-be197cef7e4d",
+      "name": "APP ICON · Light · 16",
+      "opticalSize": "16",
+      "layers": {
+        "id": "652bcae8-da1b-8033-8008-be197cef7e4d",
+        "name": "APP ICON · Light · 16",
+        "type": "board",
+        "children": [
+          {
+            "id": "652bcae8-da1b-8033-8008-be197cf7079c",
+            "name": "app-icon-background",
+            "type": "rectangle"
+          },
+          {
+            "id": "652bcae8-da1b-8033-8008-be197d050662",
+            "name": "back-panel",
+            "type": "group",
+            "children": [
+              {
+                "id": "652bcae8-da1b-8033-8008-be197cfdebf0",
+                "name": "back-panel-surface",
+                "type": "path"
+              }
+            ]
+          },
+          {
+            "id": "652bcae8-da1b-8033-8008-be197d13cc50",
+            "name": "chaos",
+            "type": "group",
+            "children": [
+              {
+                "id": "652bcae8-da1b-8033-8008-be197d10b644",
+                "name": "chaos-01",
+                "type": "group",
+                "children": [
+                  {
+                    "id": "652bcae8-da1b-8033-8008-be197d07e8b3",
+                    "name": "cord-body-1",
+                    "type": "path"
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "id": "652bcae8-da1b-8033-8008-be197d2181cf",
+            "name": "front-panel",
+            "type": "group",
+            "children": [
+              {
+                "id": "652bcae8-da1b-8033-8008-be197d17efdc",
+                "name": "front-panel-surface",
+                "type": "path"
+              }
+            ]
+          },
+          {
+            "id": "652bcae8-da1b-8033-8008-be197d35b685",
+            "name": "text",
+            "type": "group",
+            "children": [
+              {
+                "id": "652bcae8-da1b-8033-8008-be197d24487b",
+                "name": "line-1",
+                "type": "rectangle"
+              },
+              {
+                "id": "652bcae8-da1b-8033-8008-be197d2cff8d",
+                "name": "line-2",
+                "type": "rectangle"
+              }
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "id": "652bcae8-da1b-8033-8008-be197d698378",
+      "name": "SYMBOL · Full",
+      "opticalSize": "256",
+      "layers": {
+        "id": "652bcae8-da1b-8033-8008-be197d698378",
+        "name": "SYMBOL · Full",
+        "type": "board",
+        "children": [
+          {
+            "id": "652bcae8-da1b-8033-8008-be197d7fc139",
+            "name": "back-panel",
+            "type": "group",
+            "children": [
+              {
+                "id": "652bcae8-da1b-8033-8008-be197d758b2c",
+                "name": "back-panel-surface",
+                "type": "path"
+              }
+            ]
+          },
+          {
+            "id": "652bcae8-da1b-8033-8008-be197ddd6a91",
+            "name": "chaos",
+            "type": "group",
+            "children": [
+              {
+                "id": "652bcae8-da1b-8033-8008-be197d8c39f7",
+                "name": "chaos-01",
+                "type": "group",
+                "children": [
+                  {
+                    "id": "652bcae8-da1b-8033-8008-be197d843ee6",
+                    "name": "cord-body-1",
+                    "type": "path"
+                  }
+                ]
+              },
+              {
+                "id": "652bcae8-da1b-8033-8008-be197d990073",
+                "name": "chaos-02",
+                "type": "group",
+                "children": [
+                  {
+                    "id": "652bcae8-da1b-8033-8008-be197d90d29c",
+                    "name": "cord-body-2",
+                    "type": "path"
+                  }
+                ]
+              },
+              {
+                "id": "652bcae8-da1b-8033-8008-be197da7eeef",
+                "name": "chaos-03",
+                "type": "group",
+                "children": [
+                  {
+                    "id": "652bcae8-da1b-8033-8008-be197d9dee5f",
+                    "name": "cord-body-3",
+                    "type": "path"
+                  }
+                ]
+              },
+              {
+                "id": "652bcae8-da1b-8033-8008-be197db54d03",
+                "name": "chaos-04",
+                "type": "group",
+                "children": [
+                  {
+                    "id": "652bcae8-da1b-8033-8008-be197dabec49",
+                    "name": "cord-body-4",
+                    "type": "path"
+                  }
+                ]
+              },
+              {
+                "id": "652bcae8-da1b-8033-8008-be197dc7a289",
+                "name": "chaos-05",
+                "type": "group",
+                "children": [
+                  {
+                    "id": "652bcae8-da1b-8033-8008-be197db8b10a",
+                    "name": "cord-body-5",
+                    "type": "path"
+                  }
+                ]
+              },
+              {
+                "id": "652bcae8-da1b-8033-8008-be197dd98303",
+                "name": "chaos-06",
+                "type": "group",
+                "children": [
+                  {
+                    "id": "652bcae8-da1b-8033-8008-be197dcf8675",
+                    "name": "cord-body-6",
+                    "type": "path"
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "id": "652bcae8-da1b-8033-8008-be197de85cfb",
+            "name": "front-panel",
+            "type": "group",
+            "children": [
+              {
+                "id": "652bcae8-da1b-8033-8008-be197de0d56d",
+                "name": "front-panel-surface",
+                "type": "path"
+              }
+            ]
+          },
+          {
+            "id": "652bcae8-da1b-8033-8008-be197e02d494",
+            "name": "text",
+            "type": "group",
+            "children": [
+              {
+                "id": "652bcae8-da1b-8033-8008-be197deb52e4",
+                "name": "line-1",
+                "type": "rectangle"
+              },
+              {
+                "id": "652bcae8-da1b-8033-8008-be197df27489",
+                "name": "line-2",
+                "type": "rectangle"
+              },
+              {
+                "id": "652bcae8-da1b-8033-8008-be197dfa1c4a",
+                "name": "line-3",
+                "type": "rectangle"
+              }
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "id": "652bcae8-da1b-8033-8008-be197e4fc562",
+      "name": "SYMBOL · Small",
+      "opticalSize": "32",
+      "layers": {
+        "id": "652bcae8-da1b-8033-8008-be197e4fc562",
+        "name": "SYMBOL · Small",
+        "type": "board",
+        "children": [
+          {
+            "id": "652bcae8-da1b-8033-8008-be197e5f9f5b",
+            "name": "back-panel",
+            "type": "group",
+            "children": [
+              {
+                "id": "652bcae8-da1b-8033-8008-be197e583943",
+                "name": "back-panel-surface",
+                "type": "path"
+              }
+            ]
+          },
+          {
+            "id": "652bcae8-da1b-8033-8008-be197e8b784c",
+            "name": "chaos",
+            "type": "group",
+            "children": [
+              {
+                "id": "652bcae8-da1b-8033-8008-be197e6ba102",
+                "name": "chaos-01",
+                "type": "group",
+                "children": [
+                  {
+                    "id": "652bcae8-da1b-8033-8008-be197e630257",
+                    "name": "cord-body-1",
+                    "type": "path"
+                  }
+                ]
+              },
+              {
+                "id": "652bcae8-da1b-8033-8008-be197e7b2dfc",
+                "name": "chaos-02",
+                "type": "group",
+                "children": [
+                  {
+                    "id": "652bcae8-da1b-8033-8008-be197e6f9989",
+                    "name": "cord-body-2",
+                    "type": "path"
+                  }
+                ]
+              },
+              {
+                "id": "652bcae8-da1b-8033-8008-be197e86b846",
+                "name": "chaos-03",
+                "type": "group",
+                "children": [
+                  {
+                    "id": "652bcae8-da1b-8033-8008-be197e7e94c9",
+                    "name": "cord-body-3",
+                    "type": "path"
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "id": "652bcae8-da1b-8033-8008-be197e993544",
+            "name": "front-panel",
+            "type": "group",
+            "children": [
+              {
+                "id": "652bcae8-da1b-8033-8008-be197e8fd79f",
+                "name": "front-panel-surface",
+                "type": "path"
+              }
+            ]
+          },
+          {
+            "id": "652bcae8-da1b-8033-8008-be197ebde0cb",
+            "name": "text",
+            "type": "group",
+            "children": [
+              {
+                "id": "652bcae8-da1b-8033-8008-be197e9cab26",
+                "name": "line-1",
+                "type": "rectangle"
+              },
+              {
+                "id": "652bcae8-da1b-8033-8008-be197ea642a4",
+                "name": "line-2",
+                "type": "rectangle"
+              },
+              {
+                "id": "652bcae8-da1b-8033-8008-be197eb15547",
+                "name": "line-3",
+                "type": "rectangle"
+              }
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "id": "652bcae8-da1b-8033-8008-be197efe945f",
+      "name": "APP ICON · Dark · 256",
+      "opticalSize": "256",
+      "layers": {
+        "id": "652bcae8-da1b-8033-8008-be197efe945f",
+        "name": "APP ICON · Dark · 256",
+        "type": "board",
+        "children": [
+          {
+            "id": "652bcae8-da1b-8033-8008-be197f060b18",
+            "name": "app-icon-background",
+            "type": "rectangle"
+          },
+          {
+            "id": "652bcae8-da1b-8033-8008-be197f2a713f",
+            "name": "shadows",
+            "type": "group",
+            "children": [
+              {
+                "id": "652bcae8-da1b-8033-8008-be197f12625a",
+                "name": "back-depth",
+                "type": "path"
+              },
+              {
+                "id": "652bcae8-da1b-8033-8008-be197f1e5522",
+                "name": "front-depth",
+                "type": "path"
+              }
+            ]
+          },
+          {
+            "id": "652bcae8-da1b-8033-8008-be197f39315a",
+            "name": "back-panel",
+            "type": "group",
+            "children": [
+              {
+                "id": "652bcae8-da1b-8033-8008-be197f2f2f2d",
+                "name": "back-panel-surface",
+                "type": "path"
+              }
+            ]
+          },
+          {
+            "id": "652bcae8-da1b-8033-8008-be197fdec161",
+            "name": "chaos",
+            "type": "group",
+            "children": [
+              {
+                "id": "652bcae8-da1b-8033-8008-be197f51fd5a",
+                "name": "chaos-01",
+                "type": "group",
+                "children": [
+                  {
+                    "id": "652bcae8-da1b-8033-8008-be197f3dadfb",
+                    "name": "cord-body-1",
+                    "type": "path"
+                  },
+                  {
+                    "id": "652bcae8-da1b-8033-8008-be197f472836",
+                    "name": "cord-highlight-1",
+                    "type": "path"
+                  }
+                ]
+              },
+              {
+                "id": "652bcae8-da1b-8033-8008-be197f6c1d4c",
+                "name": "chaos-02",
+                "type": "group",
+                "children": [
+                  {
+                    "id": "652bcae8-da1b-8033-8008-be197f571aed",
+                    "name": "cord-body-2",
+                    "type": "path"
+                  },
+                  {
+                    "id": "652bcae8-da1b-8033-8008-be197f618184",
+                    "name": "cord-highlight-2",
+                    "type": "path"
+                  }
+                ]
+              },
+              {
+                "id": "652bcae8-da1b-8033-8008-be197f89c2b9",
+                "name": "chaos-03",
+                "type": "group",
+                "children": [
+                  {
+                    "id": "652bcae8-da1b-8033-8008-be197f7342e4",
+                    "name": "cord-body-3",
+                    "type": "path"
+                  },
+                  {
+                    "id": "652bcae8-da1b-8033-8008-be197f7d501b",
+                    "name": "cord-highlight-3",
+                    "type": "path"
+                  }
+                ]
+              },
+              {
+                "id": "652bcae8-da1b-8033-8008-be197fa1e294",
+                "name": "chaos-04",
+                "type": "group",
+                "children": [
+                  {
+                    "id": "652bcae8-da1b-8033-8008-be197f8d2dcc",
+                    "name": "cord-body-4",
+                    "type": "path"
+                  },
+                  {
+                    "id": "652bcae8-da1b-8033-8008-be197f968134",
+                    "name": "cord-highlight-4",
+                    "type": "path"
+                  }
+                ]
+              },
+              {
+                "id": "652bcae8-da1b-8033-8008-be197fbf0585",
+                "name": "chaos-05",
+                "type": "group",
+                "children": [
+                  {
+                    "id": "652bcae8-da1b-8033-8008-be197fa54f31",
+                    "name": "cord-body-5",
+                    "type": "path"
+                  },
+                  {
+                    "id": "652bcae8-da1b-8033-8008-be197fb0ab92",
+                    "name": "cord-highlight-5",
+                    "type": "path"
+                  }
+                ]
+              },
+              {
+                "id": "652bcae8-da1b-8033-8008-be197fda740b",
+                "name": "chaos-06",
+                "type": "group",
+                "children": [
+                  {
+                    "id": "652bcae8-da1b-8033-8008-be197fc2a581",
+                    "name": "cord-body-6",
+                    "type": "path"
+                  },
+                  {
+                    "id": "652bcae8-da1b-8033-8008-be197fcf1141",
+                    "name": "cord-highlight-6",
+                    "type": "path"
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "id": "652bcae8-da1b-8033-8008-be197fecd26f",
+            "name": "front-panel",
+            "type": "group",
+            "children": [
+              {
+                "id": "652bcae8-da1b-8033-8008-be197fe470d3",
+                "name": "front-panel-surface",
+                "type": "path"
+              }
+            ]
+          },
+          {
+            "id": "652bcae8-da1b-8033-8008-be198012087c",
+            "name": "text",
+            "type": "group",
+            "children": [
+              {
+                "id": "652bcae8-da1b-8033-8008-be197ff0daed",
+                "name": "line-1",
+                "type": "rectangle"
+              },
+              {
+                "id": "652bcae8-da1b-8033-8008-be197ffb7684",
+                "name": "line-2",
+                "type": "rectangle"
+              },
+              {
+                "id": "652bcae8-da1b-8033-8008-be198005d031",
+                "name": "line-3",
+                "type": "rectangle"
+              }
+            ]
+          },
+          {
+            "id": "652bcae8-da1b-8033-8008-be1980273e3b",
+            "name": "highlights",
+            "type": "group",
+            "children": [
+              {
+                "id": "652bcae8-da1b-8033-8008-be1980161870",
+                "name": "back-edge-light",
+                "type": "path"
+              },
+              {
+                "id": "652bcae8-da1b-8033-8008-be19801eae68",
+                "name": "front-edge-light",
+                "type": "path"
+              }
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "id": "652bcae8-da1b-8033-8008-be1980776677",
+      "name": "APP ICON · Dark · 64",
+      "opticalSize": "64",
+      "layers": {
+        "id": "652bcae8-da1b-8033-8008-be1980776677",
+        "name": "APP ICON · Dark · 64",
+        "type": "board",
+        "children": [
+          {
+            "id": "652bcae8-da1b-8033-8008-be1980800a4f",
+            "name": "app-icon-background",
+            "type": "rectangle"
+          },
+          {
+            "id": "652bcae8-da1b-8033-8008-be1980966fae",
+            "name": "back-panel",
+            "type": "group",
+            "children": [
+              {
+                "id": "652bcae8-da1b-8033-8008-be198088edc2",
+                "name": "back-panel-surface",
+                "type": "path"
+              }
+            ]
+          },
+          {
+            "id": "652bcae8-da1b-8033-8008-be1980d7af12",
+            "name": "chaos",
+            "type": "group",
+            "children": [
+              {
+                "id": "652bcae8-da1b-8033-8008-be1980a2f00f",
+                "name": "chaos-01",
+                "type": "group",
+                "children": [
+                  {
+                    "id": "652bcae8-da1b-8033-8008-be19809a1d5d",
+                    "name": "cord-body-1",
+                    "type": "path"
+                  }
+                ]
+              },
+              {
+                "id": "652bcae8-da1b-8033-8008-be1980ada151",
+                "name": "chaos-02",
+                "type": "group",
+                "children": [
+                  {
+                    "id": "652bcae8-da1b-8033-8008-be1980a5d51f",
+                    "name": "cord-body-2",
+                    "type": "path"
+                  }
+                ]
+              },
+              {
+                "id": "652bcae8-da1b-8033-8008-be1980b979ba",
+                "name": "chaos-03",
+                "type": "group",
+                "children": [
+                  {
+                    "id": "652bcae8-da1b-8033-8008-be1980b08379",
+                    "name": "cord-body-3",
+                    "type": "path"
+                  }
+                ]
+              },
+              {
+                "id": "652bcae8-da1b-8033-8008-be1980c5168e",
+                "name": "chaos-04",
+                "type": "group",
+                "children": [
+                  {
+                    "id": "652bcae8-da1b-8033-8008-be1980bf3893",
+                    "name": "cord-body-4",
+                    "type": "path"
+                  }
+                ]
+              },
+              {
+                "id": "652bcae8-da1b-8033-8008-be1980d460bb",
+                "name": "chaos-05",
+                "type": "group",
+                "children": [
+                  {
+                    "id": "652bcae8-da1b-8033-8008-be1980c7d1e8",
+                    "name": "cord-body-5",
+                    "type": "path"
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "id": "652bcae8-da1b-8033-8008-be1980e47c1f",
+            "name": "front-panel",
+            "type": "group",
+            "children": [
+              {
+                "id": "652bcae8-da1b-8033-8008-be1980db697b",
+                "name": "front-panel-surface",
+                "type": "path"
+              }
+            ]
+          },
+          {
+            "id": "652bcae8-da1b-8033-8008-be19810c9eda",
+            "name": "text",
+            "type": "group",
+            "children": [
+              {
+                "id": "652bcae8-da1b-8033-8008-be1980e87aa8",
+                "name": "line-1",
+                "type": "rectangle"
+              },
+              {
+                "id": "652bcae8-da1b-8033-8008-be1980f4b8f4",
+                "name": "line-2",
+                "type": "rectangle"
+              },
+              {
+                "id": "652bcae8-da1b-8033-8008-be1980fe62d8",
+                "name": "line-3",
+                "type": "rectangle"
+              }
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "id": "652bcae8-da1b-8033-8008-be1981fdf590",
+      "name": "SYMBOL · Mono",
+      "opticalSize": "32",
+      "layers": {
+        "id": "652bcae8-da1b-8033-8008-be1981fdf590",
+        "name": "SYMBOL · Mono",
+        "type": "board",
+        "children": [
+          {
+            "id": "a361d7fb-53ba-807f-8008-be20a481b9a5",
+            "name": "back-panel",
+            "type": "bool",
+            "children": [
+              {
+                "id": "a361d7fb-53ba-807f-8008-be20a464e2aa",
+                "name": "back-panel-base",
+                "type": "path"
+              },
+              {
+                "id": "a361d7fb-53ba-807f-8008-be20a46c4ef3",
+                "name": "front-panel-clearance",
+                "type": "path"
+              },
+              {
+                "id": "a361d7fb-53ba-807f-8008-be20a4740aa2",
+                "name": "cord-cutout-1",
+                "type": "path"
+              },
+              {
+                "id": "a361d7fb-53ba-807f-8008-be20a47851e0",
+                "name": "cord-cutout-2",
+                "type": "path"
+              },
+              {
+                "id": "a361d7fb-53ba-807f-8008-be20a47d21b1",
+                "name": "cord-cutout-3",
+                "type": "path"
+              }
+            ]
+          },
+          {
+            "id": "a361d7fb-53ba-807f-8008-be20a4ffada7",
+            "name": "front-panel",
+            "type": "bool",
+            "children": [
+              {
+                "id": "a361d7fb-53ba-807f-8008-be20a4e8a49c",
+                "name": "front-panel-base",
+                "type": "path"
+              },
+              {
+                "id": "a361d7fb-53ba-807f-8008-be20a4ede58a",
+                "name": "line-1",
+                "type": "rectangle"
+              },
+              {
+                "id": "a361d7fb-53ba-807f-8008-be20a4f42342",
+                "name": "line-2",
+                "type": "rectangle"
+              },
+              {
+                "id": "a361d7fb-53ba-807f-8008-be20a4f9097c",
+                "name": "line-3",
+                "type": "rectangle"
+              }
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "id": "652bcae8-da1b-8033-8008-be1d6f58fd5a",
+      "name": "SYMBOL · Dark",
+      "opticalSize": "256",
+      "layers": {
+        "id": "652bcae8-da1b-8033-8008-be1d6f58fd5a",
+        "name": "SYMBOL · Dark",
+        "type": "board",
+        "children": [
+          {
+            "id": "652bcae8-da1b-8033-8008-be1d6f58fd5b",
+            "name": "back-panel",
+            "type": "group",
+            "children": [
+              {
+                "id": "652bcae8-da1b-8033-8008-be1d6f58fd5f",
+                "name": "back-panel-surface",
+                "type": "path"
+              }
+            ]
+          },
+          {
+            "id": "652bcae8-da1b-8033-8008-be1d6f58fd5c",
+            "name": "chaos",
+            "type": "group",
+            "children": [
+              {
+                "id": "652bcae8-da1b-8033-8008-be1d6f58fd60",
+                "name": "chaos-01",
+                "type": "group",
+                "children": [
+                  {
+                    "id": "652bcae8-da1b-8033-8008-be1d6f58fd66",
+                    "name": "cord-body-1",
+                    "type": "path"
+                  }
+                ]
+              },
+              {
+                "id": "652bcae8-da1b-8033-8008-be1d6f58fd61",
+                "name": "chaos-02",
+                "type": "group",
+                "children": [
+                  {
+                    "id": "652bcae8-da1b-8033-8008-be1d6f58fd67",
+                    "name": "cord-body-2",
+                    "type": "path"
+                  }
+                ]
+              },
+              {
+                "id": "652bcae8-da1b-8033-8008-be1d6f58fd62",
+                "name": "chaos-03",
+                "type": "group",
+                "children": [
+                  {
+                    "id": "652bcae8-da1b-8033-8008-be1d6f58fd68",
+                    "name": "cord-body-3",
+                    "type": "path"
+                  }
+                ]
+              },
+              {
+                "id": "652bcae8-da1b-8033-8008-be1d6f58fd63",
+                "name": "chaos-04",
+                "type": "group",
+                "children": [
+                  {
+                    "id": "652bcae8-da1b-8033-8008-be1d6f58fd69",
+                    "name": "cord-body-4",
+                    "type": "path"
+                  }
+                ]
+              },
+              {
+                "id": "652bcae8-da1b-8033-8008-be1d6f58fd64",
+                "name": "chaos-05",
+                "type": "group",
+                "children": [
+                  {
+                    "id": "652bcae8-da1b-8033-8008-be1d6f58fd6a",
+                    "name": "cord-body-5",
+                    "type": "path"
+                  }
+                ]
+              },
+              {
+                "id": "652bcae8-da1b-8033-8008-be1d6f58fd65",
+                "name": "chaos-06",
+                "type": "group",
+                "children": [
+                  {
+                    "id": "652bcae8-da1b-8033-8008-be1d6f58fd6b",
+                    "name": "cord-body-6",
+                    "type": "path"
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "id": "652bcae8-da1b-8033-8008-be1d6f58fd5d",
+            "name": "front-panel",
+            "type": "group",
+            "children": [
+              {
+                "id": "652bcae8-da1b-8033-8008-be1d6f58fd6c",
+                "name": "front-panel-surface",
+                "type": "path"
+              }
+            ]
+          },
+          {
+            "id": "652bcae8-da1b-8033-8008-be1d6f58fd5e",
+            "name": "text",
+            "type": "group",
+            "children": [
+              {
+                "id": "652bcae8-da1b-8033-8008-be1d6f58fd6d",
+                "name": "line-1",
+                "type": "rectangle"
+              },
+              {
+                "id": "652bcae8-da1b-8033-8008-be1d6f58fd6e",
+                "name": "line-2",
+                "type": "rectangle"
+              },
+              {
+                "id": "652bcae8-da1b-8033-8008-be1d6f58fd6f",
+                "name": "line-3",
+                "type": "rectangle"
+              }
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "id": "652bcae8-da1b-8033-8008-be1dcff8308e",
+      "name": "APP ICON · Dark · 32",
+      "opticalSize": "32",
+      "layers": {
+        "id": "652bcae8-da1b-8033-8008-be1dcff8308e",
+        "name": "APP ICON · Dark · 32",
+        "type": "board",
+        "children": [
+          {
+            "id": "652bcae8-da1b-8033-8008-be1dd01bb290",
+            "name": "app-icon-background",
+            "type": "rectangle"
+          },
+          {
+            "id": "652bcae8-da1b-8033-8008-be1dd04e7e6e",
+            "name": "back-panel",
+            "type": "group",
+            "children": [
+              {
+                "id": "652bcae8-da1b-8033-8008-be1dd03994b7",
+                "name": "back-panel-surface",
+                "type": "path"
+              }
+            ]
+          },
+          {
+            "id": "652bcae8-da1b-8033-8008-be1dd094f89c",
+            "name": "chaos",
+            "type": "group",
+            "children": [
+              {
+                "id": "652bcae8-da1b-8033-8008-be1dd06220ff",
+                "name": "chaos-01",
+                "type": "group",
+                "children": [
+                  {
+                    "id": "652bcae8-da1b-8033-8008-be1dd0571124",
+                    "name": "cord-body-1",
+                    "type": "path"
+                  }
+                ]
+              },
+              {
+                "id": "652bcae8-da1b-8033-8008-be1dd07adb72",
+                "name": "chaos-02",
+                "type": "group",
+                "children": [
+                  {
+                    "id": "652bcae8-da1b-8033-8008-be1dd0696945",
+                    "name": "cord-body-2",
+                    "type": "path"
+                  }
+                ]
+              },
+              {
+                "id": "652bcae8-da1b-8033-8008-be1dd08f3b58",
+                "name": "chaos-03",
+                "type": "group",
+                "children": [
+                  {
+                    "id": "652bcae8-da1b-8033-8008-be1dd0802924",
+                    "name": "cord-body-3",
+                    "type": "path"
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "id": "652bcae8-da1b-8033-8008-be1dd0ab6c56",
+            "name": "front-panel",
+            "type": "group",
+            "children": [
+              {
+                "id": "652bcae8-da1b-8033-8008-be1dd09c15ed",
+                "name": "front-panel-surface",
+                "type": "path"
+              }
+            ]
+          },
+          {
+            "id": "652bcae8-da1b-8033-8008-be1dd0ebb185",
+            "name": "text",
+            "type": "group",
+            "children": [
+              {
+                "id": "652bcae8-da1b-8033-8008-be1dd0b1bfc2",
+                "name": "line-1",
+                "type": "rectangle"
+              },
+              {
+                "id": "652bcae8-da1b-8033-8008-be1dd0c225c8",
+                "name": "line-2",
+                "type": "rectangle"
+              },
+              {
+                "id": "652bcae8-da1b-8033-8008-be1dd0d79fdf",
+                "name": "line-3",
+                "type": "rectangle"
+              }
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "id": "652bcae8-da1b-8033-8008-be1dd1517e04",
+      "name": "APP ICON · Dark · 16",
+      "opticalSize": "16",
+      "layers": {
+        "id": "652bcae8-da1b-8033-8008-be1dd1517e04",
+        "name": "APP ICON · Dark · 16",
+        "type": "board",
+        "children": [
+          {
+            "id": "652bcae8-da1b-8033-8008-be1dd15f748f",
+            "name": "app-icon-background",
+            "type": "rectangle"
+          },
+          {
+            "id": "652bcae8-da1b-8033-8008-be1dd1816d59",
+            "name": "back-panel",
+            "type": "group",
+            "children": [
+              {
+                "id": "652bcae8-da1b-8033-8008-be1dd1729703",
+                "name": "back-panel-surface",
+                "type": "path"
+              }
+            ]
+          },
+          {
+            "id": "652bcae8-da1b-8033-8008-be1dd19edb10",
+            "name": "chaos",
+            "type": "group",
+            "children": [
+              {
+                "id": "652bcae8-da1b-8033-8008-be1dd19802ed",
+                "name": "chaos-01",
+                "type": "group",
+                "children": [
+                  {
+                    "id": "652bcae8-da1b-8033-8008-be1dd187dd73",
+                    "name": "cord-body-1",
+                    "type": "path"
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "id": "652bcae8-da1b-8033-8008-be1dd1b6994a",
+            "name": "front-panel",
+            "type": "group",
+            "children": [
+              {
+                "id": "652bcae8-da1b-8033-8008-be1dd1a5bcfa",
+                "name": "front-panel-surface",
+                "type": "path"
+              }
+            ]
+          },
+          {
+            "id": "652bcae8-da1b-8033-8008-be1dd1e21a4a",
+            "name": "text",
+            "type": "group",
+            "children": [
+              {
+                "id": "652bcae8-da1b-8033-8008-be1dd1bd599d",
+                "name": "line-1",
+                "type": "rectangle"
+              },
+              {
+                "id": "652bcae8-da1b-8033-8008-be1dd1cfc043",
+                "name": "line-2",
+                "type": "rectangle"
+              }
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "id": "652bcae8-da1b-8033-8008-be1dd24497ab",
+      "name": "SYMBOL · Tiny",
+      "opticalSize": "16",
+      "layers": {
+        "id": "652bcae8-da1b-8033-8008-be1dd24497ab",
+        "name": "SYMBOL · Tiny",
+        "type": "board",
+        "children": [
+          {
+            "id": "652bcae8-da1b-8033-8008-be1dd265d53c",
+            "name": "back-panel",
+            "type": "group",
+            "children": [
+              {
+                "id": "652bcae8-da1b-8033-8008-be1dd252d0df",
+                "name": "back-panel-surface",
+                "type": "path"
+              }
+            ]
+          },
+          {
+            "id": "652bcae8-da1b-8033-8008-be1dd284a37a",
+            "name": "chaos",
+            "type": "group",
+            "children": [
+              {
+                "id": "652bcae8-da1b-8033-8008-be1dd27e79b1",
+                "name": "chaos-01",
+                "type": "group",
+                "children": [
+                  {
+                    "id": "652bcae8-da1b-8033-8008-be1dd26bcba8",
+                    "name": "cord-body-1",
+                    "type": "path"
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "id": "652bcae8-da1b-8033-8008-be1dd29f3df5",
+            "name": "front-panel",
+            "type": "group",
+            "children": [
+              {
+                "id": "652bcae8-da1b-8033-8008-be1dd28c618a",
+                "name": "front-panel-surface",
+                "type": "path"
+              }
+            ]
+          },
+          {
+            "id": "652bcae8-da1b-8033-8008-be1dd2d472ec",
+            "name": "text",
+            "type": "group",
+            "children": [
+              {
+                "id": "652bcae8-da1b-8033-8008-be1dd2a6a175",
+                "name": "line-1",
+                "type": "rectangle"
+              },
+              {
+                "id": "652bcae8-da1b-8033-8008-be1dd2bd79c3",
+                "name": "line-2",
+                "type": "rectangle"
+              }
+            ]
+          }
+        ]
+      }
+    }
+  ]
+}

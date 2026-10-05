@@ -1,0 +1,13 @@
+{
+  "name": "translator-mono-icon-system",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "export:penpot": "node penpot/export-assets.mjs",
+    "build": "node build-kit.mjs"
+  },
+  "dependencies": {
+    "sharp": "0.34.5"
+  }
+}

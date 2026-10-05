@@ -1,0 +1,52 @@
+{
+  "svg": [
+    {
+      "file": "translator-line-white.svg",
+      "validXml": true,
+      "uniqueIds": true,
+      "rasterImages": false,
+      "pathCount": 1
+    },
+    {
+      "file": "translator-logo-dark.svg",
+      "validXml": true,
+      "uniqueIds": true,
+      "rasterImages": false,
+      "pathCount": 38
+    },
+    {
+      "file": "translator-logo.svg",
+      "validXml": true,
+      "uniqueIds": true,
+      "rasterImages": false,
+      "pathCount": 38
+    }
+  ],
+  "icns": {
+    "validContainer": true,
+    "representations": [
+      "ic04",
+      "ic11",
+      "ic05",
+      "ic12",
+      "ic07",
+      "ic13",
+      "ic08",
+      "ic14",
+      "ic09",
+      "ic10"
+    ],
+    "count": 10,
+    "blocksIncludingTableOfContents": 11,
+    "tableOfContentsPassed": true,
+    "diagnosticNote": "The initial checker counted the TOC block as an image; the check was corrected. Artwork is unchanged."
+  },
+  "penpot": {
+    "file": "translator-icon/penpot/Translator-Mono.penpot",
+    "crcPassed": true,
+    "entries": 586,
+    "acceptanceBoards": 23,
+    "originalReferenceLocked": true
+  },
+  "newDocumentsWhitespacePassed": true
+}

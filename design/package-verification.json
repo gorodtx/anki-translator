@@ -1,0 +1,13 @@
+{
+  "verifiedAt": "2026-10-05T12:01:43.855372+00:00",
+  "file": "Translator-Design-Delivery.zip",
+  "bytes": 17262655,
+  "sha256": "7574222fe95ba20b4bc9a262e9e2d388e6dc1fe8bc35beb2c6d7d5598b9b8f8b",
+  "entries": 224,
+  "crcPassed": true,
+  "readyExportChecksumsPassed": true,
+  "full23BoardPenpotIncluded": true,
+  "duplicatePenpotOmittedAfterByteMatch": true,
+  "previousArchivesPreserved": true,
+  "runtimeAndPrivateFilesExcluded": true
+}

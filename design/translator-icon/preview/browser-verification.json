@@ -1,0 +1,161 @@
+{
+  "ok": true,
+  "result": {
+    "images": [
+      {
+        "src": "../master/app-icon-master.png",
+        "natural": [
+          2048,
+          2048
+        ],
+        "rendered": [
+          496,
+          496
+        ]
+      },
+      {
+        "src": "../master/app-icon-master-dark.png",
+        "natural": [
+          2048,
+          2048
+        ],
+        "rendered": [
+          496,
+          496
+        ]
+      },
+      {
+        "src": "../macOS/png/light/256.png",
+        "natural": [
+          256,
+          256
+        ],
+        "rendered": [
+          256,
+          256
+        ]
+      },
+      {
+        "src": "../macOS/png/light/128.png",
+        "natural": [
+          128,
+          128
+        ],
+        "rendered": [
+          128,
+          128
+        ]
+      },
+      {
+        "src": "../macOS/png/light/64.png",
+        "natural": [
+          64,
+          64
+        ],
+        "rendered": [
+          64,
+          64
+        ]
+      },
+      {
+        "src": "../macOS/png/light/32.png",
+        "natural": [
+          32,
+          32
+        ],
+        "rendered": [
+          32,
+          32
+        ]
+      },
+      {
+        "src": "../macOS/png/light/16.png",
+        "natural": [
+          16,
+          16
+        ],
+        "rendered": [
+          16,
+          16
+        ]
+      },
+      {
+        "src": "../symbol/logo-symbol.svg",
+        "natural": [
+          1024,
+          1024
+        ],
+        "rendered": [
+          120,
+          120
+        ]
+      },
+      {
+        "src": "../symbol/logo-symbol-small.svg",
+        "natural": [
+          1024,
+          1024
+        ],
+        "rendered": [
+          120,
+          120
+        ]
+      },
+      {
+        "src": "../symbol/logo-symbol-dark.svg",
+        "natural": [
+          1024,
+          1024
+        ],
+        "rendered": [
+          120,
+          120
+        ]
+      },
+      {
+        "src": "../symbol/logo-symbol-mono.svg",
+        "natural": [
+          1024,
+          1024
+        ],
+        "rendered": [
+          120,
+          120
+        ]
+      }
+    ],
+    "mobile": {
+      "viewport": 390,
+      "pageWidth": 390
+    },
+    "reducedMotion": [
+      {
+        "id": "chaos",
+        "animation": "none",
+        "opacity": "1"
+      },
+      {
+        "id": "front-panel",
+        "animation": "none",
+        "opacity": "1"
+      },
+      {
+        "id": "line-1",
+        "animation": "none",
+        "opacity": "1"
+      },
+      {
+        "id": "line-2",
+        "animation": "none",
+        "opacity": "1"
+      },
+      {
+        "id": "line-3",
+        "animation": "none",
+        "opacity": "1"
+      }
+    ],
+    "normalAnimationCount": 5,
+    "animationFinished": true
+  }
+}

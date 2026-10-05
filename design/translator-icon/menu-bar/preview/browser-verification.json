@@ -1,0 +1,48 @@
+{
+  "wide": {
+    "width": 1064,
+    "documentWidth": 1064,
+    "images": [
+      {
+        "source": "../translator-line-white.svg",
+        "loaded": true,
+        "displayWidth": 560,
+        "displayHeight": 360
+      },
+      {
+        "source": "../png/translator-line-white@2x.png",
+        "loaded": true,
+        "displayWidth": 28,
+        "displayHeight": 18
+      },
+      {
+        "source": "../png/translator-line-template@2x.png",
+        "loaded": true,
+        "displayWidth": 28,
+        "displayHeight": 18
+      },
+      {
+        "source": "../png/translator-line-white.png",
+        "loaded": true,
+        "displayWidth": 28,
+        "displayHeight": 18
+      },
+      {
+        "source": "../png/translator-line-tiny-white.png",
+        "loaded": true,
+        "displayWidth": 20,
+        "displayHeight": 18
+      },
+      {
+        "source": "../reference/menu-bar-reference.png",
+        "loaded": true,
+        "displayWidth": 254,
+        "displayHeight": 47
+      }
+    ]
+  },
+  "mobile": {
+    "width": 390,
+    "documentWidth": 390
+  }
+}

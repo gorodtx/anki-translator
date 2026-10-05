@@ -1,8 +1,8 @@
 # Translator
 
-<img src="icons/main_icon.png" width="56" alt="Иконка Translator">
+<img src="design/final/translator-logo-1024.png" width="80" height="80" alt="Логотип Translator: две панели, клубок и строки текста">
 
-**Перевод рядом с текстом.**
+**Перевод рядом. Из хаоса — в ясность.**
 
 Выделите английский текст → вызовите Translator через macOS «Службы» → прочитайте русский перевод.
 

@@ -1,0 +1,8 @@
+#chaos { transform-box: fill-box; transform-origin: center; animation: clarify 1.4s cubic-bezier(.2,.75,.25,1) both; }
+#front-panel { animation: forward 1s cubic-bezier(.2,.75,.25,1) both; }
+#line-1, #line-2, #line-3 { transform-box: fill-box; transform-origin: left center; animation: reveal .55s cubic-bezier(.2,.75,.25,1) both; }
+#line-1 { animation-delay: .35s; } #line-2 { animation-delay: .48s; } #line-3 { animation-delay: .61s; }
+@keyframes clarify { 0% { opacity: .68; transform: rotate(-3deg) scale(1.04); } 55% { opacity: .92; transform: rotate(1deg) scale(.97); } 100% { opacity: 1; transform: none; } }
+@keyframes forward { from { transform: translate(-8px,6px); } to { transform: none; } }
+@keyframes reveal { from { opacity: 0; transform: scaleX(.15); } to { opacity: 1; transform: none; } }
+@media (prefers-reduced-motion: reduce) { #chaos, #front-panel, #line-1, #line-2, #line-3 { animation: none; transform: none; opacity: 1; } }

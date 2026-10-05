@@ -1,0 +1,58 @@
+{
+  "fileId": "76adeac8-81da-81cd-8008-be13d9a96e83",
+  "pageId": "76adeac8-81da-81cd-8008-be13d9a96e84",
+  "name": "Translator · Mono icon system",
+  "font": "Inter",
+  "legacyLayersUnchanged": true,
+  "totalBoardCount": 23,
+  "boards": [
+    {
+      "id": "0121e6bb-e9d3-80ba-8008-be35a5ae2cec",
+      "name": "GITHUB · Repo card · RU",
+      "role": "card-ru",
+      "bounds": {
+        "x": 6100,
+        "y": 0,
+        "width": 1280,
+        "height": 640
+      },
+      "safeInset": 80
+    },
+    {
+      "id": "0121e6bb-e9d3-80ba-8008-be35a62077c3",
+      "name": "GITHUB · Repo card · EN",
+      "role": "card-en",
+      "bounds": {
+        "x": 6100,
+        "y": 800,
+        "width": 1280,
+        "height": 640
+      },
+      "safeInset": 80
+    },
+    {
+      "id": "0121e6bb-e9d3-80ba-8008-be35a688d0c9",
+      "name": "AVATAR · Light · 1024",
+      "role": "avatar-light",
+      "bounds": {
+        "x": 6100,
+        "y": 1600,
+        "width": 1024,
+        "height": 1024
+      },
+      "circleSafe": true
+    },
+    {
+      "id": "0121e6bb-e9d3-80ba-8008-be35a702e074",
+      "name": "AVATAR · Dark · 1024",
+      "role": "avatar-dark",
+      "bounds": {
+        "x": 7220,
+        "y": 1600,
+        "width": 1024,
+        "height": 1024
+      },
+      "circleSafe": true
+    }
+  ]
+}

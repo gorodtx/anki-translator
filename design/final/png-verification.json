@@ -1,0 +1,126 @@
+{
+  "verifiedAt": "2026-10-05T11:57:17.948Z",
+  "files": [
+    {
+      "file": "translator-logo.png",
+      "width": 2048,
+      "height": 2048,
+      "bytes": 596914,
+      "opaque": false,
+      "minAlpha": 0,
+      "maxAlpha": 255,
+      "cornerAlpha": [
+        0,
+        0,
+        0,
+        0
+      ]
+    },
+    {
+      "file": "translator-logo-1024.png",
+      "width": 1024,
+      "height": 1024,
+      "bytes": 213345,
+      "opaque": false,
+      "minAlpha": 0,
+      "maxAlpha": 255,
+      "cornerAlpha": [
+        0,
+        0,
+        0,
+        0
+      ]
+    },
+    {
+      "file": "translator-logo-dark.png",
+      "width": 2048,
+      "height": 2048,
+      "bytes": 581609,
+      "opaque": false,
+      "minAlpha": 0,
+      "maxAlpha": 255,
+      "cornerAlpha": [
+        0,
+        0,
+        0,
+        0
+      ]
+    },
+    {
+      "file": "translator-line-white.png",
+      "width": 560,
+      "height": 360,
+      "bytes": 8767,
+      "opaque": false,
+      "minAlpha": 0,
+      "maxAlpha": 255,
+      "cornerAlpha": [
+        0,
+        0,
+        0,
+        0
+      ],
+      "pureWhiteInk": true
+    },
+    {
+      "file": "github-avatar.png",
+      "width": 500,
+      "height": 500,
+      "bytes": 80842,
+      "opaque": true,
+      "minAlpha": 255,
+      "maxAlpha": 255,
+      "cornerAlpha": [
+        255,
+        255,
+        255,
+        255
+      ]
+    },
+    {
+      "file": "github-avatar-dark.png",
+      "width": 500,
+      "height": 500,
+      "bytes": 80064,
+      "opaque": true,
+      "minAlpha": 255,
+      "maxAlpha": 255,
+      "cornerAlpha": [
+        255,
+        255,
+        255,
+        255
+      ]
+    },
+    {
+      "file": "github-repo-card.png",
+      "width": 1280,
+      "height": 640,
+      "bytes": 104880,
+      "opaque": true,
+      "minAlpha": 255,
+      "maxAlpha": 255,
+      "cornerAlpha": [
+        255,
+        255,
+        255,
+        255
+      ]
+    },
+    {
+      "file": "github-repo-card-en.png",
+      "width": 1280,
+      "height": 640,
+      "bytes": 106284,
+      "opaque": true,
+      "minAlpha": 255,
+      "maxAlpha": 255,
+      "cornerAlpha": [
+        255,
+        255,
+        255,
+        255
+      ]
+    }
+  ]
+}

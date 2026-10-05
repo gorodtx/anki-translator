@@ -1,0 +1,147 @@
+{
+  "verifiedAt": "2026-10-05T11:38:17.947Z",
+  "singleContinuousPath": true,
+  "readySvgCount": 5,
+  "readyPngCount": 14,
+  "png": [
+    {
+      "file": "png/translator-line-template.png",
+      "width": 28,
+      "height": 18,
+      "transparent": true,
+      "uncropped": true,
+      "onlyRequestedColour": true,
+      "sha256": "c19aee0565c39213a31418f034d8feab2c20a3110fea9277f51396abff86574a"
+    },
+    {
+      "file": "png/translator-line-template@2x.png",
+      "width": 56,
+      "height": 36,
+      "transparent": true,
+      "uncropped": true,
+      "onlyRequestedColour": true,
+      "sha256": "22fc2e54e0b82a2af9e9d0aa71934edd9d6d73907d273cdb6e84bf45da0566ce"
+    },
+    {
+      "file": "png/translator-line-template@3x.png",
+      "width": 84,
+      "height": 54,
+      "transparent": true,
+      "uncropped": true,
+      "onlyRequestedColour": true,
+      "sha256": "9d4dd54307d6434556bdeb8a80d5affb243c71faf060b04f5d6c80c626ed2279"
+    },
+    {
+      "file": "png/translator-line-tiny-white.png",
+      "width": 20,
+      "height": 18,
+      "transparent": true,
+      "uncropped": true,
+      "onlyRequestedColour": true,
+      "sha256": "b636b5ef04904d03f866c5429ed03d86c1c8a6c38fee68ac45cebc1e953e4cf4"
+    },
+    {
+      "file": "png/translator-line-tiny-white@2x.png",
+      "width": 40,
+      "height": 36,
+      "transparent": true,
+      "uncropped": true,
+      "onlyRequestedColour": true,
+      "sha256": "6b2726d9df6effa9cb54ef88b2559849333c553e3f1f21360fc4ba6842640366"
+    },
+    {
+      "file": "png/translator-line-tiny-white@3x.png",
+      "width": 60,
+      "height": 54,
+      "transparent": true,
+      "uncropped": true,
+      "onlyRequestedColour": true,
+      "sha256": "b326b37fc1262239963d13325c8ffb8c96fc728ca431eb98bb4341eeee6226dc"
+    },
+    {
+      "file": "png/translator-line-white-large@2x.png",
+      "width": 1120,
+      "height": 720,
+      "transparent": true,
+      "uncropped": true,
+      "onlyRequestedColour": true,
+      "sha256": "38ff3b0d6fd7532cc95ed0cf0d25efadb37098e5e9d1f4f29790f0f54e5d1959"
+    },
+    {
+      "file": "png/translator-line-white.png",
+      "width": 28,
+      "height": 18,
+      "transparent": true,
+      "uncropped": true,
+      "onlyRequestedColour": true,
+      "sha256": "4ba6aec4ac5ebe3b81f14062cb62c3b78e89576cb3b6aba271d5f3436a2f9564"
+    },
+    {
+      "file": "png/translator-line-white@2x.png",
+      "width": 56,
+      "height": 36,
+      "transparent": true,
+      "uncropped": true,
+      "onlyRequestedColour": true,
+      "sha256": "02c8971379eaa0d73e0d48bee0be88e25df2163337c2a6f90a8daade735bbc7b"
+    },
+    {
+      "file": "png/translator-line-white@3x.png",
+      "width": 84,
+      "height": 54,
+      "transparent": true,
+      "uncropped": true,
+      "onlyRequestedColour": true,
+      "sha256": "2a05f6205fb5c3d3603f37dc99fc6abe732895943a04c8318dbf975614b4c157"
+    },
+    {
+      "file": "translator-line-white.png",
+      "width": 560,
+      "height": 360,
+      "transparent": true,
+      "uncropped": true,
+      "onlyRequestedColour": true,
+      "sha256": "f1adfdc9040ac3b52c9f420cce77d3d06f6c4fd1605861a7e66ca1f11eb6eca3"
+    },
+    {
+      "file": "macOS/TranslatorMenuBar.imageset/TranslatorMenuBar.png",
+      "width": 28,
+      "height": 18,
+      "transparent": true,
+      "uncropped": true,
+      "onlyRequestedColour": true,
+      "sha256": "c19aee0565c39213a31418f034d8feab2c20a3110fea9277f51396abff86574a"
+    },
+    {
+      "file": "macOS/TranslatorMenuBar.imageset/TranslatorMenuBar@2x.png",
+      "width": 56,
+      "height": 36,
+      "transparent": true,
+      "uncropped": true,
+      "onlyRequestedColour": true,
+      "sha256": "22fc2e54e0b82a2af9e9d0aa71934edd9d6d73907d273cdb6e84bf45da0566ce"
+    },
+    {
+      "file": "macOS/TranslatorMenuBar.imageset/TranslatorMenuBar@3x.png",
+      "width": 84,
+      "height": 54,
+      "transparent": true,
+      "uncropped": true,
+      "onlyRequestedColour": true,
+      "sha256": "9d4dd54307d6434556bdeb8a80d5affb243c71faf060b04f5d6c80c626ed2279"
+    }
+  ],
+  "nativeGeometryOverlap": [
+    {
+      "role": "white",
+      "maskIntersectionOverUnion": 0.9920532752388969
+    },
+    {
+      "role": "template",
+      "maskIntersectionOverUnion": 1
+    }
+  ],
+  "templateImageSet": true,
+  "referenceUnchanged": true,
+  "legacyLayersUnchanged": true
+}

@@ -1,0 +1,11 @@
+{
+  "large": {
+    "width": 1360,
+    "documentWidth": 1360,
+    "missingImages": 0
+  },
+  "mobile": {
+    "width": 390,
+    "documentWidth": 390
+  }
+}

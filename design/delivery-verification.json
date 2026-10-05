@@ -1,0 +1,343 @@
+{
+  "preparedAt": "2026-10-05",
+  "scope": "Local artwork delivery and a three-agent handoff only",
+  "initialWorkingTree": {
+    "head": "6931540ad76a6ab7a5abe70d49c513e93e881d36",
+    "branch": "mac",
+    "files": [
+      {
+        "status": " M",
+        "path": "icons/main_icon.png",
+        "sha256": "0730efa3ee32ea72729785ce6b04ebe7bb9b975f0507ef61b79a00fea444c851"
+      },
+      {
+        "status": " M",
+        "path": "macos/Translator/Resources/AppIcon.icns",
+        "sha256": "ca1f8328df7395ca05066fbeff9449e6ead4df2dbfefecf4c473ca7f43e3a4b3"
+      },
+      {
+        "status": " M",
+        "path": "macos/Translator/Resources/Info.plist",
+        "sha256": "fc636cfd80d641a17574391ac64d5e975098898d6451092be4ad8f71021c205c"
+      },
+      {
+        "status": " M",
+        "path": "macos/Translator/scripts/make_icon.sh",
+        "sha256": "95cb94ebff0b0729fe0250e6a70b650792c84a25a1fe4d9f6fcb964cd3c772db"
+      },
+      {
+        "status": " M",
+        "path": "macos/Translator/scripts/make_icon.swift",
+        "sha256": "4d9b467d6d143f472393ade8e882354f7b9a70c5487c373b95b90b1340319333"
+      },
+      {
+        "status": " M",
+        "path": "site/README.md",
+        "sha256": "3d041a85c895ebfd39db2aed20e6f09a43d21a906eca7d40ff723ef7a0d92575"
+      },
+      {
+        "status": " M",
+        "path": "site/app.js",
+        "sha256": "574ca6890040e44ed10c469e6b0c994b1e1ee3d0ce25f13d0d93abebfd3f6266"
+      },
+      {
+        "status": " M",
+        "path": "site/assets/icon.png",
+        "sha256": "ff35a8a41390da25b3cc38eb3988f9aaf0447c5b7b2509d8d250fb1bfa7f317a"
+      },
+      {
+        "status": " M",
+        "path": "site/index.html",
+        "sha256": "85f8ed34b993da7cf1fc0f874df06c4383387471f73ccd760a23a6b36b8d5327"
+      },
+      {
+        "status": " M",
+        "path": "site/media.js",
+        "sha256": "f5efa9b455596c74c19e37155de3d5a9fba72978238c17809f2b7b0f64541f2d"
+      },
+      {
+        "status": " M",
+        "path": "site/style.css",
+        "sha256": "9888276a895ec3843d59a9a77c9b72db3720cf9e1a40957063dd6d002b8a170e"
+      },
+      {
+        "status": "??",
+        "path": "site/assets/apple-touch-icon.png",
+        "sha256": "24ef250c79f97b883db9abe2fb9e0b8c1b6904ef3a7cdf0bc14e2c2c18e2bc8a"
+      },
+      {
+        "status": "??",
+        "path": "site/assets/favicon.ico",
+        "sha256": "383ad0195e51803c4ce96cf028b289dffaa6fd3d478b1bcca05527fa6b516ee5"
+      },
+      {
+        "status": "??",
+        "path": "site/assets/favicon.svg",
+        "sha256": "f49615436130cb1e442e6c14d33fbdf1eea65643bac854076147282db3292a17"
+      },
+      {
+        "status": "??",
+        "path": "site/assets/logo-dark-small.svg",
+        "sha256": "a078aaf19256818a7fc6d174b9aac198561892aec31959cd4d9d0e2ec659ab16"
+      }
+    ]
+  },
+  "verifiedAt": "2026-10-05T12:01:43.437076+00:00",
+  "finalGit": {
+    "branch": "mac",
+    "head": "6931540ad76a6ab7a5abe70d49c513e93e881d36",
+    "headUnchanged": true,
+    "outsideDesignFilesUnchanged": true,
+    "outsideDesignStatusUnchanged": true,
+    "outsideDesignFileCount": 15,
+    "gitDiffCheckPassed": true
+  },
+  "readyExports": {
+    "count": 12,
+    "identicalToSource": true,
+    "manifest": "final/manifest.json",
+    "png": {
+      "verifiedAt": "2026-10-05T11:57:17.948Z",
+      "files": [
+        {
+          "file": "translator-logo.png",
+          "width": 2048,
+          "height": 2048,
+          "bytes": 596914,
+          "opaque": false,
+          "minAlpha": 0,
+          "maxAlpha": 255,
+          "cornerAlpha": [
+            0,
+            0,
+            0,
+            0
+          ]
+        },
+        {
+          "file": "translator-logo-1024.png",
+          "width": 1024,
+          "height": 1024,
+          "bytes": 213345,
+          "opaque": false,
+          "minAlpha": 0,
+          "maxAlpha": 255,
+          "cornerAlpha": [
+            0,
+            0,
+            0,
+            0
+          ]
+        },
+        {
+          "file": "translator-logo-dark.png",
+          "width": 2048,
+          "height": 2048,
+          "bytes": 581609,
+          "opaque": false,
+          "minAlpha": 0,
+          "maxAlpha": 255,
+          "cornerAlpha": [
+            0,
+            0,
+            0,
+            0
+          ]
+        },
+        {
+          "file": "translator-line-white.png",
+          "width": 560,
+          "height": 360,
+          "bytes": 8767,
+          "opaque": false,
+          "minAlpha": 0,
+          "maxAlpha": 255,
+          "cornerAlpha": [
+            0,
+            0,
+            0,
+            0
+          ],
+          "pureWhiteInk": true
+        },
+        {
+          "file": "github-avatar.png",
+          "width": 500,
+          "height": 500,
+          "bytes": 80842,
+          "opaque": true,
+          "minAlpha": 255,
+          "maxAlpha": 255,
+          "cornerAlpha": [
+            255,
+            255,
+            255,
+            255
+          ]
+        },
+        {
+          "file": "github-avatar-dark.png",
+          "width": 500,
+          "height": 500,
+          "bytes": 80064,
+          "opaque": true,
+          "minAlpha": 255,
+          "maxAlpha": 255,
+          "cornerAlpha": [
+            255,
+            255,
+            255,
+            255
+          ]
+        },
+        {
+          "file": "github-repo-card.png",
+          "width": 1280,
+          "height": 640,
+          "bytes": 104880,
+          "opaque": true,
+          "minAlpha": 255,
+          "maxAlpha": 255,
+          "cornerAlpha": [
+            255,
+            255,
+            255,
+            255
+          ]
+        },
+        {
+          "file": "github-repo-card-en.png",
+          "width": 1280,
+          "height": 640,
+          "bytes": 106284,
+          "opaque": true,
+          "minAlpha": 255,
+          "maxAlpha": 255,
+          "cornerAlpha": [
+            255,
+            255,
+            255,
+            255
+          ]
+        }
+      ]
+    },
+    "containers": {
+      "svg": [
+        {
+          "file": "translator-line-white.svg",
+          "validXml": true,
+          "uniqueIds": true,
+          "rasterImages": false,
+          "pathCount": 1
+        },
+        {
+          "file": "translator-logo-dark.svg",
+          "validXml": true,
+          "uniqueIds": true,
+          "rasterImages": false,
+          "pathCount": 38
+        },
+        {
+          "file": "translator-logo.svg",
+          "validXml": true,
+          "uniqueIds": true,
+          "rasterImages": false,
+          "pathCount": 38
+        }
+      ],
+      "icns": {
+        "validContainer": true,
+        "representations": [
+          "ic04",
+          "ic11",
+          "ic05",
+          "ic12",
+          "ic07",
+          "ic13",
+          "ic08",
+          "ic14",
+          "ic09",
+          "ic10"
+        ],
+        "count": 10,
+        "blocksIncludingTableOfContents": 11,
+        "tableOfContentsPassed": true,
+        "diagnosticNote": "The initial checker counted the TOC block as an image; the check was corrected. Artwork is unchanged."
+      },
+      "penpot": {
+        "file": "translator-icon/penpot/Translator-Mono.penpot",
+        "crcPassed": true,
+        "entries": 586,
+        "acceptanceBoards": 23,
+        "originalReferenceLocked": true
+      },
+      "newDocumentsWhitespacePassed": true
+    }
+  },
+  "penpot": {
+    "file": "translator-icon/penpot/Translator-Mono.penpot",
+    "actualBoardCount": 23,
+    "eightAddedBoardsPresent": true,
+    "crcPassed": true,
+    "entries": 586,
+    "sha256": "0a01bb1cb28873023c9812662c77cfe31a53aed1e461a6ee0bf4796c79e94899"
+  },
+  "userReferences": [
+    {
+      "file": "translator-icon/reference/logo_translator.png",
+      "identicalToUserAttachment": true,
+      "sha256": "c12cbfb9ca11bb99f209b84afcc6997ababe5db11d4256af157f80c0957bb203"
+    },
+    {
+      "file": "translator-icon/github/reference/repository-open-graph-template.png",
+      "identicalToUserAttachment": true,
+      "sha256": "5259d6e413242c63afe88027122eed783612ff9a9e48b9a9c51313f6bf66fb94"
+    }
+  ],
+  "preservedArchives": [
+    {
+      "file": "Translator-Mono-Icon-Kit.zip",
+      "bytes": 11503599,
+      "sha256": "75ea05aa796a747578c803f1a3fb415dfcbd8f00ed2907f46ef935be39dacdf3",
+      "entries": 156,
+      "crcPassed": true
+    },
+    {
+      "file": "Translator-Panel-and-GitHub-Kit.zip",
+      "bytes": 8268251,
+      "sha256": "062c47c48155e0103d83b8edb10aab44befbd873b30195ee91e9f90d43e34625",
+      "entries": 74,
+      "crcPassed": true
+    }
+  ],
+  "sharedMcp": {
+    "doctorPassed": true,
+    "pluginConnected": true,
+    "fileId": "76adeac8-81da-81cd-8008-be13d9a96e83",
+    "pageId": "76adeac8-81da-81cd-8008-be13d9a96e84",
+    "toolCount": 5,
+    "allNativeLaunchPathsVerified": false
+  },
+  "integration": {
+    "newImplementationChangesThisStage": false,
+    "preExistingLocalIntegrationChangesPreserved": true,
+    "installedAppUpdated": false,
+    "menuBarReplaced": false,
+    "githubUploadPerformed": false,
+    "profileUpdated": false,
+    "commitPerformed": false,
+    "pushPerformed": false,
+    "newSiteDeploymentPerformed": false,
+    "agentsLaunched": false
+  },
+  "handoff": {
+    "file": "THREE-AGENT-HANDOFF.md",
+    "roleCount": 3,
+    "roles": [
+      "Translator-Brand-GitHub",
+      "Translator-Brand-macOS",
+      "Translator-Brand-Web"
+    ]
+  }
+}
