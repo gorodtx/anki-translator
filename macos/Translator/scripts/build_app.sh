@@ -27,12 +27,8 @@ mkdir -p "$OUT/Contents/MacOS" "$OUT/Contents/Resources"
 cp "$BIN" "$OUT/Contents/MacOS/${APP_NAME}"
 cp Resources/Info.plist "$OUT/Contents/Info.plist"
 /usr/libexec/PlistBuddy -c "Set :CFBundleVersion $APP_BUILD" "$OUT/Contents/Info.plist"
-# CFBundleIconFile names it; the About panel and Finder show it.
-cp Resources/AppIcon.icns "$OUT/Contents/Resources/AppIcon.icns"
-mkdir -p "$OUT/Contents/Resources/MenuBar"
-for image in TranslatorMenuBar.png TranslatorMenuBar@2x.png TranslatorMenuBar@3x.png; do
-  cp "Resources/MenuBar/$image" "$OUT/Contents/Resources/MenuBar/$image"
-done
+# Verify the exact compiler inputs and pack CAR, optical fallback and template masks.
+uv run --no-project python ../../scripts/macos_bundle_manifest.py --pack-artwork "$OUT"
 printf 'APPL????' > "$OUT/Contents/PkgInfo"
 
 # Ad-hoc signature: enough for local runs (a Developer ID identity is needed for

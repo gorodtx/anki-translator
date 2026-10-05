@@ -2,6 +2,11 @@ name: macOS icon resources
 
 on:
   workflow_dispatch:
+    inputs:
+      diagnostic_batch:
+        description: Compile isolated control/preferred cases instead of production input
+        type: boolean
+        default: false
 
 permissions:
   contents: read
@@ -17,7 +22,14 @@ jobs:
       - name: Install uv
         uses: astral-sh/setup-uv@v5
 
+      - name: Compile production appearances with official Xcode
+        if: ${{ !inputs.diagnostic_batch }}
+        run: |
+          set -euo pipefail
+          macos/Translator/scripts/make_icon.sh --compile-appearances "${RUNNER_TEMP}/Translator-AppIcon-resources"
+
       - name: Compile isolated control and preferred declarations
+        if: ${{ inputs.diagnostic_batch }}
         run: |
           set -euo pipefail
           macos/Translator/scripts/make_icon.sh --compile-appearance-diagnostics "${RUNNER_TEMP}/Translator-AppIcon-resources"

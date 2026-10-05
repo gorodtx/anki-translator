@@ -22,6 +22,8 @@ selection ──▶ Translator.app ──NDJSON/UDS──▶ python -m desktop_a
 | `scripts/mock_backend.py` | Canned backend on the real protocol, for working without Python running. |
 | `Resources/Info.plist` | `LSUIElement`, `NSServices`. |
 | `Resources/AppIcon.icns` | Утверждённый Mono AppIcon с десятью оптическими representations. |
+| `Resources/AppIcon.icon/`, `AppIcon-layer-sources/` | Точные слои исходного знака и подтверждённый порядок Icon Composer. |
+| `Resources/CompiledAppIcon/` | Официально скомпилированный CAR, неизменённая provenance и отдельный receipt выбора. |
 | `Resources/MenuBar/` | Template PNG знака «клубок → ровная линия», 28×18 pt, 1x/2x/3x. |
 
 ## Build and run
@@ -31,15 +33,32 @@ scripts/build_app.sh release      # -> .build/Translator.app
 open .build/Translator.app
 ```
 
-There is no Xcode on this machine, only Command Line Tools, so everything goes through
-SwiftPM. `xcodebuild` is not used anywhere.
+На этой машине установлен только Command Line Tools; native shell собирается через
+SwiftPM. Appearance resources заранее скомпилированы официальным Xcode в отдельном
+resource-only workflow. Локальная сборка не требует установки Xcode.
 
 Знак панели загружает `MenuBarArtwork` через `Bundle.main`: каждая bitmap representation
 имеет логический размер 28×18 pt, а `NSImage.isTemplate` и SwiftUI `.template` передают
 выбор цвета системе. У знака прозрачный фон; подложки и тени отсутствуют. `Package.swift`
 не объявляет asset catalog: оба сборщика (`scripts/build_app.sh` здесь и
-`../../scripts/build_macos_app.sh`) явно копируют три PNG в `Contents/Resources/MenuBar`
-до подписи. Сборка завершается проверкой `codesign --verify --deep --strict`.
+`../../scripts/build_macos_app.sh`) вызывают общий `macos_bundle_manifest.py --pack-artwork`
+до подписи. Он сверяет 13 compiler inputs, digest, CAR hash и receipt, упаковывает три
+menu PNG, CAR, provenance и curated ICNS, затем задаёт `CFBundleIconName=AppIcon`.
+Проверяется byte equality реально упакованных ресурсов; одного наличия CAR недостаточно.
+Сборка завершается проверкой `codesign --verify --deep --strict`.
+
+Системные macOS appearances используют app-owned layered CAR; fallback сохраняет
+десять оптических representations и native `ic04/ic05`. Исходный `AppIcon-source.json`
+скопирован byte-identically из compiler input и описывает его исторический diagnostic
+статус. Текущий выбор control и проверку маленького **не запущенного** ClearDark probe
+фиксирует отдельный `CompiledAppIcon/promotion-receipt.json`. Его положительный результат
+не означает installed acceptance или пользовательский Accessibility grant.
+
+Для обновления CAR служит `.github/workflows/macos-icon-assets.yml`: обычный ручной запуск
+компилирует production input; `diagnostic_batch=true` собирает две изолированные пробы.
+Workflow не подписывает, не устанавливает и не публикует приложение. Artwork и immutable
+compiler provenance не перезаписывают после проверки; последующий выбор записывают
+отдельным receipt. Global theme, icon cache и TCC не меняют ради отображения.
 
 `TRANSLATOR_APP_BUILD` задаёт локальный номер сборки в обоих путях; без него используется
 число коммитов. Короткая сборка содержит native shell, полная — также backend и Python

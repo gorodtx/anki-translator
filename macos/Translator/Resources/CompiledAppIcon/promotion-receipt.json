@@ -1,0 +1,34 @@
+{
+  "actual_os_default_and_dark_acceptance": "pending",
+  "assets_car_sha256": "119d9a04a731edc72037a5886ccaca11b0c519ad6bcd962a905a4116ffe6f4d7",
+  "checked_utc": "2026-10-05T17:26:38.893287+00:00",
+  "compiler_job": 111888956735,
+  "compiler_source_revision": "5c2747aca18805e7f0c4fcea9d38377767fd9d3a",
+  "compiler_workflow_run": 37347290607,
+  "global_preferences": {
+    "AppleIconAppearanceTheme": "ClearDark",
+    "AppleIconAppearanceTintColor": "Graphite",
+    "AppleInterfaceStyle": "Dark"
+  },
+  "input_manifest_copied_without_changes": true,
+  "input_manifest_is_immutable_compilation_metadata": true,
+  "native_installed_acceptance": "pending",
+  "positive_visual_features": [
+    "bright front panel",
+    "visible knot",
+    "three decreasing text bars"
+  ],
+  "probe_scope": "public NSWorkspace file icon; unique unlaunched bundle; ClearDark/Graphite; 16/32pt at1x/2x",
+  "resource_provenance_sha256": "4733faca4c8c8a705362205d931525201e721c0379da28f66371b00aaa7a4e81",
+  "selected_variant": "control",
+  "selection_reason": "same personally viewed identity as preferred; retains known-valid appearance/color declarations",
+  "source_sha256": "ebfc66e6da9e1eff9ab0a673a67fd1ed6ce1e21e8525874cc909e77f9bfde8d6",
+  "unlaunched_clear_dark_small_render_check": "passed",
+  "version": 1,
+  "viewed_render_hashes": {
+    "batch-control-workspace-16pt-1x-NSAppearanceNameAqua.png": "4b0ea1627e93a8f78a8b62e4fc0d3976b2c91c3b123216a71d6cb9ae1ea61660",
+    "batch-control-workspace-16pt-2x-NSAppearanceNameAqua.png": "5851c07487802be56601bb5ea80a239efa0cf417980b44df93c60926cccfab44",
+    "batch-control-workspace-32pt-1x-NSAppearanceNameAqua.png": "5ff509d8ed1d796e1b168d0ea8046894b7446c64e4824cfe47e1f4a9c355a8ac",
+    "batch-control-workspace-32pt-2x-NSAppearanceNameAqua.png": "fdc179ca411035c159937e6ccf4c527d9ee1d41b50d26b5a749d47e75850ff65"
+  }
+}

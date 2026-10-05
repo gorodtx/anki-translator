@@ -1,4 +1,10 @@
 {
+  "fill": {
+    "linear-gradient": [
+      "srgb:0.98824,0.98039,0.96471,1.00000",
+      "srgb:0.91373,0.90588,0.88627,1.00000"
+    ]
+  },
   "fill-specializations": [
     {
       "appearance": "dark",
@@ -22,10 +28,8 @@
         {
           "name": "highlights",
           "image-name": "highlights.png",
+          "fill": "automatic",
           "fill-specializations": [
-            {
-              "value": "automatic"
-            },
             {
               "appearance": "dark",
               "value": "automatic"
@@ -44,10 +48,8 @@
         {
           "name": "text",
           "image-name": "text.png",
+          "fill": "automatic",
           "fill-specializations": [
-            {
-              "value": "automatic"
-            },
             {
               "appearance": "dark",
               "value": "automatic"
@@ -66,10 +68,8 @@
         {
           "name": "front-panel",
           "image-name": "front-panel.png",
+          "fill": "automatic",
           "fill-specializations": [
-            {
-              "value": "automatic"
-            },
             {
               "appearance": "dark",
               "value": "automatic"
@@ -105,10 +105,8 @@
         {
           "name": "chaos",
           "image-name": "chaos.png",
+          "fill": "automatic",
           "fill-specializations": [
-            {
-              "value": "automatic"
-            },
             {
               "appearance": "dark",
               "value": "automatic"
@@ -144,10 +142,8 @@
         {
           "name": "back-panel",
           "image-name": "back-panel.png",
+          "fill": "automatic",
           "fill-specializations": [
-            {
-              "value": "automatic"
-            },
             {
               "appearance": "dark",
               "value": "automatic"
@@ -178,11 +174,5 @@
   ],
   "supported-platforms": {
     "squares": "shared"
-  },
-  "fill": {
-    "linear-gradient": [
-      "srgb:0.98824,0.98039,0.96471,1.00000",
-      "srgb:0.91373,0.90588,0.88627,1.00000"
-    ]
   }
 }

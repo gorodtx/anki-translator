@@ -178,12 +178,6 @@ ln -sf ../python/bin/python3.13 "${RESOURCES}/bin/TranslatorEngine"
 chmod +x "${RESOURCES}/bin/run-backend"
 
 cp "${ROOT_DIR}/scripts/db-bundle.lock.json" "${RESOURCES}/db-bundle.lock.json"
-# Optical AppIcon and template menu artwork from the approved Mono icon system.
-cp "${ROOT_DIR}/macos/Translator/Resources/AppIcon.icns" "${RESOURCES}/AppIcon.icns"
-mkdir -p "${RESOURCES}/MenuBar"
-for image in TranslatorMenuBar.png TranslatorMenuBar@2x.png TranslatorMenuBar@3x.png; do
-  cp "${ROOT_DIR}/macos/Translator/Resources/MenuBar/${image}" "${RESOURCES}/MenuBar/${image}"
-done
 cp "${ROOT_DIR}/scripts/runtime-requirements.txt" "${RESOURCES}/runtime-requirements.txt"
 
 # --- Info.plist ------------------------------------------------------------------------------
@@ -223,6 +217,8 @@ cat > "${CONTENTS}/Info.plist" <<PLIST
 PLIST
 
 # --- Signing -----------------------------------------------------------------------------------
+uv run --no-project python "${ROOT_DIR}/scripts/macos_bundle_manifest.py" \
+  --pack-artwork "${APP_DIR}"
 uv run --no-project python "${ROOT_DIR}/scripts/macos_bundle_manifest.py" \
   --app "${APP_DIR}" --expected-source-digest "${SOURCE_DIGEST}"
 log "signing (${SIGN_IDENTITY})"

@@ -1,0 +1,37 @@
+{
+  "compiler": "/Applications/Xcode_26.6.app/Contents/Developer/usr/bin/actool",
+  "generated_files": {
+    "AppIcon.icns": "43950f21bcf66e6d9e10690867ac9b27cde0472f5d475bfb4a3d8f31ab6bf03b",
+    "Assets.car": "119d9a04a731edc72037a5886ccaca11b0c519ad6bcd962a905a4116ffe6f4d7",
+    "actool.log": "7fe4c68a89b92392c582e9d4fcf85d57ccfd6b0051f1308d0148faad15e0abab",
+    "compiler-path.txt": "87a78d69c8bf23cabbc6a4c5f95a5a59b672765d6618412385734aa893a9f377",
+    "partial-info.plist": "2cb2dbb43d7fd36a46a161d0b13b68ead7aedc009160de705366c08f2d17965c",
+    "sdk-version.txt": "25205f2e2f02dc71036ee827e19c49b893b231a3d1af240e35a3ac55aa8cdcb6",
+    "xcode-version.txt": "18730ed2ae28a2c9cf0c2d5db549033a4f07089331391a7133b7b32187454fa9"
+  },
+  "native_appearance_acceptance": "pending",
+  "partial_info": {
+    "CFBundleIconFile": "AppIcon",
+    "CFBundleIconName": "AppIcon"
+  },
+  "sdk": "26.5",
+  "source_files": {
+    "AppIcon-layer-sources/back-panel.svg": "f3807f4689dd718390b503b8ac9c3b1faa4c657ee361a18b4ae623d19db06e7a",
+    "AppIcon-layer-sources/chaos.svg": "ed7895524b492913b43066ce7ef129229888a0cc9d86aab037a0c8842c169be8",
+    "AppIcon-layer-sources/front-panel.svg": "7bce9996433d3b38e2fbc734251c57e063b001f59c1f0296055eeb27cb7c3184",
+    "AppIcon-layer-sources/highlights.svg": "3162a7f339c886bb058c45283dc9d7bd224927f1d53b9e32896f1e798a9bfb63",
+    "AppIcon-layer-sources/text.svg": "9f78df56c14aa3744e48ca25858b4d6ecf332197cc81d1dcd1c6e359fd7d2531",
+    "AppIcon-source.json": "21a35d0fd59735b2d40dfc32d9d696518453b078a04b924acbc23bad9158f5bf",
+    "AppIcon.icns": "ca1f8328df7395ca05066fbeff9449e6ead4df2dbfefecf4c473ca7f43e3a4b3",
+    "AppIcon.icon/Assets/back-panel.png": "997e92287d3182f8a1bf4086b239a2a9215772d0d4955f93719a50c796763ace",
+    "AppIcon.icon/Assets/chaos.png": "d0c13c4541da8c5c4926377486ce2660fbc0239f3fec74d94e99b2eeb080b8c6",
+    "AppIcon.icon/Assets/front-panel.png": "db8f24c0862bf2a117cab9d1f1cf6832be2b86efcf0fbb8d77c0fe77636e2ed3",
+    "AppIcon.icon/Assets/highlights.png": "0595791806d9995b372d33bd3bdab9ed36d7325ad56cf7a9eff3444c29346f9e",
+    "AppIcon.icon/Assets/text.png": "cc24d0779a8c79575d8d9911a0d890c2d43f50311938b2f27c114d74dbabf402",
+    "AppIcon.icon/icon.json": "5474ad926e3af55472e8489aafbe91771504089f28b0a78838bc419a729bc0ce"
+  },
+  "source_revision": "5c2747aca18805e7f0c4fcea9d38377767fd9d3a",
+  "source_sha256": "ebfc66e6da9e1eff9ab0a673a67fd1ed6ce1e21e8525874cc909e77f9bfde8d6",
+  "version": 1,
+  "xcode": "Xcode 26.6\nBuild version 17F113"
+}

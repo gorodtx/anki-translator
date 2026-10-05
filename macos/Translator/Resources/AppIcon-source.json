@@ -128,7 +128,7 @@
       "exact_master_subtree": true
     }
   ],
-  "status": "positive-PNG-inputs; corrected-stack; supported-root-and-layer-schema; compiler-and-native-appearance-verification-pending",
+  "status": "diagnostic-only; compiler and native appearance pending",
   "composition": {
     "json_order": "front-to-back, matching Apple Icon Composer sidebar and Landmarks sample",
     "rendered_paint_order": [
@@ -138,7 +138,17 @@
       "text",
       "highlights"
     ],
-    "appearance_fill_serialization": "root retains known-valid plain fill and existing specializations; layers use exclusive fill-specializations with unnamed default, dark, mono values",
+    "appearance_fill_serialization": "known compiler-PASS declarations",
     "artwork_and_color_values_changed": false
+  },
+  "diagnostic_variant": {
+    "case": "control",
+    "baseline_revision": "305a485a3f51584f7d5e5a8575952231a231c3ce",
+    "baseline_config_sha256": "c48a7003947272e752569e782bbc3b9b907f535b39e2facce74d5fc7bf0f0d16",
+    "config_sha256": "5474ad926e3af55472e8489aafbe91771504089f28b0a78838bc419a729bc0ce",
+    "changes": [
+      "reverse group/layer arrays"
+    ],
+    "selected_for_production": false
   }
 }
