@@ -273,32 +273,29 @@ jobs:
         run: |
           set -euo pipefail
           mkdir -p out
+          # Internal transport to the notarization job, not an installer.
           ditto -c -k --sequesterRsrc --keepParent dist/Translator.app out/Translator-macos.zip
-          cp scripts/install_macos.sh out/
-          shasum -a 256 out/Translator-macos.zip out/install_macos.sh \
-            | sed 's| out/|  |' > out/macos-assets.sha256
-          cat out/macos-assets.sha256
           scripts/package_macos_dmg.sh dist/Translator.app out
 
-      - name: Installer must verify what the release ships
+      - name: Verify DMG release contract
         run: |
           set -euo pipefail
-          # The installer resolves the app from dist/ by default and from
-          # TRANSLATOR_APP_PATH otherwise; both must exist for a tag build.
-          grep -q 'TRANSLATOR_APP_PATH' scripts/install_macos.sh
-          bash -n out/install_macos.sh
           uv run --frozen python - <<'PY'
-          import pathlib
+          from pathlib import Path
+          import plistlib
+          from dev.scripts.release_metadata import macos_code_asset_files, sha256_file
 
-          expected = {"Translator-macos.zip", "install_macos.sh"}
-          from dev.scripts.release_metadata import OPTIONAL_CODE_ASSET_FILES
-
-          assert set(OPTIONAL_CODE_ASSET_FILES) == expected, OPTIONAL_CODE_ASSET_FILES
-          names = {line.split("  ")[-1].strip()
-                   for line in pathlib.Path("out/macos-assets.sha256").read_text().splitlines()
-                   if line.strip()}
-          assert names == expected, names
-          print("release asset names match the manifest contract")
+          info = plistlib.loads(Path("dist/Translator.app/Contents/Info.plist").read_bytes())
+          expected = macos_code_asset_files(f"v{info['CFBundleShortVersionString']}")
+          output = Path("out")
+          allowed = {"Translator-macos.zip"}
+          for name in expected:
+              allowed.update((name, f"{name}.sha256"))
+              image = output / name
+              checksum = output / f"{name}.sha256"
+              assert checksum.read_text() == f"{sha256_file(image)}  {name}\n"
+          assert {path.name for path in output.iterdir()} == allowed
+          print("DMG release contract and checksums verified; no script installer")
           PY
 
       - name: Upload bundle
@@ -307,8 +304,6 @@ jobs:
           name: Translator-macos
           path: |
             out/Translator-macos.zip
-            out/install_macos.sh
-            out/macos-assets.sha256
             out/Translator-*-macos-arm64.dmg
             out/Translator-*-macos-arm64.dmg.sha256
           if-no-files-found: error
@@ -395,9 +390,6 @@ jobs:
           codesign --verify --deep --strict "${app}"
           spctl -a -vvv "${app}"
           mkdir -p signed
-          ditto -c -k --sequesterRsrc --keepParent "${app}" signed/Translator-macos.zip
-          cp scripts/install_macos.sh signed/
-          (cd signed && shasum -a 256 Translator-macos.zip install_macos.sh > macos-assets.sha256 && shasum -a 256 -c macos-assets.sha256)
           scripts/package_macos_dmg.sh "${app}" signed
           dmg="$(find signed -maxdepth 1 -name '*.dmg' -print)"
           test -n "${dmg}"
@@ -428,9 +420,6 @@ jobs:
         with:
           name: Translator-macos-notarized
           path: |
-            signed/Translator-macos.zip
-            signed/install_macos.sh
-            signed/macos-assets.sha256
             signed/Translator-*-macos-arm64.dmg
             signed/Translator-*-macos-arm64.dmg.sha256
           if-no-files-found: error

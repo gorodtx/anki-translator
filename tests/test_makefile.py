@@ -33,7 +33,7 @@ def test_core_targets_exist(target: str) -> None:
 
 
 @pytest.mark.parametrize(
-    "target", ["macos-app", "macos-backend", "macos-swift", "macos-install"]
+    "target", ["macos-app", "macos-backend", "macos-swift", "macos-dmg"]
 )
 def test_macos_targets_exist(target: str) -> None:
     assert target in _targets()

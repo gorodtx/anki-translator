@@ -1,14 +1,8 @@
 import Foundation
 
-// The backend runs at login, so whatever launchd starts appears in the user's Login
-// Items. That used to be a shell script, and a script cannot carry a signature: the
-// system could not tie it to this app and listed a bare "run-backend" from an
-// unidentified developer — indistinguishable from something the user never installed.
-// This is a Mach-O in Contents/MacOS, signed with the bundle, so the item is
-// attributable to Translator and says what it belongs to.
-//
-// It does nothing but prepare the environment and hand the process over: launchd watches
-// the pid it started, so replacing this process is right and spawning a child is not.
+// The app launches this signed Mach-O as its owned backend process. Replace the
+// launcher with the bundled engine so its PID and TRANSLATOR_PARENT_PID remain
+// intact; BackendBootstrap and the daemon parent watcher own its lifecycle.
 
 let executable = (Bundle.main.executableURL ?? URL(fileURLWithPath: CommandLine.arguments[0]))
     .resolvingSymlinksInPath()
@@ -19,8 +13,7 @@ let resources = executable
 
 func die(_ message: String, _ code: Int32) -> Never {
     FileHandle.standardError.write(Data("translator-backend: \(message)\n".utf8))
-    // KeepAlive restarts on a non-zero exit, so a broken bundle retries on launchd's
-    // throttle rather than looking like a backend that started and went quiet.
+    // BackendBootstrap observes an unsuccessful launch and reports/retries it.
     exit(code)
 }
 

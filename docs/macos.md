@@ -14,7 +14,7 @@
 2. Перетащить `Translator.app` на значок `Applications` в окне DMG.
 3. Открыть Translator из Applications, затем извлечь DMG.
 
-В образе находятся приложение и ссылка `/Applications`. `install_macos.sh` в этом сценарии не используется. Приложение запускает backend из собственного bundle и соединяется с ним по Unix socket; положительный `ping` подтверждает готовность.
+В образе находятся только приложение и ссылка `/Applications`. Это единственный поддерживаемый путь установки macOS. Приложение запускает backend из собственного bundle и соединяется с ним по Unix socket; положительный `ping` подтверждает готовность.
 
 Первый запуск показывает существующие шаги Settings. Accessibility нужна для чтения выделения через глобальную клавишу; разрешение выбирает пользователь в System Settings. Services доступен без этого разрешения. Словари Apple и языковая пара проверяются отдельно: наличие системного API не означает установленную модель. Загрузка пары выполняется существующим SwiftUI `.translationTask`/`prepareTranslation()`; headless helper самостоятельно модель не скачивает. Open at login — отдельный пользовательский выбор через `SMAppService.mainApp`; drag install не создаёт отдельный LaunchAgent backend.
 
@@ -68,7 +68,7 @@ Developer overrides: `TRANSLATOR_CONFIG_DIR`, `TRANSLATOR_DB_DIR`, `TRANSLATOR_R
 
 Удаление приложения после Quit сохраняет Application Support и Logs. Удаление данных и отключение ранее выбранного Open at login — отдельные пользовательские действия.
 
-`scripts/install_macos.sh` остаётся developer/legacy маршрутом с `current`, `previous`, staging, rollback и LaunchAgent. Обычному пользователю он не нужен. Account-home guard fail-closed при ошибке `dscl`; restart/remove проверяют exact executable path и используют exact PID, оставляя одноимённые development/downloaded копии в покое. Настоящая пользовательская legacy установка не менялась в distribution acceptance.
+Старый скриптовый установщик и его agent wrapper удалены. macOS release metadata и CI используют DMG; вспомогательный ZIP в CI служит только для передачи bundle на этап подписи. Установка не создаёт `releases/current`, symlink в `~/Applications` или отдельный backend LaunchAgent. Разработка сохраняет команды сборки и изолированного запуска backend; они не устанавливают приложение пользователю.
 
 ## Протокол
 

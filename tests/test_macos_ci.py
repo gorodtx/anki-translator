@@ -1,8 +1,10 @@
 from __future__ import annotations
 
 from pathlib import Path
+import plistlib
 import subprocess
 import os
+import sys
 from typing import Any, cast
 
 import yaml
@@ -147,6 +149,48 @@ def test_bundle_smoke_checks_both_actual_launchers_without_checkout_imports() ->
     )
     assert "python -m desktop_app.platform.macos.client" not in commands
     assert 'wait "${backend_pid}" 2>/dev/null || true' not in commands
+
+
+@pytest.mark.parametrize("failure", ["", "checksum", "obsolete_installer"])
+def test_dmg_release_contract_checks_bytes_and_rejects_extra_installer(
+    tmp_path: Path, failure: str
+) -> None:
+    from dev.scripts.release_metadata import sha256_file
+
+    step = next(
+        item
+        for item in _steps("bundle")
+        if item.get("name") == "Verify DMG release contract"
+    )
+    script = str(step["run"]).split("<<'PY'\n", 1)[1].rsplit("\nPY", 1)[0]
+    contents = tmp_path / "dist/Translator.app/Contents"
+    contents.mkdir(parents=True)
+    (contents / "Info.plist").write_bytes(
+        plistlib.dumps({"CFBundleShortVersionString": "9.9.9"})
+    )
+    output = tmp_path / "out"
+    output.mkdir()
+    name = "Translator-9.9.9-macos-arm64.dmg"
+    image = output / name
+    image.write_bytes(b"synthetic image for checksum contract")
+    digest = "0" * 64 if failure == "checksum" else sha256_file(image)
+    (output / f"{name}.sha256").write_text(f"{digest}  {name}\n", encoding="utf-8")
+    (output / "Translator-macos.zip").write_bytes(b"internal CI transport")
+    if failure == "obsolete_installer":
+        (output / "obsolete-install.sh").write_text("#!/bin/sh\n", encoding="utf-8")
+    result = subprocess.run(
+        [sys.executable, "-c", script],
+        cwd=tmp_path,
+        env={
+            "PATH": os.defpath,
+            "PYTHONPATH": str(REPO_ROOT),
+            "PYTHONDONTWRITEBYTECODE": "1",
+        },
+        capture_output=True,
+        text=True,
+        check=False,
+    )
+    assert (result.returncode == 0) == (failure == ""), result.stderr
 
 
 def test_notarize_job_is_tag_gated_and_secret_gated() -> None:

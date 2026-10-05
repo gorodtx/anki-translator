@@ -1,5 +1,5 @@
 .PHONY: bootstrap fmt fmt-check lint lint-check types test verify check clean \
-        macos-app macos-backend macos-swift macos-install
+        macos-app macos-backend macos-swift macos-dmg
 
 # The branch baseline. `fmt-check` only looks at files changed since then:
 # ~20 files inherited from the GNOME branch are not ruff-formatted, and
@@ -58,8 +58,8 @@ macos-app:
 macos-backend:
 	scripts/run_backend_macos.sh
 
-macos-install: macos-app
-	scripts/install_macos.sh install
+macos-dmg: macos-app
+	scripts/package_macos_dmg.sh dist/Translator.app out
 
 clean:
 	rm -rf .mypy_cache .pytest_cache .ruff_cache .problems .pyright.json dist out

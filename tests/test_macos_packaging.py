@@ -169,14 +169,10 @@ def test_service_is_offered_on_any_selection() -> None:
 
 
 def test_bundle_identifier_matches_the_project_identity() -> None:
-    # The same string is the D-Bus bus name on Linux and the launchd label in
-    # the installer; a second identifier would earn a second, separate
-    # Accessibility grant from the user.
+    # Production and development bundles share the project's identity.
     text = _script()
-    installer = (REPO_ROOT / "scripts" / "install_macos.sh").read_text(encoding="utf-8")
 
     assert 'BUNDLE_ID="com.translator.desktop"' in text
-    assert 'BUNDLE_ID="com.translator.desktop"' in installer
     # The SwiftPM bundle used during development has to claim the same identity, or a
     # grant given to the dev build does not carry over to the installed one.
     dev_script = REPO_ROOT / "macos" / "Translator" / "scripts" / "build_app.sh"
@@ -239,3 +235,34 @@ def test_nested_signing_failures_stop_the_build() -> None:
     assert "set -euo pipefail" in signing
     assert "file -b" in signing and "Mach-O" in signing
     assert "|| true" not in signing
+
+
+def test_build_signs_the_backend_launcher_before_sealing_the_bundle() -> None:
+    text = _script()
+    assert 'cp "${BACKEND_BIN}" "${CONTENTS}/MacOS/TranslatorBackend"' in text
+    assert '"${ROOT_DIR}/scripts/sign_macos_app.sh"' in text
+    signing = (REPO_ROOT / "scripts/sign_macos_app.sh").read_text(encoding="utf-8")
+    launcher_signing = signing.index(
+        "TranslatorBackend" + '"', signing.index("codesign")
+    )
+    sealing = signing.index(
+        'codesign "${SIGN_FLAGS[@]}" --identifier com.translator.desktop "${APP}"'
+    )
+    assert launcher_signing < sealing
+    assert "--identifier com.translator.desktop.backend" in signing
+
+
+def test_background_processes_are_named_after_the_app() -> None:
+    build = _script()
+    assert (
+        'ln -sf ../python/bin/python3.13 "${RESOURCES}/bin/TranslatorEngine"' in build
+    )
+    assert 'ln -sf apple-lang-helper "${RESOURCES}/bin/TranslatorLookup"' in build
+    launcher = (
+        REPO_ROOT / "macos/Translator/Sources/TranslatorBackend/main.swift"
+    ).read_text(encoding="utf-8")
+    assert "bin/TranslatorEngine" in launcher
+    assert "bin/TranslatorLookup" in launcher
+    assert "python/bin/python3.13" not in launcher
+    assert 'exec "${RES}/bin/TranslatorEngine"' in build
+    assert 'TRANSLATOR_APPLE_HELPER="${RES}/bin/TranslatorLookup"' in build

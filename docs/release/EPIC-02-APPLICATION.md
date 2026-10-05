@@ -336,3 +336,13 @@ Root сверил накопленные записи с текущим Git HEAD
 Presentation отдельно: короткий русский README и минимальный site уже доставлены commit e00ff39; ROOT_GIT_PENDING в старом peer handoff исторический. Ждём пользовательские реальные video/logo, затем integration/playback/Safari/public hosting. DB web checkpoint остаётся PAUSED_USER_STEERING. Root отправил существующей peer-сессии status сверку msg_d97a44822dbf; это enqueue, не новый peer outcome. Новые агенты, VM и download waves не запускались.
 
 Ближайший пользовательский шаг — popup dismissal на принятой304, затем History и реальные примеры. Общий эпик открыт; отдельные hardware/Anki/signing зависимости сохраняются до фактической приёмки.
+
+### 05.10.2026 — A29: выбран и проверен единственный DMG installation contract
+
+Пользователь прямо разрешил удалить старый установщик после проверки независимости обычной установки. Код подтверждает: BackendBootstrap запускает packaged TranslatorBackend через собственный Process и передаёт parent PID; Settings скачивает pinned DB штатным IPC. Старый script был отдельным developer/LaunchAgent путём, оставался в Makefile, agent wrapper и CI assets. Ошибка bootstrap5 не относится к штатному DMG bootstrap; её прежняя запись сохранена.
+
+**A29 PASS_RETIRED_LEGACY_PATH в source/local объёме:** удалены scripts/install_macos.sh, scripts/agent_install_macos.sh и отдельная agent-install инструкция. Makefile содержит macos-dmg build target, CI и release manifest используют версионный DMG. ZIP нужен только как внутренний transport CI на notarization stage. Подписанный output содержит DMG/checksum; backend LaunchAgent/current/previous installer не публикуется. Linux installer сохранён для Linux.
+
+Проверки: 47 metadata/CI/Makefile tests PASS; 20 packaging tests PASS; fresh bundled native/shell launchers PASS в пустом isolated профиле без внешнего Python/PATH/repo imports. Actual DMG e9ea9b8f3eb62f72a5cae55dfa1fc0f29930da2beb49eed27a13f63dcbe85601 (25 240 131 bytes) прошёл create/verify/checksum/read-only mount: visible contents только Translator.app и Applications → /Applications; оба launcher из mounted image PASS, detach exit0. Реальный CI checksum/asset checker выполнен на этом output. История старых installer tests сохраняется в Git; две проверки актуальных signing/process-name contracts перенесены в packaging suite.
+
+Working /Applications/Translator.app304 не заменяется при этом удалении. DB downloads/uploads0; пользовательские данные и permissions вне изменений. Evidence: /Users/den/Documents/dev/translator-evidence/2026-10-05/retire-macos-installer. Commit/push/remote CI и own build cleanup записываются отдельно после normal gates; физический drag и D05 этим source изменением не закрыты.

@@ -1,11 +1,7 @@
 """Fetch the offline bases from inside the app.
 
-Until now only `scripts/install_macos.sh` could do this, so a user whose store
-is empty — a hand-placed bundle, deleted bases, a changed
-``TRANSLATOR_DB_DIR`` — could be told they were missing and nothing more. The
-onboarding step needs a button, so the daemon needs a method.
-
-The contract is the installer's: URLs and digests come from
+Settings invokes the daemon when the shared database store needs setup.
+URLs and digests come from
 ``scripts/db-bundle.lock.json``, every file is verified before it is moved into
 place, and a file that already matches its digest is not fetched again.
 """

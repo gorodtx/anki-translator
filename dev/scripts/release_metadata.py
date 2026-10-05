@@ -23,12 +23,13 @@ CODE_ASSET_FILES = (
     "translator-extension.zip",
 )
 
-# Shipped only by releases built on macOS. A Linux-only release stays valid
-# without them, so they are recorded when present instead of being required.
-OPTIONAL_CODE_ASSET_FILES = (
-    "Translator-macos.zip",
-    "install_macos.sh",
-)
+
+def macos_code_asset_files(release_tag: str) -> tuple[str]:
+    """Name the Finder installation artifact; macOS builds remain optional."""
+    match = re.fullmatch(r"v?([0-9]+\.[0-9]+\.[0-9]+)(?:-rc\.[0-9]+)?", release_tag)
+    if match is None:
+        raise ValueError("Invalid release tag for the macOS DMG")
+    return (f"Translator-{match[1]}-macos-arm64.dmg",)
 
 
 def _project_root() -> Path:
@@ -160,13 +161,14 @@ def build_release_manifest(
         "name": "install.sh",
         "sha256": sha256_file(install_script),
     }
-    for name in OPTIONAL_CODE_ASSET_FILES:
+    macos_assets = macos_code_asset_files(release_tag)
+    for name in macos_assets:
         path = assets_dir / name
         if path.is_file():
             code_entries[name] = {"name": name, "sha256": sha256_file(path)}
 
     platforms = ["linux-gnome"]
-    if all((assets_dir / name).is_file() for name in OPTIONAL_CODE_ASSET_FILES):
+    if all((assets_dir / name).is_file() for name in macos_assets):
         platforms.append("macos")
 
     return {

@@ -172,8 +172,8 @@ def test_release_manifest_records_macos_assets_when_they_are_built(
     assets.mkdir()
     for name in ("translator-app.tar.gz", "translator-extension.zip"):
         (assets / name).write_bytes(b"code")
-    (assets / "Translator-macos.zip").write_bytes(b"macos-bundle")
-    (assets / "install_macos.sh").write_text("#!/usr/bin/env bash\n", encoding="utf-8")
+    dmg_name = "Translator-9.9.9-macos-arm64.dmg"
+    (assets / dmg_name).write_bytes(b"macos-bundle")
     install = tmp_path / "install.sh"
     install.write_text("#!/usr/bin/env bash\n", encoding="utf-8")
 
@@ -186,8 +186,54 @@ def test_release_manifest_records_macos_assets_when_they_are_built(
     )
 
     assert manifest["platforms"] == ["linux-gnome", "macos"]
-    entry = manifest["code_assets"]["Translator-macos.zip"]
-    assert entry["sha256"] == sha256_file(assets / "Translator-macos.zip")
-    assert "install_macos.sh" in manifest["code_assets"]
+    entry = manifest["code_assets"][dmg_name]
+    assert entry["sha256"] == sha256_file(assets / dmg_name)
+    assert set(manifest["code_assets"]) == {
+        "translator-app.tar.gz",
+        "translator-extension.zip",
+        "install.sh",
+        dmg_name,
+    }
     # The offline bases still travel in their own bundle, never in a code asset.
     assert manifest["db_bundle"]["tag"] == "db-test"
+
+
+def test_legacy_macos_files_cannot_advertise_an_installation(
+    tmp_path: Path,
+) -> None:
+    from dev.scripts.release_metadata import build_release_manifest
+
+    assets = tmp_path / "assets"
+    assets.mkdir()
+    for name in (
+        "translator-app.tar.gz",
+        "translator-extension.zip",
+        "Translator-macos.zip",
+    ):
+        (assets / name).write_bytes(b"code")
+    legacy = assets / "install_macos.sh"
+    legacy.write_text("#!/bin/sh\n", encoding="utf-8")
+    install = tmp_path / "install.sh"
+    install.write_text("#!/bin/sh\n", encoding="utf-8")
+    manifest = build_release_manifest(
+        repo="gorodtx/selection_translator_anki",
+        release_tag="v9.9.9",
+        assets_dir=assets,
+        install_script=install,
+        db_bundle={"tag": "db-test"},
+    )
+
+    assert manifest["platforms"] == ["linux-gnome"]
+    assert set(manifest["code_assets"]) == {
+        "translator-app.tar.gz",
+        "translator-extension.zip",
+        "install.sh",
+    }
+
+
+def test_macos_prerelease_uses_the_app_version_in_the_dmg_name() -> None:
+    from dev.scripts.release_metadata import macos_code_asset_files
+
+    assert macos_code_asset_files("v9.9.9-rc.1") == (
+        "Translator-9.9.9-macos-arm64.dmg",
+    )
