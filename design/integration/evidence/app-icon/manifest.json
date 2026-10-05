@@ -1,0 +1,35 @@
+{
+  "scope": "NSWorkspace Icon Services render; no desktop screenshot",
+  "before": "installed build305",
+  "after": "isolated unlaunched accepted control candidate; installed306 acceptance pending",
+  "global_appearance": "ClearDark/Graphite; user preferences unchanged",
+  "root_personally_viewed": true,
+  "files": {
+    "before-build305-32pt-retina.png": {
+      "source_name": "workspace305-32pt-2x.png",
+      "sha256": "0adb1a4070b745eab69263418cf946e8e13d85a196f31d3b5873dd39efb6c123",
+      "bytes": 5475
+    },
+    "candidate-control-32pt-retina.png": {
+      "source_name": "batch-control-workspace-32pt-2x-NSAppearanceNameAqua.png",
+      "sha256": "fdc179ca411035c159937e6ccf4c527d9ee1d41b50d26b5a749d47e75850ff65",
+      "bytes": 5518
+    },
+    "candidate-control-128pt.png": {
+      "source_name": "batch-control-workspace-128pt-1x-NSAppearanceNameAqua.png",
+      "sha256": "db7428590b25d79b061c1b80a5b1002def8579f1cd1042f5805333896e7671e2",
+      "bytes": 14385
+    },
+    "installed306-32pt-retina.png": {
+      "source_name": "installed306-workspace-32pt-2x-NSAppearanceNameAqua.png",
+      "sha256": "fdc179ca411035c159937e6ccf4c527d9ee1d41b50d26b5a749d47e75850ff65",
+      "bytes": 5518
+    },
+    "installed306-128pt.png": {
+      "source_name": "installed306-workspace-128pt-1x-NSAppearanceNameAqua.png",
+      "sha256": "db7428590b25d79b061c1b80a5b1002def8579f1cd1042f5805333896e7671e2",
+      "bytes": 14385
+    }
+  },
+  "installed306": "Root actual NSWorkspace /Applications file rendering; desktop UI/user feedback pending"
+}
