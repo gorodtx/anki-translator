@@ -128,5 +128,17 @@
       "exact_master_subtree": true
     }
   ],
-  "status": "positive-PNG-inputs; official-compiler-and-small-native-appearance-verification-pending"
+  "status": "positive-PNG-inputs; corrected-stack-and-specializations; compiler-and-native-appearance-verification-pending",
+  "composition": {
+    "json_order": "front-to-back, matching Apple Icon Composer sidebar and Landmarks sample",
+    "rendered_paint_order": [
+      "back-panel",
+      "chaos",
+      "front-panel",
+      "text",
+      "highlights"
+    ],
+    "appearance_fill_serialization": "exclusive fill-specializations with unnamed default, dark, mono values",
+    "artwork_and_color_values_changed": false
+  }
 }

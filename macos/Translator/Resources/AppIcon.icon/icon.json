@@ -1,11 +1,13 @@
 {
-  "fill": {
-    "linear-gradient": [
-      "srgb:0.98824,0.98039,0.96471,1.00000",
-      "srgb:0.91373,0.90588,0.88627,1.00000"
-    ]
-  },
   "fill-specializations": [
+    {
+      "value": {
+        "linear-gradient": [
+          "srgb:0.98824,0.98039,0.96471,1.00000",
+          "srgb:0.91373,0.90588,0.88627,1.00000"
+        ]
+      }
+    },
     {
       "appearance": "dark",
       "value": {
@@ -21,15 +23,39 @@
   ],
   "groups": [
     {
-      "name": "back-panel",
+      "name": "front-panel",
       "blend-mode": "normal",
       "hidden": false,
       "layers": [
         {
-          "name": "back-panel",
-          "image-name": "back-panel.png",
-          "fill": "automatic",
+          "name": "highlights",
+          "image-name": "highlights.png",
           "fill-specializations": [
+            {
+              "value": "automatic"
+            },
+            {
+              "appearance": "dark",
+              "value": "automatic"
+            },
+            {
+              "appearance": "mono",
+              "value": {
+                "solid": "srgb:0.98824,0.98039,0.96471,1.00000"
+              }
+            }
+          ],
+          "glass": false,
+          "hidden": false,
+          "opacity": 1
+        },
+        {
+          "name": "text",
+          "image-name": "text.png",
+          "fill-specializations": [
+            {
+              "value": "automatic"
+            },
             {
               "appearance": "dark",
               "value": "automatic"
@@ -38,6 +64,28 @@
               "appearance": "mono",
               "value": {
                 "solid": "srgb:0.12549,0.12941,0.14118,1.00000"
+              }
+            }
+          ],
+          "glass": false,
+          "hidden": false,
+          "opacity": 1
+        },
+        {
+          "name": "front-panel",
+          "image-name": "front-panel.png",
+          "fill-specializations": [
+            {
+              "value": "automatic"
+            },
+            {
+              "appearance": "dark",
+              "value": "automatic"
+            },
+            {
+              "appearance": "mono",
+              "value": {
+                "solid": "srgb:0.96078,0.94902,0.91765,1.00000"
               }
             }
           ],
@@ -65,8 +113,10 @@
         {
           "name": "chaos",
           "image-name": "chaos.png",
-          "fill": "automatic",
           "fill-specializations": [
+            {
+              "value": "automatic"
+            },
             {
               "appearance": "dark",
               "value": "automatic"
@@ -95,35 +145,17 @@
       }
     },
     {
-      "name": "front-panel",
+      "name": "back-panel",
       "blend-mode": "normal",
       "hidden": false,
       "layers": [
         {
-          "name": "front-panel",
-          "image-name": "front-panel.png",
-          "fill": "automatic",
+          "name": "back-panel",
+          "image-name": "back-panel.png",
           "fill-specializations": [
             {
-              "appearance": "dark",
               "value": "automatic"
             },
-            {
-              "appearance": "mono",
-              "value": {
-                "solid": "srgb:0.96078,0.94902,0.91765,1.00000"
-              }
-            }
-          ],
-          "glass": false,
-          "hidden": false,
-          "opacity": 1
-        },
-        {
-          "name": "text",
-          "image-name": "text.png",
-          "fill": "automatic",
-          "fill-specializations": [
             {
               "appearance": "dark",
               "value": "automatic"
@@ -132,26 +164,6 @@
               "appearance": "mono",
               "value": {
                 "solid": "srgb:0.12549,0.12941,0.14118,1.00000"
-              }
-            }
-          ],
-          "glass": false,
-          "hidden": false,
-          "opacity": 1
-        },
-        {
-          "name": "highlights",
-          "image-name": "highlights.png",
-          "fill": "automatic",
-          "fill-specializations": [
-            {
-              "appearance": "dark",
-              "value": "automatic"
-            },
-            {
-              "appearance": "mono",
-              "value": {
-                "solid": "srgb:0.98824,0.98039,0.96471,1.00000"
               }
             }
           ],
