@@ -1,0 +1,178 @@
+{
+  "fill": {
+    "linear-gradient": [
+      "srgb:0.98824,0.98039,0.96471,1.00000",
+      "srgb:0.91373,0.90588,0.88627,1.00000"
+    ]
+  },
+  "fill-specializations": [
+    {
+      "appearance": "dark",
+      "value": {
+        "solid": "srgb:0.07059,0.07451,0.08235,1.00000"
+      }
+    },
+    {
+      "appearance": "mono",
+      "value": {
+        "solid": "srgb:0.07059,0.07451,0.08235,1.00000"
+      }
+    }
+  ],
+  "groups": [
+    {
+      "name": "back-panel",
+      "blend-mode": "normal",
+      "hidden": false,
+      "layers": [
+        {
+          "name": "back-panel",
+          "image-name": "back-panel.png",
+          "fill": "automatic",
+          "fill-specializations": [
+            {
+              "appearance": "dark",
+              "value": "automatic"
+            },
+            {
+              "appearance": "mono",
+              "value": {
+                "solid": "srgb:0.12549,0.12941,0.14118,1.00000"
+              }
+            }
+          ],
+          "glass": false,
+          "hidden": false,
+          "opacity": 1
+        }
+      ],
+      "lighting": "individual",
+      "shadow": {
+        "kind": "neutral",
+        "opacity": 0
+      },
+      "specular": false,
+      "translucency": {
+        "enabled": false,
+        "value": 0
+      }
+    },
+    {
+      "name": "chaos",
+      "blend-mode": "normal",
+      "hidden": false,
+      "layers": [
+        {
+          "name": "chaos",
+          "image-name": "chaos.png",
+          "fill": "automatic",
+          "fill-specializations": [
+            {
+              "appearance": "dark",
+              "value": "automatic"
+            },
+            {
+              "appearance": "mono",
+              "value": {
+                "solid": "srgb:0.98824,0.98039,0.96471,1.00000"
+              }
+            }
+          ],
+          "glass": false,
+          "hidden": false,
+          "opacity": 1
+        }
+      ],
+      "lighting": "individual",
+      "shadow": {
+        "kind": "neutral",
+        "opacity": 0
+      },
+      "specular": false,
+      "translucency": {
+        "enabled": false,
+        "value": 0
+      }
+    },
+    {
+      "name": "front-panel",
+      "blend-mode": "normal",
+      "hidden": false,
+      "layers": [
+        {
+          "name": "front-panel",
+          "image-name": "front-panel.png",
+          "fill": "automatic",
+          "fill-specializations": [
+            {
+              "appearance": "dark",
+              "value": "automatic"
+            },
+            {
+              "appearance": "mono",
+              "value": {
+                "solid": "srgb:0.96078,0.94902,0.91765,1.00000"
+              }
+            }
+          ],
+          "glass": false,
+          "hidden": false,
+          "opacity": 1
+        },
+        {
+          "name": "text",
+          "image-name": "text.png",
+          "fill": "automatic",
+          "fill-specializations": [
+            {
+              "appearance": "dark",
+              "value": "automatic"
+            },
+            {
+              "appearance": "mono",
+              "value": {
+                "solid": "srgb:0.12549,0.12941,0.14118,1.00000"
+              }
+            }
+          ],
+          "glass": false,
+          "hidden": false,
+          "opacity": 1
+        },
+        {
+          "name": "highlights",
+          "image-name": "highlights.png",
+          "fill": "automatic",
+          "fill-specializations": [
+            {
+              "appearance": "dark",
+              "value": "automatic"
+            },
+            {
+              "appearance": "mono",
+              "value": {
+                "solid": "srgb:0.98824,0.98039,0.96471,1.00000"
+              }
+            }
+          ],
+          "glass": false,
+          "hidden": false,
+          "opacity": 1
+        }
+      ],
+      "lighting": "individual",
+      "shadow": {
+        "kind": "neutral",
+        "opacity": 0
+      },
+      "specular": false,
+      "translucency": {
+        "enabled": false,
+        "value": 0
+      }
+    }
+  ],
+  "supported-platforms": {
+    "squares": "shared"
+  }
+}

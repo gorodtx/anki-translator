@@ -17,10 +17,10 @@ jobs:
       - name: Install uv
         uses: astral-sh/setup-uv@v5
 
-      - name: Compile with the runner's official Xcode
+      - name: Compile isolated control and preferred declarations
         run: |
           set -euo pipefail
-          macos/Translator/scripts/make_icon.sh --compile-appearances "${RUNNER_TEMP}/Translator-AppIcon-resources"
+          macos/Translator/scripts/make_icon.sh --compile-appearance-diagnostics "${RUNNER_TEMP}/Translator-AppIcon-resources"
 
       - name: Upload generated resources and compiler diagnostics
         if: always()
