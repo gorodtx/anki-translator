@@ -222,8 +222,9 @@ jobs:
           set -euo pipefail
           if [[ "${GITHUB_REF_TYPE}" == tag ]]; then
             version="${GITHUB_REF_NAME#v}"
-            [[ "${version}" =~ ^[0-9]+\.[0-9]+\.[0-9]+$ ]] || { echo 'invalid release version'; exit 1; }
-            export TRANSLATOR_APP_VERSION="${version}"
+            [[ "${version}" =~ ^([0-9]+\.[0-9]+\.[0-9]+)(-rc\.[0-9]+)?$ ]] || { echo 'invalid release version'; exit 1; }
+            # RC tags are explicit ad-hoc prereleases. The native version is numeric.
+            export TRANSLATOR_APP_VERSION="${BASH_REMATCH[1]}"
           fi
           scripts/build_macos_app.sh --out dist
 
@@ -311,7 +312,8 @@ jobs:
   notarize:
     name: notarize
     needs: [bundle]
-    if: startsWith(github.ref, 'refs/tags/')
+    # Stable tags still require Developer ID and notarization. RCs are ad-hoc.
+    if: startsWith(github.ref, 'refs/tags/') && !contains(github.ref_name, '-rc.')
     runs-on: macos-26
     steps:
       - uses: actions/checkout@v4
