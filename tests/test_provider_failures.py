@@ -408,6 +408,20 @@ def test_cold_apple_primary_gets_its_engine_budget(
     monkeypatch.setattr(apple, "is_available", lambda: True)
     cancelled: list[bool] = []
     network_calls: list[str] = []
+    lookup_ready = asyncio.Event()
+    observed_budgets: list[float] = []
+    resolve_apple_lookup = pipeline._resolve_apple_lookup
+
+    async def release_primary_lookup(
+        task: asyncio.Task[apple.AppleLookup],
+        *,
+        timeout_s: float = pipeline._APPLE_FINAL_WAIT_S,
+    ) -> apple.AppleLookup | None:
+        observed_budgets.append(timeout_s)
+        lookup_ready.set()
+        return await resolve_apple_lookup(task, timeout_s=timeout_s)
+
+    monkeypatch.setattr(pipeline, "_resolve_apple_lookup", release_primary_lookup)
 
     async def cold_lookup(
         *,
@@ -420,9 +434,9 @@ def test_cold_apple_primary_gets_its_engine_budget(
     ) -> apple.AppleLookup:
         assert (allow_dictionary, allow_translation) == (dictionary, not dictionary)
         try:
-            # A cold but valid response inside both declared Apple engine
-            # budgets, outside the optional enrichment window.
-            await asyncio.sleep(0.45)
+            # Keep the primary lookup pending until the pipeline chooses its
+            # budget, without relying on a loaded CI runner waking a timer.
+            await lookup_ready.wait()
         except asyncio.CancelledError:
             cancelled.append(True)
             raise
@@ -460,6 +474,12 @@ def test_cold_apple_primary_gets_its_engine_budget(
     )
 
     assert result.translation_ru.text == "банк"
+    expected_budget = (
+        apple.DEFAULT_DEFINE_TIMEOUT_S
+        if dictionary
+        else apple.DEFAULT_TRANSLATE_TIMEOUT_S
+    )
+    assert observed_budgets == [expected_budget]
     assert cancelled == [], "a valid primary Apple response must be allowed to finish"
     assert bool(network_calls) == failed_google
 
