@@ -105,3 +105,17 @@ Root actual installed Icon Services inspection **PASS**: personally viewed16/32p
 Получены прямые ответы для реального `/Applications/Translator.app`, 0.3.0 (306): Services-перевод `bank` появился, запись есть в History, квадратная иконка выглядит нормально. **PASS_USER_REPORTED**, без присвоения Root GUI PASS. MacOS-сессии переданы точные ответы и разрешение датированного append отчёта; source/signature/grants не меняются.
 
 Первая desktop lease 18:02:39–18:03:39 UTC истекла при восстановлении tool context; никаких действий/скриншотов не было. Actual menu/Settings/About остаются NOT_DONE; документация подготовлена до запроса нового трёхминутного окна. Normal checkpoint docs commit `c919274b23da20c0297da90fddf526e80b97e844` PASS. Final push/remote SHA/CI после нового acceptance addendum сохраняются в delivery receipt; localhost, Git push и установленная локальная306 не объявлены новым публичным release.
+
+
+## Дополнение 05.10.2026: reviewed actual306 и остановка дальнейших CUA tests
+
+Root лично просмотрел actual General/About/Advanced306 JPEGs, независимо сверил3SHA/encoding/размеры и перенёс exact bytes в [evidence/native306](evidence/native306/manifest.json). About показывает исправленную AppIcon/build306; Advanced подтверждает visible backend/DB3/Apple Dictionary. Own defaults Accessibility=1 прочитан отдельно и reconciled с authoritative source writer; fresh AX query/global shortcut delivery не заявлены. [Root review](</Users/den/Documents/dev/translator-evidence/2026-10-05/brand/github/installed306-cua-peer-review.json>).
+
+Последний tab restoration случился на1.841s после hard deadline, без изменения настроек/поздних screenshots: lease compliance FAIL сохранён. Пользователь поручил закончить без дальнейших computer-use tests; все такие действия/вопросы прекращены. Непросмотренные menu/foreground/light/physical Retina отмечены NOT_DONE_USER_STOPPED_CUA. Source push6f02a17 exactremotePASS; actual CI37355151825 проверяется, final docs report checkpoint получит свой remote SHA/CI в delivery receipt. Публичный релиз и hosting не выполнены; большая DB повторно не загружалась.
+
+
+## Финальный CLI/source checkpoint, 05.10.2026
+
+Source6f02a17 exact remote + [CI37355151825](https://github.com/gorodtx/selection_translator_anki/actions/runs/37355151825) **PASS**,5jobs success/notarize skipped. Actual app-bundle log:301passed/1skipped57.14s; backend smoke, immutable signed-bundle checks, package и DMG contract success. Исторический5cFAIL не переписан.
+
+Local306 DMG27396598bytes SHAeb255c0974606bbff16092ff36942acd80f16c021540b787835cf3df848b0a55: Root сам verify/readonly mount/strict signature/exact source-tree+7resources/Applications symlink/noDB-design-agentdocs/detach/temp cleanup PASS. [Root proof](</Users/den/Documents/dev/translator-evidence/2026-10-05/brand/github/dmg306-root-review.json>). Native final MD SHA0f31483b7735f7e7d18b597a6c5a554fb61a083161b867bbef27b03b850897c6 matches; последняя документационная доставка и её exact SHA/CI — в delivery receipt. Новых computer-use tests, app rebuild/signing, publicsite/release или DB upload нет. Реальные NOT_DONE/dependencies и отдельный lease compliance FAIL сохранены в PROGRESS.

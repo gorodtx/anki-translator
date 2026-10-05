@@ -1,0 +1,39 @@
+{
+  "date": "2026-10-05",
+  "app": "/Applications/Translator.app",
+  "build": 306,
+  "source": "native/cua-installed306; exact bytes, no reencoding",
+  "images": [
+    {
+      "file": "settings-general-dark.jpg",
+      "encoding": "JPEG/JFIF",
+      "sha256": "7f3131dc313f3a19fff025233f56514ff1dc926a1264264777870d524f77c3d9",
+      "bytes": 45851,
+      "width_px": 1020,
+      "height_px": 436,
+      "root_personally_viewed": true
+    },
+    {
+      "file": "about-installed306-dark.jpg",
+      "encoding": "JPEG/JFIF",
+      "sha256": "d6ffe0a62cecc4173c66c39833ca14e0c5c3bfa83fd1984441a6d90be0d48d61",
+      "bytes": 22899,
+      "width_px": 568,
+      "height_px": 382,
+      "root_personally_viewed": true
+    },
+    {
+      "file": "settings-advanced-dark.jpg",
+      "encoding": "JPEG/JFIF",
+      "sha256": "39895a0ff842d100cfec39d3295852a87d30504e7d6ed99977452d505d4ea8c5",
+      "bytes": 95396,
+      "width_px": 1020,
+      "height_px": 894,
+      "root_personally_viewed": true
+    }
+  ],
+  "scope": "only Translator windows; no unrelated user content",
+  "lease_compliance": "FAIL: final tab restoration started1.841s after deadline; no screenshot after deadline",
+  "actual_menu_bar_extra": "NOT_DONE",
+  "settings_via_menu_over_another_app": "NOT_DONE"
+}

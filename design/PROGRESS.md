@@ -323,3 +323,53 @@ Cwd всех трёх — `/Users/den/Documents/dev/selection_translator_anki`, 
 Разрешённое пользователем окно рабочего стола было доставлено macOS-сессии в 18:02:39 UTC, истекло в 18:03:39. Обязательное восстановление CUA documentation переполнило доступный контекст инструмента; восстановление завершилось в 18:05:21. В этом окне **не было UI input, capture или screenshots**. Actual menu/Settings/About проверка остаётся NOT_DONE. Доступность не продлена молча; после готовности документации отправлен новый вопрос на три минуты. Native report разрешено дополнить этими результатами; source/signature/global settings остаются frozen.
 
 Normal docs commit предыдущего checkpoint: `c919274b23da20c0297da90fddf526e80b97e844`, 11 поимённых paths, Ruff/format/mypy/commit hooks PASS, индекс и дерево были чисты. После нового результата запланирован отдельный логический acceptance addendum, затем один общий push с remote SHA и реальным CI. Epic остаётся открытым до оставшихся фактических проверок; исторические ошибки, source CI FAIL и NOT_DONE уровни сохранены.
+
+
+## B036 — 05.10.2026: actual306 GUI evidence и изменение объёма приёмки
+
+В новом ограниченном окне 18:15:07–18:18:07 UTC macOS-сессия лично просмотрела настоящие тёмные General Settings, About и Advanced установленной 306. About показывает исправленную AppIcon и Version 0.3.0 (306); Advanced — Backend Running, три базы Available, Apple Dictionary Available. Root самостоятельно просмотрел все три кадра и проверил их exact SHA/формат/размеры. Полученные CUA bytes оказались JPEG: имена `.png` исправлены на `.jpg` без перекодирования или повторного capture. [Переносимый manifest](integration/evidence/native306/manifest.json), [Root review](</Users/den/Documents/dev/translator-evidence/2026-10-05/brand/github/installed306-cua-peer-review.json>).
+
+![Настоящие General Settings306](integration/evidence/native306/settings-general-dark.jpg)
+
+![Настоящее About306 с исправленной иконкой](integration/evidence/native306/about-installed306-dark.jpg)
+
+![Настоящий backend и три базы306](integration/evidence/native306/settings-advanced-dark.jpg)
+
+Root read-only проверил собственный ключ приложения `com.translator.desktop/accessibilityTrusted`: **1**. В коде его пишет `AppModel.refreshAccessibilityTrust` из authoritative `SelectionCapture.isTrusted`; General не показывает Setup warning. Это положительный app-reported persisted статус, отдельно от fresh AX invocation и фактической доставки хоткея. Сохранённая ⇧⌘Q не менялась и вслепую не нажималась.
+
+Нарушение desktop lease не скрыто: последний возврат на General начался в 18:18:08.841, на **1.841 секунды позже** deadline, завершился в 18:18:09.987. Значения настроек не менялись; последний capture завершился в 18:16:58.684, снимков после deadline нет. Lease compliance — **FAIL**, не дефект приложения. Все desktop operations остановлены, точные вызовы/AX/timestamps сохранены в native/cua-installed306/cua-commands-and-ax.json.
+
+Пользователь затем уточнил: «заканчивай без тестов компьютер юза — но всё равно убедись во всём на сто процентов». Новые CUA/computer-use tests, desktop capture и запросы нового окна **прекращены**. Непросмотренные actual MenuBarExtra/light/physical Retina/Finder Get Info/Settings через status menu поверх другого приложения/global shortcut delivery остаются **NOT_DONE_USER_STOPPED_CUA**, а не PASS. Далее выполняются только проверяемые source/bundle/signature/resource/CLI packaging/Git/CI уровни. Три role reports и история сохранены; абсолютная уверенность не приписывается ненаблюдённому поведению.
+
+Общий source/evidence push **6f02a17a06f9e11a8f38eb2dbdde5c8d515c3d36** PASS, remote SHA verified 18:20:05 UTC. Его реальный CI [37355151825](https://github.com/gorodtx/selection_translator_anki/actions/runs/37355151825): четыре jobs PASS, app bundle ещё in progress на момент записи. После финального dated GUI/CLI report checkpoint — последняя логическая docs delivery и actual CI её SHA, результаты в delivery receipt без бесконечных self-reference commits. Installed306 не переподписывается; public v0.3.0/site не меняются.
+
+
+## B037 — 05.10.2026: заключительная CLI/delivery сверка без computer-use
+
+Source CI **37355151825 / 6f02a17** completed/success: все пять jobs PASS; notarize skipped. Root прочитал actual app-bundle steps/log: build, bundle contract, backend smoke, проверки отсутствия записи в signed bundle, package и DMG release contract PASS; **301 passed, 1 skipped, 57.14s**. Исторический5cFAIL сохранён; narrow deterministic354bc92 реально проверен новым CI. [Source CI](https://github.com/gorodtx/selection_translator_anki/actions/runs/37355151825).
+
+Native собрал local306 DMG из уже проверенного full bundle, без нового build/signing/relaunch. `Translator-0.3.0-macos-arm64.dmg`: **27396598 bytes**, SHA256 `eb255c0974606bbff16092ff36942acd80f16c021540b787835cf3df848b0a55`. Владелец проверил1202file/symlink entries, потом Root **самостоятельно** выполнил hdiutil verify, read-only/nobrowse/noautoopen attach, strict codesign/CDHash/native SHA, common7-artwork guard и полное сравнение всех файлов/symlinks с reviewed full306. Root entries ровно Translator.app + Applications→/Applications; SQLite/design/agent docs отсутствуют. Оба точных временных mount удалены после detach. [Root independent proof](</Users/den/Documents/dev/translator-evidence/2026-10-05/brand/github/dmg306-root-review.json>). LocalDMG не публичный release; [готовый local306 DMG](</Users/den/Documents/dev/translator-evidence/2026-10-05/brand/native/dmg306/Translator-0.3.0-macos-arm64.dmg>).
+
+Final macOS report freeze SHA `0f31483b7735f7e7d18b597a6c5a554fb61a083161b867bbef27b03b850897c6` independently matched. Root final docs commit содержит ровно пять согласованных MD и четыре native306 evidence files; master artwork/site/native sources после productionbfac не изменены. Следующие exact commit/push/remote SHA/final CI записываются в [delivery receipt](</Users/den/Documents/dev/translator-evidence/2026-10-05/brand/github/final-delivery.json>) после Git операций, без новых self-reference commits.
+
+Состояние при уточнённом пользователем завершении:
+
+| Уровень | Измеренное состояние |
+|---|---|
+| Artwork/master/geometry/export hashes | PASS; утверждённые источники сохранены |
+| Official compiler/stack/native appearance | PASS; выбран byte-verified control, старые ошибки сохранены |
+| Short/full builders/guards/signature | PASS; resource packing до подписи, positive+negative controls |
+| Installed306/data/backend | PASS independently на signature/source/resources/process/health; user data сохранены |
+| Translation/History/AppIcon | PASS_USER_REPORTED для actual306; installed Icon Services/About Root viewed PASS |
+| Settings/About/Advanced dark | PASS_CUA + Root personally reviewed JPEGs |
+| Accessibility | PASS own-app persisted authoritative report=1; fresh helper AX не подменён этим результатом |
+| Actual menu/Settings over another app/light/physical Retina/global shortcut | NOT_DONE_USER_STOPPED_CUA; никаких дальнейших desktop tests |
+| Desktop lease compliance | FAIL1.841s late tab restoration; значения не менялись, поздних captures нет |
+| Local306 DMG | PASS native и independent Root; временные mount очищены |
+| README/Social preview | PASS published HTML/asset и saved exact CDN bytes; README browser frame UNKNOWN, внешние кеши NOT_DONE |
+| Profile/Pinned | Exact dependency: доступный public gorodtx/gorodtx не найден; snippet/assets готовы, avatar/Pins не менялись |
+| Web | PASS local Chromium/root/subpath/light/dark/mobile/focus/motion; Safari/WebKit NOT_DONE, видео не поступило |
+| Public site/new release/notarization | NOT_DONE: новая публикация не выбрана текущей передачей; Developer Program отсутствует |
+| Git/source CI | 6f02a17 push/remote/5-job CI PASS; final docs delivery/CI фиксируются receipt |
+
+Три самостоятельные сессии/IDs/точные resume commands сохранены в B034; native final edited path — только integration/macos.md, productionsourcebfac4d1, summary — этот журнал/role report/external receipt. Web retained, macOS retained после scoped completion, Root закрывает Git/CI checkpoint. Не запускать nativeID второй раз. Этот wrap-up заканчивает разрешённое внедрение и проверки в уточнённом объёме; более широкие video/profile/publichosting/release зависимости не объявлены выполненными и общий epic не выдан за безусловный100%PASS.

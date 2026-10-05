@@ -137,3 +137,13 @@ B15 дополнен bounded batch требованием: known-valid конт�
 - B06/B08: actual menu/Settings/About, поведение Settings поверх другого приложения и light/dark desktop evidence всё ещё NOT_DONE. Первая minute lease истекла при восстановлении CUA context, без input/capture. Новое окно требует нового положительного ответа; инструменты заранее подготовлены.
 - Требование качества: ограниченный desktop lease имеет измеренные начало/конец; восстановление документации выполняется до него. Истёкшее окно не разрешает дальнейшие действия. Пользовательская функциональная приёмка, чужой GUI-отчёт и собственный просмотр доказательств отмечаются раздельно.
 - B12: normal source/test/resources/evidence commits локально PASS; последующий acceptance addendum и единый final push/remote SHA/actual CI проверяются без перезаписи исторического 5c FAIL. Public release/site, реальное видео, Safari и доступный profile repository остаются отдельными зависимостями.
+
+
+## Дополнение 05.10.2026: окончательная граница компьютерной приёмки
+
+Пользователь остановил дальнейшие computer-use tests. B06/B08 сохраняют реальные измеренные результаты и перечисленные NOT_DONE_USER_STOPPED_CUA; отсутствие прямого наблюдения не превращается в PASS. Actual dark Settings/About/Advanced screenshots просмотрены владельцем и Root; Services/History/новая AppIcon приняты пользователем. App-reported saved Accessibility=true прочитан Root отдельно; доставку сохранённого global shortcut это не доказывает. B16: окончательная доставка требует валидных source/resource/signature/CLI packaging/Git/CI результатов, точного final SHA и завершённых role reports в уточнённом объёме. Профиль без доступного repository, отсутствующее настоящее видео, Safari/public site/new release сохраняют свои зависимости и отдельные статусы. Deadline compliance FAIL1.841s также остаётся в истории; новых UI действий нет.
+
+
+## Дополнение 05.10.2026: окончательный проверяемый implementation checkpoint
+
+B07/B12/B14/B15/B16: source306 CI5jobs PASS, включая app backend smoke/signed-bundle301tests/DMG contract. Local306 DMG создан из неизменного reviewed full bundle и independently mounted Root: exact1202entries,7artwork, strict signature/CDHash/nativeSHA, app+Applications link, никаких SQLite/design/agent docs; точные mount очищены. Это local distribution PASS, не новый public release. Final docs commit/remote/CI фиксируются в external receipt после операции. Scoped implementation/wrap-up завершены после его PASS; broader epic сохраняет названные зависимости/NOT_DONE, исходную историю и отозванные claims.

@@ -813,3 +813,119 @@ native SHA256 `f8fdb1edacb5cd54ce4032f495278087422feb810218d64fc9427bd75f24eb5c`
 CDHash `86db3a69b875b1037903f8dc3c4f92bf386aa19e`. Этот addendum меняет только отчёт;
 источники, ресурсы signed bundle, данные и grants не менялись. Git commit/push остаются
 исключительно у координатора.
+
+## Фактическая GUI-приёмка exact306 и финальное ограничение пользователя · 05.10.2026
+
+Новое положительное desktop lease было задано точно: **18:15:07–18:18:07 UTC**.
+Агент использовал только документированный CUA, связанный с exact installed path:
+`await cua.getApp('/Applications/Translator.app')`. Получен настоящий General window.
+Затем выполнены `getScreenshot`, exposed `Raise`, обычный application menu Translator →
+About Translator, возврат в Settings и выбор Advanced; каждый следующий AX index взят
+из свежего snapshot. Standard About panel показывает данные именно установленного
+bundle. Это собственная GUI-проверка, а не render отдельного ресурса или новый probe app.
+
+| Gate | Фактически полученный уровень |
+|---|---|
+| General Settings | **PASS_CUA**: лично просмотрены ⇧⌘Q и выключенный Open at login; значения не менялись |
+| Raise Settings window | **PASS_CUA_API**: exposed Raise завершился, AX focused General; отдельный вызов Settings через MenuBarExtra поверх другого приложения этим не доказан |
+| About | **PASS_CUA**: лично видны светлый передний слой, узел и три полосы утверждённой AppIcon, `Version 0.3.0 (306)` |
+| Advanced | **PASS_CUA**: Backend Running, три DB Available, Apple Dictionary Available |
+| Тёмные native окна | **PASS_CUA**: General/About/Advanced лично просмотрены; global theme не менялась |
+| Services `bank`, History, оценка квадратной иконки | **PASS_USER_REPORTED**, как зафиксировано выше; агент не выдаёт эти ответы за собственный повторный сценарий |
+| Accessibility own app status | **PASS_APP_REPORTED_ROOT_VERIFIED**: Root read-only прочитал собственный сохранённый `accessibilityTrusted=1`; источник записи `AppModel.refreshAccessibilityTrust → SelectionCapture.isTrusted` |
+| Setup warning | В собственном General AX/screenshot предупреждений Setup нет; source mapping указывает на готовые required model states. Это отдельно помеченная **source/UI inference**, а не нажатие глобального shortcut |
+
+Root record `github/installed306-cua-peer-review.json` прочитан: hashes трёх снимков
+сходятся с собственными captures, Root также лично их просмотрел. Сохранённый own app
+boolean не равен новому AX query от helper process; отдельного свежего OS query агент
+не выполнял. Services остаётся самостоятельным пользовательским сценарием и не служит
+доказательством Accessibility trust. Регистрация/доставка ⇧⌘Q отдельным runtime нажатием
+не проверялась; сочетание не нажимали и не меняли.
+
+Три лично просмотренных capture сохранены как исходные **JPEG/JFIF bytes CUA**,
+без перекодирования. Root перенёс точные копии в portable evidence:
+
+| Снимок | Pixels | SHA256 |
+|---|---:|---|
+| [General](evidence/native306/settings-general-dark.jpg) | 1020×436 | `7f3131dc313f3a19fff025233f56514ff1dc926a1264264777870d524f77c3d9` |
+| [About](evidence/native306/about-installed306-dark.jpg) | 568×382 | `d6ffe0a62cecc4173c66c39833ca14e0c5c3bfa83fd1984441a6d90be0d48d61` |
+| [Advanced](evidence/native306/settings-advanced-dark.jpg) | 1020×894 | `39895a0ff842d100cfec39d3295852a87d30504e7d6ed99977452d505d4ea8c5` |
+
+Первоначальные `.png` имена были исправлены на `.jpg` после `file`/`sips` проверки
+формата и dimensions, без новой capture или изменения bytes. В снимках только окна
+Translator. Физический Retina display scale не измеряли; pixel dimensions не выданы
+за полный Retina acceptance. Portable manifest — `evidence/native306/manifest.json`.
+Полные собственные команды, AX text и timestamps находятся вне repo:
+`/Users/den/Documents/dev/translator-evidence/2026-10-05/brand/native/cua-installed306/cua-commands-and-ax.json`;
+уровни acceptance, hashes и явное нарушение deadline — в соседнем `acceptance.json`.
+
+**Lease compliance — FAIL.** Последний возврат на General tab
+`await brand306.click(9); await brand306.getAXState();` начат в **18:18:08.841 UTC**,
+то есть на **1.841 s после hard deadline**, завершён в **18:18:09.987 UTC**.
+Это один поздний input и один поздний AX observation, хотя значения настроек не менялись.
+Ошибка сразу раскрыта координатору (`msg_4beb7e40169a`) и сохранена в exact call log.
+Последний screenshot завершён в **18:16:58.684 UTC**, после deadline новых снимков нет.
+Дальнейший desktop input/capture остановлен; lease не продлевали задним числом.
+
+После этого пользователь прямо остановил дальнейшие computer-use проверки.
+Неизмеренные MenuBarExtra open/template на самом desktop, Settings через status menu
+поверх другого foreground app, light-mode сравнение, физический Retina scale,
+Finder/Get Info и реальная доставка shortcut получают статус
+**NOT_DONE_USER_STOPPED_CUA**. Подготовленный ранее capability plan — историческая
+запись; новые desktop probes и вопросы о desktop lease не выполняются. Отсутствие этих
+проверок не выдано за 100% GUI success и не отменяет уже измеренные собственные и
+пользовательские результаты.
+
+Это финальная правка только отчёта. Exact installed306 остаётся тем же full bundle:
+source revision `bfac4d1f736716f9ba41a1ae2927ac3cb11edb6b`, source digest
+`c3231b87928d687d0030929e16ee3df32454e7fa5d56beb62279b32e2bb41420`, native SHA256
+`f8fdb1edacb5cd54ce4032f495278087422feb810218d64fc9427bd75f24eb5c`, CDHash
+`86db3a69b875b1037903f8dc3c4f92bf386aa19e`. Новых build/signature/settings/source
+изменений нет. Source/local gates, собственная GUI-приёмка, user reports, Root peer
+verification и CI/Git delivery остаются разными уровнями; финальные commit/push/CI
+контролирует координатор.
+
+## Финальная CLI-only проверка DMG306 · 05.10.2026
+
+После остановки computer-use пользовательский scope допускал ещё одну упаковочную
+CLI-проверку, которую отдельно поручил координатор. Уже проверенный signed full306
+упакован существующим `scripts/package_macos_dmg.sh`, без rebuild, resign или relaunch:
+
+```sh
+scripts/package_macos_dmg.sh \
+  /Users/den/Documents/dev/translator-evidence/2026-10-05/brand/native/full306/Translator.app \
+  /Users/den/Documents/dev/translator-evidence/2026-10-05/brand/native/dmg306
+```
+
+Команда завершилась **0**; собственные `hdiutil verify` и SHA256 check упаковщика прошли.
+Локальный artifact `Translator-0.3.0-macos-arm64.dmg` содержит build **306**, размер
+**27,396,598 bytes**, SHA256
+`eb255c0974606bbff16092ff36942acd80f16c021540b787835cf3df848b0a55`.
+Он сохранён только во внешнем `native/dmg306`; существующий public v0.3.0/tag/release
+не изменён и новый public release не создан.
+
+DMG присоединён через `hdiutil attach -readonly -nobrowse -noautoopen -mountpoint`
+в единственный exact temporary directory внутри owned `native/dmg306`.
+Mount не открывал Finder или приложение. Собственная проверка mounted contents дала:
+
+| Gate | Измеренный результат |
+|---|---|
+| Корень тома | **PASS**: только `Translator.app` и symlink `Applications → /Applications` |
+| Полное дерево app | **PASS**: все **1202 file/symlink entries**, bytes и link targets равны reviewed full306 |
+| Mounted identity | **PASS**: `com.translator.desktop`, `0.3.0 (306)`, `LSUIElement=true`, minimum26.0 |
+| Mounted signature | **PASS**: strict/deep codesign; CDHash `86db3a69b875b1037903f8dc3c4f92bf386aa19e` |
+| Mounted native | **PASS**: SHA256 `f8fdb1edacb5cd54ce4032f495278087422feb810218d64fc9427bd75f24eb5c` |
+| Семь artwork resources | **PASS**: `uv run python scripts/macos_bundle_manifest.py --verify-artwork` на mounted app |
+| Curated ICNS | **PASS**: exact approved bytes, SHA256 `ca1f8328df7395ca05066fbeff9449e6ead4df2dbfefecf4c473ca7f43e3a4b3` |
+| Compiled CAR | **PASS**: SHA256 `119d9a04a731edc72037a5886ccaca11b0c519ad6bcd962a905a4116ffe6f4d7` |
+| SQLite/design/agent docs | **PASS**: нет SQLite file headers, project `design`, `.git`, `AGENTS.md`, `SKILL.md` или `.env` в payload |
+| Завершение mount | **PASS**: exact mount штатно detached, пустой owned temporary directory удалён |
+
+Полные argv, return codes, mount entries, Info, семь hashes, полный tree digest и detach
+записаны в
+`/Users/den/Documents/dev/translator-evidence/2026-10-05/brand/native/dmg306/mounted-verification.json`;
+packaging stdout/stderr — `native/dmg306-package.log`, attach/codesign/artwork/detach logs —
+в `native/dmg306`. Broad cleanup и изменения настроек не выполнялись. Это упаковочная
+CLI-приёмка, не Finder/desktop acceptance, notarization или разрешение на публикацию.
+После неё установленные app bytes/source/signature/grants и пользовательские данные
+сохраняются; дальнейших computer-use действий нет.
