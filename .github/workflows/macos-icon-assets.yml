@@ -1,0 +1,32 @@
+name: macOS icon resources
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  compile:
+    name: Compile app-owned icon appearances
+    runs-on: macos-26
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@v5
+
+      - name: Compile with the runner's official Xcode
+        run: |
+          set -euo pipefail
+          macos/Translator/scripts/make_icon.sh --compile-appearances "${RUNNER_TEMP}/Translator-AppIcon-resources"
+
+      - name: Upload generated resources and compiler diagnostics
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: Translator-AppIcon-resources-${{ github.sha }}
+          path: ${{ runner.temp }}/Translator-AppIcon-resources/
+          if-no-files-found: error
+          retention-days: 7

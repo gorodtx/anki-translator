@@ -1,0 +1,45 @@
+{
+  "version": 1,
+  "source": "design/translator-icon/master/logo-master.svg",
+  "source_sha256": "20d2f29060a00f45f7d3c1fd5be5219b64977790fbad984b4150fa5b138d546b",
+  "schema_reference": "https://developer.apple.com/documentation/swiftui/landmarks-building-an-app-with-liquid-glass",
+  "fallback_icns_sha256": "ca1f8328df7395ca05066fbeff9449e6ead4df2dbfefecf4c473ca7f43e3a4b3",
+  "layers": [
+    {
+      "file": "Assets/back-panel.svg",
+      "source": "design/translator-icon/master/logo-master.svg",
+      "semantic_id": "back-panel",
+      "subtree_preserved": true,
+      "sha256": "f3807f4689dd718390b503b8ac9c3b1faa4c657ee361a18b4ae623d19db06e7a"
+    },
+    {
+      "file": "Assets/chaos.svg",
+      "source": "design/translator-icon/master/logo-master.svg",
+      "semantic_id": "chaos",
+      "subtree_preserved": true,
+      "sha256": "ed7895524b492913b43066ce7ef129229888a0cc9d86aab037a0c8842c169be8"
+    },
+    {
+      "file": "Assets/front-panel.svg",
+      "source": "design/translator-icon/master/logo-master.svg",
+      "semantic_id": "front-panel",
+      "subtree_preserved": true,
+      "sha256": "7bce9996433d3b38e2fbc734251c57e063b001f59c1f0296055eeb27cb7c3184"
+    },
+    {
+      "file": "Assets/text.svg",
+      "source": "design/translator-icon/master/logo-master.svg",
+      "semantic_id": "text",
+      "subtree_preserved": true,
+      "sha256": "9f78df56c14aa3744e48ca25858b4d6ecf332197cc81d1dcd1c6e359fd7d2531"
+    },
+    {
+      "file": "Assets/highlights.svg",
+      "source": "design/translator-icon/master/logo-master.svg",
+      "semantic_id": "highlights",
+      "subtree_preserved": true,
+      "sha256": "3162a7f339c886bb058c45283dc9d7bd224927f1d53b9e32896f1e798a9bfb63"
+    }
+  ],
+  "status": "compiler-and-native-appearance-verification-pending"
+}

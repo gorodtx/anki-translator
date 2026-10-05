@@ -23,12 +23,24 @@ def source_digest() -> str:
         ("macos/AppleLangHelper/Sources", ".swift"),
     ):
         paths.extend((ROOT / folder).rglob(f"*{suffix}"))
+    # Hash the exact shipped artwork and its appearance compiler inputs. Research
+    # exports and reports outside these production resource directories are excluded.
+    for folder in (
+        "macos/Translator/Resources/AppIcon.icon",
+        "macos/Translator/Resources/CompiledAppIcon",
+    ):
+        paths.extend(path for path in (ROOT / folder).rglob("*") if path.is_file())
     paths.extend(
         ROOT / name
         for name in (
             "macos/Translator/Package.swift",
             "macos/AppleLangHelper/Package.swift",
             "macos/Translator/Resources/AppIcon.icns",
+            "macos/Translator/Resources/AppIcon-source.json",
+            "macos/Translator/Resources/MenuBar/TranslatorMenuBar.png",
+            "macos/Translator/Resources/MenuBar/TranslatorMenuBar@2x.png",
+            "macos/Translator/Resources/MenuBar/TranslatorMenuBar@3x.png",
+            "macos/Translator/scripts/make_icon.sh",
             "scripts/build_macos_app.sh",
             "scripts/sign_macos_app.sh",
             "scripts/macos_bundle_manifest.py",
@@ -56,6 +68,19 @@ def write_manifest(app: Path, expected_digest: str) -> None:
             raise SystemExit(f"external bundle symlink: {path.relative_to(app)}")
     with (contents / "Info.plist").open("rb") as handle:
         info = plistlib.load(handle)
+    for relative in (
+        "AppIcon.icns",
+        "MenuBar/TranslatorMenuBar.png",
+        "MenuBar/TranslatorMenuBar@2x.png",
+        "MenuBar/TranslatorMenuBar@3x.png",
+    ):
+        bundled = resources / relative
+        expected = ROOT / "macos/Translator/Resources" / relative
+        if bundled.read_bytes() != expected.read_bytes():
+            raise SystemExit(f"bundle artwork differs from source: {relative}")
+    if info.get("CFBundleIconName") == "AppIcon":
+        if not (resources / "Assets.car").is_file():
+            raise SystemExit("compiled AppIcon resource missing: Assets.car")
     dependencies = {
         distribution.metadata["Name"]: distribution.version
         for distribution in importlib.metadata.distributions(
