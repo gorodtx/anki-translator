@@ -129,3 +129,11 @@ B15 дополнен bounded batch требованием: known-valid конт�
 - SourceCI5c2747a FAIL в существующем Apple fallback timer test учитывается отдельно. Test-only354bc92 заменяет scheduling-dependent sleep на Event и exact budget assertion;31tests и old-budget in-memory negative control PASS. Production timeouts не меняются. Новый реальный CI итогового source всё ещё обязателен.
 - Actual installation306/пользовательский final grant/native UI/translation/history остаются pending. Shared desktop input требует текущей доступности, вопрос отправлен после reviewed signed bundle. До ответа выполняется независимая документация/Git delivery; весь эпик не объявляется завершённым.
 - Проверенные старые результаты и ошибки не вычеркнуты. Перед остановкой каждого standalone сохранить точный native resume/cwd/branch/base/owned scope; один live nativeID не запускать повторно. Profile repository/video/DeveloperID/public hosting/release остаются ранее названными отдельными зависимостями.
+
+
+## Дополнение 05.10.2026, 18:07 UTC: реальная пользовательская приёмка
+
+- B05/B08/B15: пользователь принял квадратную иконку установленной 306 и подтвердил Services-перевод `bank` с записью в History после штатного Accessibility grant. Уровень — **PASS_USER_REPORTED**, отдельно от independently verified bundle/Icon Services/health.
+- B06/B08: actual menu/Settings/About, поведение Settings поверх другого приложения и light/dark desktop evidence всё ещё NOT_DONE. Первая minute lease истекла при восстановлении CUA context, без input/capture. Новое окно требует нового положительного ответа; инструменты заранее подготовлены.
+- Требование качества: ограниченный desktop lease имеет измеренные начало/конец; восстановление документации выполняется до него. Истёкшее окно не разрешает дальнейшие действия. Пользовательская функциональная приёмка, чужой GUI-отчёт и собственный просмотр доказательств отмечаются раздельно.
+- B12: normal source/test/resources/evidence commits локально PASS; последующий acceptance addendum и единый final push/remote SHA/actual CI проверяются без перезаписи исторического 5c FAIL. Public release/site, реальное видео, Safari и доступный profile repository остаются отдельными зависимостями.
