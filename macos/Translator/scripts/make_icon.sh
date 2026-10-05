@@ -1,32 +1,25 @@
 #!/bin/sh
-# Rebuild Resources/AppIcon.icns from scripts/make_icon.swift.
+# Repack the optical PNG variants exported from the Penpot Mono icon system.
 #
 #   scripts/make_icon.sh [PREVIEW_DIR]
 #
-# Draws the 1024 px master, scales it into an .iconset with sips, and packs the set with
-# iconutil. With PREVIEW_DIR the master and the 32 px image are kept there to look at.
+# Every logical size has its own geometry, including Retina variants.
+# With PREVIEW_DIR the master, 32 px and 16 px images are copied for review.
 set -eu
 cd "$(dirname "$0")/.."
 
-WORK="$(mktemp -d "${TMPDIR:-/tmp}/translator-icon.XXXXXX")"
-trap 'rm -rf "$WORK"' EXIT
-SET="$WORK/AppIcon.iconset"
-mkdir -p "$SET"
-
-swift scripts/make_icon.swift "$WORK/master.png" 1024
-
+ICON_SOURCE="../../design/translator-icon/macOS"
+ICON_SET="$ICON_SOURCE/AppIcon.iconset"
 for size in 16 32 128 256 512; do
-  sips -z "$size" "$size" "$WORK/master.png" --out "$SET/icon_${size}x${size}.png" >/dev/null
-  double=$((size * 2))
-  sips -z "$double" "$double" "$WORK/master.png" --out "$SET/icon_${size}x${size}@2x.png" >/dev/null
+  test -f "$ICON_SET/icon_${size}x${size}.png"
+  test -f "$ICON_SET/icon_${size}x${size}@2x.png"
 done
-
-iconutil -c icns -o Resources/AppIcon.icns "$SET"
+node ../../design/translator-icon/pack-icns.mjs "$ICON_SET" Resources/AppIcon.icns >/dev/null
 
 if [ "${1:-}" != "" ]; then
   mkdir -p "$1"
-  cp "$WORK/master.png" "$1/AppIcon-1024.png"
-  cp "$SET/icon_32x32.png" "$1/AppIcon-32.png"
-  cp "$SET/icon_16x16.png" "$1/AppIcon-16.png"
+  cp "$ICON_SOURCE/png/light/1024.png" "$1/AppIcon-1024.png"
+  cp "$ICON_SET/icon_32x32.png" "$1/AppIcon-32.png"
+  cp "$ICON_SET/icon_16x16.png" "$1/AppIcon-16.png"
 fi
 echo Resources/AppIcon.icns

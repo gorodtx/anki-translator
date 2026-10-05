@@ -21,6 +21,8 @@ selection ──▶ Translator.app ──NDJSON/UDS──▶ python -m desktop_a
 | `scripts/swift-test.sh` | `swift test` on a Command-Line-Tools-only machine. |
 | `scripts/mock_backend.py` | Canned backend on the real protocol, for working without Python running. |
 | `Resources/Info.plist` | `LSUIElement`, `NSServices`. |
+| `Resources/AppIcon.icns` | Утверждённый Mono AppIcon с десятью оптическими representations. |
+| `Resources/MenuBar/` | Template PNG знака «клубок → ровная линия», 28×18 pt, 1x/2x/3x. |
 
 ## Build and run
 
@@ -31,6 +33,20 @@ open .build/Translator.app
 
 There is no Xcode on this machine, only Command Line Tools, so everything goes through
 SwiftPM. `xcodebuild` is not used anywhere.
+
+Знак панели загружает `MenuBarArtwork` через `Bundle.main`: каждая bitmap representation
+имеет логический размер 28×18 pt, а `NSImage.isTemplate` и SwiftUI `.template` передают
+выбор цвета системе. У знака прозрачный фон; подложки и тени отсутствуют. `Package.swift`
+не объявляет asset catalog: оба сборщика (`scripts/build_app.sh` здесь и
+`../../scripts/build_macos_app.sh`) явно копируют три PNG в `Contents/Resources/MenuBar`
+до подписи. Сборка завершается проверкой `codesign --verify --deep --strict`.
+
+`TRANSLATOR_APP_BUILD` задаёт локальный номер сборки в обоих путях; без него используется
+число коммитов. Короткая сборка содержит native shell, полная — также backend и Python
+runtime. Устанавливайте полную сборку. Bundle ID `com.translator.desktop`, `LSUIElement`
+и accessory policy сохраняются. Источники AppIcon, оптическая геометрия и native `ic04/ic05`
+находятся в `../../design/translator-icon/`; существующие генераторы только копируют или
+упаковывают утверждённые exports. Новая сборка ресурсов не требует генерации логотипа.
 
 Tests:
 

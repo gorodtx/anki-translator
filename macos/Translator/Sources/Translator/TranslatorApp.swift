@@ -7,12 +7,46 @@ struct TranslatorApp: App {
     @NSApplicationDelegateAdaptor(AppDelegate.self) private var delegate
 
     var body: some Scene {
-        MenuBarExtra("Translator", systemImage: "character.bubble") {
+        MenuBarExtra {
             MenuBarContent(model: delegate.model, delegate: delegate)
+        } label: {
+            Image(nsImage: MenuBarArtwork.image)
+                .renderingMode(.template)
+                .accessibilityLabel("Translator")
         }
         .menuBarExtraStyle(.menu)
         .commands { WindowCommands(delegate: delegate) }
     }
+}
+
+/// SwiftPM emits a bare executable. Both app builders pack these optical PNGs into
+/// Contents/Resources/MenuBar before signing, without an Xcode asset catalog.
+@MainActor
+private enum MenuBarArtwork {
+    static let image: NSImage = {
+        let size = NSSize(width: 28, height: 18)
+        let image = NSImage(size: size)
+        for suffix in ["", "@2x", "@3x"] {
+            guard let url = Bundle.main.url(
+                forResource: "TranslatorMenuBar\(suffix)",
+                withExtension: "png",
+                subdirectory: "MenuBar"
+            ), let data = try? Data(contentsOf: url),
+               let representation = NSBitmapImageRep(data: data) else {
+                // A bare development executable has no manually packed resources.
+                // Keep its menu accessible and make the missing bundle asset visible.
+                NSLog("Translator: missing menu artwork representation %@", suffix)
+                let fallback = NSImage(systemSymbolName: "character.bubble", accessibilityDescription: "Translator")!
+                fallback.isTemplate = true
+                return fallback
+            }
+            // Each bitmap represents the same logical dimensions, including @3x.
+            representation.size = size
+            image.addRepresentation(representation)
+        }
+        image.isTemplate = true
+        return image
+    }()
 }
 
 /// File > Close (⌘W) and Edit > Find (⌘F) for every window of the app.
