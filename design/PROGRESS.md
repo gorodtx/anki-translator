@@ -373,3 +373,14 @@ Final macOS report freeze SHA `0f31483b7735f7e7d18b597a6c5a554fb61a083161b867bbe
 | Git/source CI | 6f02a17 push/remote/5-job CI PASS; final docs delivery/CI фиксируются receipt |
 
 Три самостоятельные сессии/IDs/точные resume commands сохранены в B034; native final edited path — только integration/macos.md, productionsourcebfac4d1, summary — этот журнал/role report/external receipt. Web retained, macOS retained после scoped completion, Root закрывает Git/CI checkpoint. Не запускать nativeID второй раз. Этот wrap-up заканчивает разрешённое внедрение и проверки в уточнённом объёме; более широкие video/profile/publichosting/release зависимости не объявлены выполненными и общий epic не выдан за безусловный100%PASS.
+
+
+## B038 — 05.10.2026, новый разрешённый release scope
+
+Root/Translator-Brand-GitHub, native `01a1030e-0fcc-7430-8c9d-070c3f569b23`, cwd `/Users/den/Documents/dev/selection_translator_anki`, branch `mac`, base `3a5f2a541b3d0753e683ee12c44c91f00b097142`; чистое дерево проверено перед работой. Peer Web/native retained завершены, дубликаты сессий/children не запускались. Пользователь разрешил публикацию нового релиза и README GNOME/Arch link.
+
+Live forge remote/auth: gorodtx, github.com/gorodtx/selection_translator_anki.git HTTPS, API200; это не push proof. `gnome` HEAD `a1dc855d5cf36d16a302b16e9b72665f737ad862`, README содержит русские GNOME/Wayland/X11 instructions. Latest stable API — `v0.2.8`, Linux assets присутствуют; новый RC не меняет этот stable URL. Предлагаемый tag `v0.3.1-rc.1` remote404 и локально отсутствует. `uv run --no-sync python dev/scripts/release_metadata.py verify-db-release --db-lock scripts/db-bundle.lock.json` EXIT0: pinned3SQLite/names/bytes/digests/manifest verified, SQLite payload transfers0. Evidence: `/Users/den/Documents/dev/translator-evidence/2026-10-05/release031rc1/preflight.json`.
+
+Owned scope Root расширен текущей publication задачей на CI RC version/notary selection и узкое обновление `site/index.html`, `site/README.md`, `docs/macos.md` download facts; native resources/layout/code не меняются. RC parsing принимает numeric version плюс `-rc.N`, для native plist используется numeric часть. Notary skipped только explicit RC; stable gate сохранён. Новый публичный DMG будет взят из actual tag CI; old295/publicv0.3.0 и local306 остаются неизменными. На этом checkpoint publication/tag/push/CI — IN_PROGRESS, не PASS.
+
+Перед stopping: resume `cd /Users/den/Documents/dev/selection_translator_anki && codex resume 01a1030e-0fcc-7430-8c9d-070c3f569b23` только после проверки отсутствия live duplicate. Summary: этот журнал + external release receipt. Оставшееся: normal gates, new tag/build/artifact, public upload/download verification, exact cleanup и финальное delivery evidence.

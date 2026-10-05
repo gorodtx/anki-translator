@@ -147,3 +147,14 @@ B15 дополнен bounded batch требованием: known-valid конт�
 ## Дополнение 05.10.2026: окончательный проверяемый implementation checkpoint
 
 B07/B12/B14/B15/B16: source306 CI5jobs PASS, включая app backend smoke/signed-bundle301tests/DMG contract. Local306 DMG создан из неизменного reviewed full bundle и independently mounted Root: exact1202entries,7artwork, strict signature/CDHash/nativeSHA, app+Applications link, никаких SQLite/design/agent docs; точные mount очищены. Это local distribution PASS, не новый public release. Final docs commit/remote/CI фиксируются в external receipt после операции. Scoped implementation/wrap-up завершены после его PASS; broader epic сохраняет названные зависимости/NOT_DONE, исходную историю и отозванные claims.
+
+
+## Дополнение 05.10.2026: разрешён новый публичный macOS-релиз
+
+Пользователь прямо поручил опубликовать релиз и добавить ссылку на рабочую GNOME/Arch-версию в README. Новое требование B17: неизменяемый `v0.3.1-rc.1`, macOS Apple Silicon/26+, native version `0.3.1`; финальные CI bytes, подпись, manifest/SHA256 и публичное скачивание проверяются до закрытия. RC явно является ad-hoc prerelease; stable tags по-прежнему требуют Developer ID/notarization. Старый `v0.3.0`, stable Linux `v0.2.8`, installed306 и grants не заменяются.
+
+B18: видимая README ссылка на существующую `gnome`-ветку/русскую инструкцию и отдельный stable Linux-релиз. Новый macOS prerelease не меняет `/releases/latest` для Linux и не содержит Linux assets, собранных из macOS branch.
+
+B19: DB bundle `db-a6f07d1e1c28` проверен metadata-only; три SQLite/manifest digest совпадают с lock, никаких повторных DB uploads/copies/hashes. В release только macOS код/DMG и доказательная metadata, без design/agent journals/runtime DB. Новые browser/native computer-use tests пользователем отменены; ранее честно отмеченные NOT_DONE сохраняются.
+
+Приёмка B17–B19: нормальные commit/push gates; exact tag/source/remote SHA; actual CI; public prerelease с ad-hoc facts; публичный DMG bytes/checksum/mount/signature/embedded runtime; GNOME ссылки; сохранённые installation/grants/DB и cleanup точных временных mount. Доставка сайта остаётся отдельной зависимостью, link update не выдаётся за deployment.
