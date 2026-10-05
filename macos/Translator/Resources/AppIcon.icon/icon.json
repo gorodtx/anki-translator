@@ -1,14 +1,6 @@
 {
   "fill-specializations": [
     {
-      "value": {
-        "linear-gradient": [
-          "srgb:0.98824,0.98039,0.96471,1.00000",
-          "srgb:0.91373,0.90588,0.88627,1.00000"
-        ]
-      }
-    },
-    {
       "appearance": "dark",
       "value": {
         "solid": "srgb:0.07059,0.07451,0.08235,1.00000"
@@ -186,5 +178,11 @@
   ],
   "supported-platforms": {
     "squares": "shared"
+  },
+  "fill": {
+    "linear-gradient": [
+      "srgb:0.98824,0.98039,0.96471,1.00000",
+      "srgb:0.91373,0.90588,0.88627,1.00000"
+    ]
   }
 }
