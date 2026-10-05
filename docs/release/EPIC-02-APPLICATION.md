@@ -319,3 +319,20 @@ A27 build302 **FAIL** по новому user screenshot: shortcut показыв
 ### A27/A31 — 2026-10-04T21:22:32.192858+00:00: permission сохраняется при normal relaunch
 
 Тот же immutable working304/nativeSHA495ff7ab0b786017fd0e8a23c587401c84f0f7b4f132b00ca31b6eddac055ea2 после normal Launch Services restart сразу сообщает authoritative granted=true и поднимает owned backend4579. Native alert on-screen0; повторного запроса нет. История пользовательского перевода сохранена. Эти PASS не распространяются на будущую ad-hoc пересборку с другой подписью или полный public release readiness.
+
+### 05.10.2026 — актуальный остаток и порядок следующих шагов
+
+Root сверил накопленные записи с текущим Git HEAD010d5f5 и ручной приёмкой304. A27/A28/A30/A31/A32 приняты в своих объявленных границах; CI010d5f5 SUCCESS, notarize branch job SKIPPED. Статусы более ранних таблиц остаются историей. P027/P028 уже закрывают измеренные VM first-run DB/model/Services/history/offline сценарии; повторять полную загрузку баз ради отчёта не требуется.
+
+| Порядок | Что осталось | Как закрыть |
+| --- | --- | --- |
+| 1 | A15/A17: физическая ручная приёмка текущей304 | Popup: click outside и Escape; capture слов/фраз в конкретных приложениях пользователя; Copy Translation/Find Examples/History recall. Уже принятый capture/grant не объявлять заново UNKNOWN; межприложная матрица и текущий host dismissal пока не закрыты |
+| 2 | A16: точный рабочий синхронизированный Anki-профиль | Определить текущий профиль/колоду и проверить собственный test note/add/repeat/merge. Старое спорное test data не удалять до выяснения происхождения; отдельная пустая Anki-коллекция уже проверена |
+| 3 | A08: финальная accessibility/hardware приёмка | Live VoiceOver речь/навигация; Reduce Motion/Transparency/contrast и multi-display при доступных условиях, с восстановлением временных настроек и отдельными PASS/UNKNOWN |
+| 4 | A29: legacy developer installer | Bounded diagnosis сохранённого launchctl bootstrap exit5; исправить поддерживаемый сценарий или явно вывести устаревший сценарий из поддержки. Ordinary canonical app-owned backend launch уже PASS; не нарушать рабочую304 ради диагностики |
+| 5 | Следующий code-only DMG/release | После закрытия найденных ручных дефектов собрать артефакт с принятыми native fixes, проверить реальное скачивание/установку/обновление/физический drag и сохранение данных, убрать собственные хвосты. Публичный v0.3.0(295) пока не содержит рабочие fixes304. Переиспользовать immutable DB bundle, без новых SQL uploads |
+| 6 | D05: Developer ID/notarization/Gatekeeper | Внешний BLOCKED: пользователь сообщил отсутствие Apple Developer Program. После появления членства/сертификата фактически sign/notarize/staple/download/Gatekeeper. Ad-hoc prerelease не обещает установку без системных предупреждений |
+
+Presentation отдельно: короткий русский README и минимальный site уже доставлены commit e00ff39; ROOT_GIT_PENDING в старом peer handoff исторический. Ждём пользовательские реальные video/logo, затем integration/playback/Safari/public hosting. DB web checkpoint остаётся PAUSED_USER_STEERING. Root отправил существующей peer-сессии status сверку msg_d97a44822dbf; это enqueue, не новый peer outcome. Новые агенты, VM и download waves не запускались.
+
+Ближайший пользовательский шаг — popup dismissal на принятой304, затем History и реальные примеры. Общий эпик открыт; отдельные hardware/Anki/signing зависимости сохраняются до фактической приёмки.
