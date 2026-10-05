@@ -8,7 +8,7 @@
 
 [Демонстрация и лендинг](site/README.md)
 
-[**Скачать для Mac — 0.3.1-rc.1, DMG**](https://github.com/gorodtx/selection_translator_anki/releases/download/v0.3.1-rc.1/Translator-0.3.1-macos-arm64.dmg)
+[**Скачать для Mac — 0.3.1-rc.1 (324), DMG 27,39 МБ**](https://github.com/gorodtx/selection_translator_anki/releases/download/v0.3.1-rc.1/Translator-0.3.1-macos-arm64.dmg)
 
 **Apple Silicon · macOS 26+.** Предварительный выпуск с ad-hoc подписью, без Developer ID и заверения Apple. macOS может блокировать открытие; публичный Gatekeeper-запуск не подтверждён. [Файлы и SHA256](https://github.com/gorodtx/selection_translator_anki/releases/tag/v0.3.1-rc.1).
 

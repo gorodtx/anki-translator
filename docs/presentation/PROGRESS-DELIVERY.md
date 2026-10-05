@@ -216,3 +216,8 @@ Role Translator-Brand-Web, native ID01a10317-15e0-7c12-a4ac-dcfddc86ce9d, Task t
 ### 05.10.2026 — разрешённое обновление download facts
 
 Root, Translator-Brand-GitHub: после завершения Web owner пользователь разрешил новый macOS prerelease. В `site/index.html` и `site/README.md` только CTA/release URLs и версия заменены на `v0.3.1-rc.1`; размер/build до actual artifact не заявлены. Typography/palette/one-column/video=null/assets/focus/motion без изменений. Публикация DMG и CI проверяются в `design/PROGRESS.md`; сайт не объявляется deployed. Новые computer-use/browser tests пользователь отменил; прежняя Chromium acceptance сохранена, Safari NOT_DONE.
+
+
+### 05.10.2026 — фактический публичный RC
+
+Root обновил только download facts после публикации `v0.3.1-rc.1`: native0.3.1/build324, DMG27389077bytes/27,39МБ. Пять файлов релиза скачаны без авторизации, hashes совпали, DMG/runtime проверены; UI, assets, typography, video=null сохранены. Новый site deployment не выполнялся, browser/CUA tests по указанию пользователя не возобновлялись. История прежнего v0.3.0 не удалена; actual release/evidence/CI queue/retry находятся в `design/PROGRESS.md` B041.

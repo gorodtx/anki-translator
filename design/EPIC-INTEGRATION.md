@@ -158,3 +158,12 @@ B18: видимая README ссылка на существующую `gnome`-в
 B19: DB bundle `db-a6f07d1e1c28` проверен metadata-only; три SQLite/manifest digest совпадают с lock, никаких повторных DB uploads/copies/hashes. В release только macOS код/DMG и доказательная metadata, без design/agent journals/runtime DB. Новые browser/native computer-use tests пользователем отменены; ранее честно отмеченные NOT_DONE сохраняются.
 
 Приёмка B17–B19: нормальные commit/push gates; exact tag/source/remote SHA; actual CI; public prerelease с ad-hoc facts; публичный DMG bytes/checksum/mount/signature/embedded runtime; GNOME ссылки; сохранённые installation/grants/DB и cleanup точных временных mount. Доставка сайта остаётся отдельной зависимостью, link update не выдаётся за deployment.
+
+
+## Дополнение 05.10.2026: опубликованный RC и внешняя CI-зависимость
+
+B17: публикация **PASS** — `v0.3.1-rc.1`, native0.3.1/build324, tag/source immutable,5macOS files, public download/checksum/read-only mount/signature/artwork/isolated runtime PASS. Из-за GitHub Actions degraded performance и фактического отсутствия hosted macOS arm64 runner принят проверенный **local** DMG из exact tagged source; первоначальный план использовать новый CI artifact уточнён до публичной публикации. Public bytes не выдаются за CI bytes и не заменяются после выпуска. Source digest совпадает с ранее прошедшим полный CI37357775394 и accepted306; локальные mandatory gates/native checks выполнены, source/Linux нового tag CI PASS.
+
+Требование actual CI сохранено: attempt1 **FAIL_EXTERNAL_RUNNER_CAPACITY** — обе Swift jobs CANCELLED до первого step, bundle SKIPPED. Аннотация: `The job was not acquired by Runner of type hosted even after multiple attempts`. Выполнен штатный `gh run rerun --failed`, attempt2 pending; полноту нового CI ещё нельзя объявлять PASS. Stable Developer ID/notarization gate не ослаблялся.
+
+B18: GNOME branch/stableLinuxv0.2.8 URLs public HTTP200; README содержит обе ссылки, final branch delivery проверяется отдельно. `/releases/latest` после публикации RC всё ещё v0.2.8. B19: pinned DB metadata/content identities прежних release assets совпадают; SQLite transfers/uploads0. Public app не содержит agent/docs/design/DB, обязательные библиотечные licenses сохранены. Installed306 exact identity до/после совпала; текущий app/grants/data не изменялись. Собственные новые duplicate app/download/mount удалены, один canonical public DMG оставлен рядом с evidence. Более широкие profile/video/notary/publicsite/native UI зависимости не вычеркнуты.
