@@ -6,6 +6,7 @@ const message = document.querySelector('#video-message');
 const detail = document.querySelector('#video-detail');
 const caption = document.querySelector('#demo-caption');
 const logo = document.querySelector('#logo');
+const logoDark = document.querySelector('#logo-dark');
 
 function asset(value) {
   if (typeof value !== 'string' || !value.startsWith('assets/')) return null;
@@ -14,6 +15,8 @@ function asset(value) {
 }
 const logoUrl = asset(media.logo);
 if (logoUrl) logo.src = logoUrl;
+const logoDarkUrl = asset(media.logoDark);
+if (logoDarkUrl) logoDark.srcset = logoDarkUrl;
 const videoUrl = asset(media.video);
 if (videoUrl) {
   video.src = videoUrl;

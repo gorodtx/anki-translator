@@ -1,6 +1,6 @@
 # Лендинг Translator
 
-Минимальный русский сайт без сборщика/зависимостей, внешних fonts/analytics. Native app не меняется. Сейчас **LOCAL_READY; WAITING_USER_VIDEO_LOGO**: пользователь готовит настоящий screencast и новый logo. Пустой video slot честно сообщает об отсутствии записи; generated demo/Canvas/fixture/DB endpoint в active site отсутствуют.
+Минимальный русский сайт без сборщика/зависимостей, внешних fonts/analytics. Сейчас **LOGO_APPROVED_INTEGRATED; WAITING_USER_VIDEO**: пользователь принял Translator Mono; настоящий screencast ещё ожидается. Пустой video slot честно сообщает об отсутствии записи; generated demo/Canvas/fixture/DB endpoint в active site отсутствуют.
 
 ## Локальный preview
 
@@ -10,9 +10,13 @@ uv run --no-project python -m http.server 8765 --bind 127.0.0.1 --directory site
 
 Открыть `http://127.0.0.1:8765/`. Это статическая presentation, не приложение и не публичный deployment. `file://` не подходит для ES modules. JavaScript проверяется `node --check site/app.js` и `node --check site/media.js`; HTML/assets/links и desktop/mobile/keyboard/media preferences проверяются отдельно в browser.
 
+Поднимать preview только на время реальной разработки или проверки. После завершения остановить свой сервер через Ctrl+C либо по заранее подтверждённому собственному PID и проверить, что listener исчез. Фоновый preview «для просмотра» не оставлять.
+
 ## Реальное видео и логотип
 
-Единая точка настройки — [media.js](media.js): `video`, `poster`, `captions` пока null; `logo` указывает на [существующую временную иконку](assets/icon.png), `logoProvisional=true`. После получения actual approved файлов положить их в `site/assets/` и указать относительные `assets/...` paths. Новую иконку не генерируем. Проверьте права/provenance, actual frames и отсутствие private data до добавления файла; сохраняйте оригинал и SHA256 во внешнем evidence. Большой master не добавлять автоматически в Git.
+Единая точка настройки — [media.js](media.js): `video`, `poster`, `captions` пока null; `logo` указывает на [Small 64 px](assets/icon.png), рассчитанный для логического размера 32 px, `logoDark` — на [Dark Small SVG](assets/logo-dark-small.svg). `<picture>` выбирает тёмный вариант через `prefers-color-scheme`, без JavaScript theme listener. Пользователь принял artwork; после byte-match с утверждёнными exports/manifest `logoProvisional=false`. Файлы не перерисовывались. Источник и геометрия — [Mono icon system](../design/translator-icon/README.md).
+
+Favicon [SVG](assets/favicon.svg) использует Tiny geometry; [ICO](assets/favicon.ico) содержит 16×16 и 32×32; [apple-touch PNG](assets/apple-touch-icon.png) — 180×180. Все пять файлов совпадают с `design/translator-icon/web/` по bytes/SHA256. Относительные URLs работают в root и поддиректории; internal SVG IDs изолированы `<img>`. Системная типографика, синяя/нейтральная палитра, layout и ссылки сохранены. Inter из GitHub card не подключается. Абсолютные canonical/OG image URLs не выдумываются до подтверждённого public hosting.
 
 Видео использует native controls/playsinline/preload=metadata, без autoplay/loop/rate changes и без background timers. Неподдерживаемый/пропавший asset показывает error state. Poster только из реальной записи; пока poster отсутствует. Actual playback в Chromium/Safari ещё не подтверждён без footage. Для README после получения реального poster добавить один preview/link к записанному видео; не рисовать подмену кадра.
 

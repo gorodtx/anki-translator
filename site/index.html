@@ -6,14 +6,16 @@
   <meta name="description" content="Translator для macOS. Выделите английский текст и получите русский перевод рядом. Apple Silicon, macOS 26+.">
   <meta name="color-scheme" content="light dark">
   <title>Translator — перевод рядом</title>
-  <link rel="icon" href="assets/icon.png">
+  <link rel="icon" href="assets/favicon.svg" type="image/svg+xml" sizes="any">
+  <link rel="icon" href="assets/favicon.ico" sizes="16x16 32x32">
+  <link rel="apple-touch-icon" href="assets/apple-touch-icon.png" sizes="180x180">
   <link rel="stylesheet" href="style.css">
   <script type="module" src="app.js"></script>
 </head>
 <body>
   <a class="skip" href="#main">К содержимому</a>
   <header class="wrap navigation">
-    <a class="brand" href="./"><img id="logo" src="assets/icon.png" alt="" width="32" height="32"><span>Translator</span></a>
+    <a class="brand" href="./"><picture><source id="logo-dark" srcset="assets/logo-dark-small.svg" media="(prefers-color-scheme: dark)"><img id="logo" src="assets/icon.png" alt="" width="32" height="32"></picture><span>Translator</span></a>
     <a class="documentation" href="https://github.com/gorodtx/selection_translator_anki/blob/mac/docs/macos.md">Документация <span aria-hidden="true">↗</span></a>
   </header>
   <main class="wrap" id="main" tabindex="-1">

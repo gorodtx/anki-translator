@@ -25,6 +25,7 @@ p, h1, figure { margin: 0; }
 .navigation { display: flex; justify-content: space-between; align-items: center; padding-block: 26px; }
 .brand { display: flex; align-items: center; gap: 10px; color: var(--text); text-decoration: none; font-size: 1.05rem; font-weight: 600; }
 .brand img { border-radius: 7px; object-fit: contain; }
+.brand picture { display: flex; }
 .documentation { font-size: .8rem; color: var(--secondary); text-decoration: none; }
 .hero { text-align: center; padding: 42px 0 38px; }
 .eyebrow { color: var(--secondary); font-size: .65rem; font-weight: 600; letter-spacing: .12em; margin-bottom: 19px; }
