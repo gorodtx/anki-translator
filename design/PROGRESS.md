@@ -415,3 +415,31 @@ Oldv0.3.0 releaseID/assets/digests/published_at и tag84b1852 прежние; st
 Actual tag CI attempt1 **FAIL**: Python/lint/format/types и Linux parity PASS; Swift jobs CANCELLED без steps, bundle/notary SKIPPED. Exact annotation `The job was not acquired by Runner of type hosted even after multiple attempts`; notices подтверждают macOSarm64 capacity constraints. Это внешний runner failure, не прошедший native CI. `gh run view --job --log` во время незавершённого общего run отказал в logs; completed step metadata сохранена и не заменена выдуманными counts. Normal `gh run rerun --failed` accepted, attempt2 exactsamehead/tag pending. Новая попытка и её итог/branch delivery будут записаны в external `DELIVERY.json`, без изменения published assets/tag и бесконечных self-reference commits.
 
 Owned final delivery: README download/nativebuild/actualsize + GNOME/Arch links; site only those same facts, без visual/assets/JS изменений; docs/macos current publicfacts; dated epic/progress/GitHub report. При остановке nativeID/cwd/base/resume те же B038/B034; одноимённые standalone peers не запускались повторно. Пользователь отменил CUA — новые desktop/browser tests отсутствуют. Source/tag/publicrelease/localQA PASS, finalbranch push/remote/CI ещё проверяются; общий epic не объявлен абсолютным100%PASS.
+
+
+## B042 — 08.10.2026, ACCEPTED: README и installer research
+
+Root native01a1030e-0fcc-7430-8c9d-070c3f569b23; cwd `/Users/den/Documents/dev/selection_translator_anki`, branch mac, base/current HEAD f7db5653ed7c503f554d4fadfc9e531bcda068b1. Owned: README.md, docs/assets/translator-banner.png, site/index.html/style.css/app.js/README.md, docs/presentation dated additions, design EPIC/PROGRESS. Named staging only. Чужие deleted reference/v2/v3/v4 design drafts обнаружены и сохраняются.
+
+Skills continuity/design-preservation/forge-access/Orca прочитаны; historical CONTINUE/independent history сверены с текущим Git. Forge account gorodtx, HTTPS remote confirmed; live mac remote SHA=f7db565, public RC draft=false/prerelease=true, DMG27389077bytes; stable Linux/latest v0.2.8 и gnome branch a1dc855 подтверждены API. Hosting URL пуст, публичный сайт не заявляется.
+
+Пользовательский PNG лично просмотрен:1280×640, SHA256 `47f5567a3cc9dff784ca74cd6d58aa13a821526920ea700bed431916340f40cc`; сохранён точной копией. Его OS glyphs — artwork, готовый Windows installer этим не заявляется.
+
+Existing macOS full session01a10c36-041c-73d3-b4a5-b96090075d82, handle term_efe4aa70-1e38-42f6-8007-cd19a98aa55c: task received, send request f6910ca6-614c-4aa0-9a64-46546ff95777 stages input_accepted + turn_started. Research-only `docs/installer/**`, Google Drive-like no-drag + default checked cleanup; потом discussion. Web completed owner уведомлён о narrow Root takeover site paths; receipt06eab5b5-0bb7-4db3-a69b-843081c9213f turn_started. New browser/CUA не выполняются.
+
+Root resume, только если текущий процесс остановлен: `cd '/Users/den/Documents/dev/selection_translator_anki' && codex resume '01a1030e-0fcc-7430-8c9d-070c3f569b23'`. Следующий шаг: README/site/source checks, normal gates, logical commit, explicit forge push и actual delivery verification.
+
+
+## B043 — 08.10.2026, README/site source и ссылки PASS
+
+Commit `1310b5f` (`docs: refresh Translator README and download presentation`) содержит ровно5paths: README.md, docs/assets/translator-banner.png, site/README.md, site/index.html, site/style.css. Normal gates Ruff PASS, format129/14unchangedlegacy PASS, mypy108sources PASS. Epic/journals добавлены отдельно, ещё не доставлены.
+
+P08.1–P08.4 source PASS: первый full-width user banner — exact bytes1280×640; первый клик и Mac label ведут прямо на public DMG. Короткие Mac/GNOME/feedback links,8technology links и3DB links добавлены. Slоgan удалён из текущей публичной подачи; historical artwork/notes сохранены. Ad-hoc/noDeveloperID/noApple notarization указаны компактно. На сайте linked empty preview + ссылка под real video; native video controls не вложены в anchor. Video/poster/captions остаются null; это не live demo.
+
+P08.5: node --check для app.js/media.js PASS; git diff --check PASS; GFM renderer API и semantic HTML inspection PASS (first image/link,2centeredrows). Первая слишком строгая строковая проверка ожидала literal p-tag без автоматически добавленного dir=auto и упала; проверка исправлена на HTML parser, production bug отсутствует. Installation anchor первоначально не совпадал с заголовком docs, исправлен на #установка до commit.
+
+22HTTP root/subpath checks с exact bytes/MIME PASS; temporary server+fixture закрыты/удалены. Все22unique external links HEAD200, включая DMG и3SQLite; payloads баз0bytes. Существующие site media/app.js/5assets exact unchanged. Новая browser/CUA acceptance NOT_DONE_USER_STOPPED, public site NOT_DONE_NO_HOST. Evidence: `/Users/den/Documents/dev/translator-evidence/2026-10-08/readme/static-checks.json`, `gfm-receipt.json`, `commit-presentation.log`.
+
+GitHub canonical repo now `gorodtx/anki-translator`: old и new API возвращают одинаковый repositoryID1123960100/default mac. Существующие ссылки `selection_translator_anki` реально redirect и HEAD200; remote configuration и user PNG не переписаны. Опубликованный release и DB assets не обновлялись/не загружались.
+
+P08.6: receiving installer session записала ACCEPTED с exact native ID/cwd/base/owned paths в docs/installer/PROGRESS.md и изучает Google/Apple+код. Web session прямо подтвердила ownership transfer и отсутствие параллельных правок. Исследование/обсуждение и installer implementation — отдельные уровни. Root не выдаёт выполненный handoff за готовый установщик.

@@ -221,3 +221,13 @@ Root, Translator-Brand-GitHub: после завершения Web owner пол�
 ### 05.10.2026 — фактический публичный RC
 
 Root обновил только download facts после публикации `v0.3.1-rc.1`: native0.3.1/build324, DMG27389077bytes/27,39МБ. Пять файлов релиза скачаны без авторизации, hashes совпали, DMG/runtime проверены; UI, assets, typography, video=null сохранены. Новый site deployment не выполнялся, browser/CUA tests по указанию пользователя не возобновлялись. История прежнего v0.3.0 не удалена; actual release/evidence/CI queue/retry находятся в `design/PROGRESS.md` B041.
+
+
+### 08.10.2026 — новый scope принят Root
+
+Добавлены P08.1–P08.6 в эпик, прежние журналы сохранены. User PNG лично просмотрен, точная копия `../assets/translator-banner.png` SHA25647f5567a3cc9dff784ca74cd6d58aa13a821526920ea700bed431916340f40cc. Источники текущего stack/corpus сверены по pyproject, Swift Package, offline providers и pinned lock. Публичный Mac RC и Linux URLs актуальны по live API; сайт не имеет hosting URL. Separate existing macOS session начала installer research (turn_started), Root делает README/site. Native app/DB/grants не затрагиваются; browser/CUA acceptance этой правки NOT_DONE_USER_STOPPED. Проверки и доставка будут дописаны после результата.
+
+
+### 08.10.2026 — source/link acceptance
+
+Root commit1310b5f,5paths. Banner exact bytes, README GFM, node syntax,22localHTTP root/subpath и22externalHEAD200 PASS; БД payloads0, fonts/palette/media/assets сохранены. Детальные команды/исправленные проверочные ошибки/evidence — design/PROGRESS.md B043. Local server/fixture очищены. Browser/CUA NOT_DONE_USER_STOPPED; public site NOT_DONE_NO_HOST. Handoff receiving session ACCEPTED в docs/installer/PROGRESS.md; installation research выполняется отдельно. Remote push/CI ещё pending, не выданы за source PASS.

@@ -167,3 +167,8 @@ B17: публикация **PASS** — `v0.3.1-rc.1`, native0.3.1/build324, tag/
 Требование actual CI сохранено: attempt1 **FAIL_EXTERNAL_RUNNER_CAPACITY** — обе Swift jobs CANCELLED до первого step, bundle SKIPPED. Аннотация: `The job was not acquired by Runner of type hosted even after multiple attempts`. Выполнен штатный `gh run rerun --failed`, attempt2 pending; полноту нового CI ещё нельзя объявлять PASS. Stable Developer ID/notarization gate не ослаблялся.
 
 B18: GNOME branch/stableLinuxv0.2.8 URLs public HTTP200; README содержит обе ссылки, final branch delivery проверяется отдельно. `/releases/latest` после публикации RC всё ещё v0.2.8. B19: pinned DB metadata/content identities прежних release assets совпадают; SQLite transfers/uploads0. Public app не содержит agent/docs/design/DB, обязательные библиотечные licenses сохранены. Installed306 exact identity до/после совпала; текущий app/grants/data не изменялись. Собственные новые duplicate app/download/mount удалены, один canonical public DMG оставлен рядом с evidence. Более широкие profile/video/notary/publicsite/native UI зависимости не вычеркнуты.
+
+
+## 08.10.2026 — новое требование публичной подачи
+
+Пользователь передал `/Users/den/Downloads/norm.png` и поручил сделать широкую шапку README по образцу Prettier/AFFiNE; прежний слоган удаляется из текущей публичной подачи. Approved artwork сохраняется, чужие v2/v3/v4 drafts не затрагиваются. Требования и приёмка P08.1–P08.6 добавлены в `docs/presentation/EPIC-03-PRESENTATION-LAYER.md`. Информация об ad-hoc подписи остаётся фактической, CTA просто «Скачать для Mac». Installer research передан existing native macOS session, без новой параллельной копии ID и без subagent. Исторические результаты этого эпика не стираются.

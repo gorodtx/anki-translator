@@ -75,3 +75,22 @@ Screen Studio — референс подачи и tool для настояще�
 Текущий статус логотипа: APPROVED_INTEGRATED; local source/HTTP/Chromium PASS. Настоящее video/poster/captions остаются null и WAITING_USER_VIDEO: прежнее WAITING_USER_VIDEO_LOGO теперь применимо только к видео. Desktop1440/mobile390 light/dark/reduced/keyboard/favicons/root/subpath проверены,6actualPNG лично просмотрены; report [design/integration/web.md](../../design/integration/web.md). Browser initial theme mismatch RED сохранён: измеренное picture currentSrc обновлялось после media смены, harness исправлен ожиданием actualdecodedvariant; production не менялся для обхода проверки.
 
 Safari/WebKit/physical devices и настоящая запись UNVERIFIED; livePenpot doctor/overview fetch failed и UNKNOWN, сервис не перезапускался. Own preview после actualchecks остановлен exactPID29720, listener8873 исчез; фоновый preview не оставлен. D05 ad-hoc prerelease/publicGatekeeper граница у CTA сохраняется; publichosting/deploy не выполнялись, Gitindex/commit/push/CI только Coordinator. Полный эпик не объявляется завершённым по приёмке логотипа.
+
+
+## Дополнение 08.10.2026 — README, скачивание и установка
+
+Новое поручение пользователя дополняет историю и заменяет публичный слоган: удалить «Перевод рядом. Из хаоса — в ясность.». Верх README — переданный пользователем `norm.png`, без перерисовки; широкая кликабельная панель по образцу Prettier. Референс структуры: https://github.com/toeverything/affine. Social preview и изображение внутри README проверяются отдельно.
+
+- [ ] P08.1: сохранить точные bytes баннера, показать его первым в README, клик ведёт на Mac DMG.
+- [ ] P08.2: короткие ссылки «Скачать для Mac», «GNOME / Arch Linux», «Обратная связь» с минимальными ассоциативными знаками; прежний слоган и prominent prerelease label убрать. Реальные ограничения подписи сохранить в условиях установки.
+- [ ] P08.3: добавить компактные ссылки на фактически используемые технологии и три SQLite-базы; не выдавать общий AGENTS stack за стек проекта. Корпус переиспользуется, не загружается заново.
+- [ ] P08.4: demo preview ведёт к скачиванию; настоящее видео остаётся отсутствующим, пока его не передаст пользователь. Native video controls не ломать ссылкой поверх плеера. Сайт сохраняет SF/system, палитру и одну колонку.
+- [ ] P08.5: проверить source/HTML/JS/asset/link delivery отдельно. Computer-use и новая browser acceptance остановлены пользователем; не объявлять их пройденными.
+- [ ] P08.6: отдельная полная macOS-сессия исследует Google Drive-подобную установку без drag, checkbox «Удалить установщик» по умолчанию включён; после исследования обсуждение с пользователем, реализация только после выбора. Владеет `docs/installer/`; общий Root журнал не правит.
+
+Root: native01a1030e-0fcc-7430-8c9d-070c3f569b23, cwd `/Users/den/Documents/dev/selection_translator_anki`, branch mac, base f7db5653ed7c503f554d4fadfc9e531bcda068b1. Новый scope README/site/docs; production app и опубликованные release artifacts не меняются. Установщик — отдельный исследовательский этап, его код ещё не готов.
+
+
+### P08 checkpoint — 08.10.2026
+
+P08.1–P08.4 source PASS, P08.5 static/HTTP/GFM PASS; source commit1310b5f. Delivery ещё pending. New browser/CUA явно NOT_DONE_USER_STOPPED. P08.6 handoff PASS + receiving ACCEPTED; research ещё выполняется, implementation ожидает будущего пользовательского выбора. Требования и результаты выше сохранены, не вычеркнуты.
