@@ -94,3 +94,8 @@ Root: native01a1030e-0fcc-7430-8c9d-070c3f569b23, cwd `/Users/den/Documents/dev/
 ### P08 checkpoint — 08.10.2026
 
 P08.1–P08.4 source PASS, P08.5 static/HTTP/GFM PASS; source commit1310b5f. Delivery ещё pending. New browser/CUA явно NOT_DONE_USER_STOPPED. P08.6 handoff PASS + receiving ACCEPTED; research ещё выполняется, implementation ожидает будущего пользовательского выбора. Требования и результаты выше сохранены, не вычеркнуты.
+
+
+### P08 delivery checkpoint — 08.10.2026
+
+P08.1–P08.5 source/static/public README delivery **PASS**: remoteffbd50b, firstbanner/public exact bytes, root/subpath HTTP, all download/data/technology links. Browser/CUA acceptance исключена текущим steering и не объявлена PASS. P08.6 standalone assignment и полный research **PASS**; обсуждение **PENDING USER**. Установщик не реализован по прямому условию пользователя «сначала research, потом обсуждение»; новый EPIC-04 сохраняет будущие14criteria. Новые CI/public site/video/Gatekeeper acceptance остаются отдельными уровнями.

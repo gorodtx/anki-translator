@@ -231,3 +231,8 @@ Root обновил только download facts после публикации 
 ### 08.10.2026 — source/link acceptance
 
 Root commit1310b5f,5paths. Banner exact bytes, README GFM, node syntax,22localHTTP root/subpath и22externalHEAD200 PASS; БД payloads0, fonts/palette/media/assets сохранены. Детальные команды/исправленные проверочные ошибки/evidence — design/PROGRESS.md B043. Local server/fixture очищены. Browser/CUA NOT_DONE_USER_STOPPED; public site NOT_DONE_NO_HOST. Handoff receiving session ACCEPTED в docs/installer/PROGRESS.md; installation research выполняется отдельно. Remote push/CI ещё pending, не выданы за source PASS.
+
+
+### 08.10.2026 — публичный README принят; installer research completed
+
+Root independently fetched public README+GitHub HTML+raw banner after remoteffbd50b: exact bytes/SHA PASS.22HTTP+22HEAD, normal gates и remote verification в B043–B044design/PROGRESS. P08.1–P08.5 согласованный source/static/GitHub delivery scope закрыт; browser/CUA не выполнялись. P08.6 отдельная полная session research completed, frozen3docs проверены; выбор A/B/C обсуждается с пользователем, implementation не начата. Полный CI ещё pending; latest measured delivery receipt — external readme/DELIVERY.json. Site source доставлен, hosting URL отсутствует.
