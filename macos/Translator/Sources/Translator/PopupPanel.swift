@@ -524,21 +524,42 @@ final class PopupPanelController: NSObject {
         hosting.sizingOptions = []
         hosting.autoresizingMask = [.width, .height]
 
-        // The one glass surface of the panel, with the content above it as a sibling —
-        // Maccy's ZStack order. Not as the glass's `contentView`: there, selectable text
-        // loses its hierarchy and `.secondary` and `.tertiary` draw exactly like
-        // `.primary`.
         let bounds = NSRect(origin: .zero, size: panel.frame.size)
+        let surface = Self.makeSurface(content: hosting, bounds: bounds)
+        panel.contentView = surface
+        // The window's root/parent view exists only after contentView is attached.
+        Self.roundSurface(surface)
+
+        panel.onResignKey = { [weak self] in self?.panelResignedKey() }
+        panel.onCancel = { [weak self] in self?.dismiss() }
+        panel.onKeyDown = { [weak self] event in self?.handleKeyDown(event) ?? false }
+        self.panel = panel
+        self.hosting = hosting
+        return panel
+    }
+
+    /// Kept separate from ordering the panel so native appearance checks can construct
+    /// the production surface without activating an app or displaying a window.
+    static func makeSurface(content: NSView, bounds: NSRect) -> NSView {
         let container = NSView(frame: bounds)
         container.autoresizingMask = [.width, .height]
         let glass = NSGlassEffectView(frame: bounds)
         glass.style = .regular
         glass.cornerRadius = Self.cornerRadius
         glass.autoresizingMask = [.width, .height]
-        hosting.frame = bounds
+        content.frame = bounds
+        // Content must belong to the glass: AppKit then adapts its foreground to the
+        // sampled background, including a light page while the system is in dark mode.
+        // Sibling content keeps the app's white text when the glass becomes light.
+        glass.contentView = content
         container.addSubview(glass)
-        container.addSubview(hosting, positioned: .above, relativeTo: glass)
-        panel.contentView = container
+        Self.roundSurface(container)
+        return container
+    }
+
+    /// Round both the content surface and the window's root layer after attachment.
+    /// Otherwise the window server can draw a square shadow around the rounded glass.
+    static func roundSurface(_ container: NSView) {
         // The window server takes the window's shape — and so its shadow and edge — from
         // the root layer; without a corner radius there it draws a square shadow edge
         // around the rounded glass.
@@ -549,12 +570,6 @@ final class PopupPanelController: NSObject {
             view.layer?.masksToBounds = true
         }
 
-        panel.onResignKey = { [weak self] in self?.panelResignedKey() }
-        panel.onCancel = { [weak self] in self?.dismiss() }
-        panel.onKeyDown = { [weak self] event in self?.handleKeyDown(event) ?? false }
-        self.panel = panel
-        self.hosting = hosting
-        return panel
     }
 
     static let cornerRadius: CGFloat = 12

@@ -100,7 +100,7 @@ struct TranslationPopupView: View {
                     if isSentence {
                         Text(query)
                             .font(.body)
-                            .foregroundStyle(.secondary)
+                            .popupSecondaryText()
                             .lineLimit(4)
                             .truncationMode(.tail)
                     } else {
@@ -120,7 +120,7 @@ struct TranslationPopupView: View {
                 if let pronunciation {
                     Text(pronunciation)
                         .font(.callout)
-                        .foregroundStyle(.secondary)
+                        .popupSecondaryText()
                 }
             }
             .textSelection(.enabled)
@@ -195,7 +195,7 @@ struct TranslationPopupView: View {
             } else {
                 Text("No translation for “\(query)”.")
                     .font(.body)
-                    .foregroundStyle(.secondary)
+                    .popupSecondaryText()
                     .textSelection(.enabled)
                     .padding(.horizontal, PopupMetrics.textInset)
                     .padding(.bottom, 12)
@@ -209,7 +209,7 @@ struct TranslationPopupView: View {
                 if !entry.pos.isEmpty {
                     Text(entry.pos)
                         .font(.callout.italic())
-                        .foregroundStyle(.secondary)
+                        .popupSecondaryText()
                         .padding(.top, groupIndex == 0 ? 2 : 10)
                         .padding(.bottom, 4)
                 }
@@ -234,12 +234,12 @@ struct TranslationPopupView: View {
                 if !sense.label.isEmpty {
                     Text("(\(sense.label))")
                         .font(.callout)
-                        .foregroundStyle(.secondary)
+                        .popupSecondaryText()
                 }
                 ForEach(Array(sense.examples.enumerated()), id: \.offset) { _, pair in
                     Text(pair.ru.isEmpty ? pair.en : "\(pair.en) — \(pair.ru)")
                         .font(.callout)
-                        .foregroundStyle(.secondary)
+                        .popupSecondaryText()
                 }
             }
         }
@@ -431,6 +431,15 @@ private final class HeightParts {
     var total: CGFloat { header + body + bottom }
 }
 
+// Selectable SwiftUI text inside NSGlassEffectView can flatten hierarchical shape
+// styles. Keep AppKit's adaptive primary foreground and apply the secondary tone to
+// the view, after the glass treatment, so pronunciations/examples stay subordinate.
+private extension View {
+    func popupSecondaryText() -> some View {
+        foregroundStyle(.primary).opacity(0.65)
+    }
+}
+
 // MARK: - Pieces
 
 private struct SectionHeader: View {
@@ -445,7 +454,7 @@ private struct SectionHeader: View {
     var body: some View {
         Text(title)
             .font(.subheadline.weight(.semibold))
-            .foregroundStyle(.secondary)
+            .popupSecondaryText()
             .padding(.top, first ? 0 : 14)
             .padding(.bottom, 4)
             .accessibilityAddTraits(.isHeader)
@@ -461,7 +470,7 @@ private struct NumberedRow<Content: View>: View {
         HStack(alignment: .firstTextBaseline, spacing: PopupMetrics.numberSpacing) {
             Text("\(number)")
                 .font(.body.monospacedDigit())
-                .foregroundStyle(.secondary)
+                .popupSecondaryText()
                 .frame(width: PopupMetrics.numberColumn, alignment: .trailing)
             content()
                 .frame(maxWidth: .infinity, alignment: .leading)
@@ -541,7 +550,8 @@ private struct MenuRow: View {
             }
             .padding(.horizontal, PopupMetrics.textInset - PopupMetrics.rowInset)
             .frame(maxWidth: .infinity, minHeight: PopupMetrics.rowHeight, alignment: .leading)
-            .foregroundStyle(highlighted ? AnyShapeStyle(Color.white) : enabled ? AnyShapeStyle(.primary) : AnyShapeStyle(.tertiary))
+            .foregroundStyle(highlighted ? Color.white : Color.primary)
+            .opacity(enabled ? 1 : 0.4)
             // macOS 26 needs some background for hover to register (Maccy's workaround).
             .background(
                 highlighted ? AnyShapeStyle(Color.accentColor.opacity(0.8)) : AnyShapeStyle(Color.white.opacity(0.001)),
