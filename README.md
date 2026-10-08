@@ -1,19 +1,33 @@
-# Translator
+[![Translator — перевод под курсором, из английского в русский](docs/assets/translator-banner.png)](https://github.com/gorodtx/selection_translator_anki/releases/download/v0.3.1-rc.1/Translator-0.3.1-macos-arm64.dmg)
 
-<img src="design/final/translator-logo-1024.png" width="80" height="80" alt="Логотип Translator: две панели, клубок и строки текста">
+<p align="center">
+  <a href="https://github.com/gorodtx/selection_translator_anki/releases/download/v0.3.1-rc.1/Translator-0.3.1-macos-arm64.dmg"><strong>🍎 Скачать для Mac</strong></a> ·
+  <a href="https://github.com/gorodtx/selection_translator_anki/tree/gnome#русский"><strong>🐧 GNOME / Arch Linux</strong></a> ·
+  <a href="https://github.com/gorodtx/selection_translator_anki/issues">💬 Обратная связь</a>
+</p>
 
-**Перевод рядом. Из хаоса — в ясность.**
+<p align="center">Apple Silicon · macOS 26+ · DMG 27,39 МБ</p>
 
-Выделите английский текст → вызовите Translator через macOS «Службы» → прочитайте русский перевод.
+Выделите английский текст и вызовите Translator сочетанием клавиш или через macOS «Службы». Русский перевод появится под курсором; история и добавление в Anki — рядом.
 
-[Демонстрация и лендинг](site/README.md)
+[Установка на Mac](docs/macos.md#установка) · [Linux-релиз](https://github.com/gorodtx/selection_translator_anki/releases/tag/v0.2.8) · [Версия и контрольные суммы](https://github.com/gorodtx/selection_translator_anki/releases/tag/v0.3.1-rc.1)
 
-[**Скачать для Mac — 0.3.1-rc.1 (324), DMG 27,39 МБ**](https://github.com/gorodtx/selection_translator_anki/releases/download/v0.3.1-rc.1/Translator-0.3.1-macos-arm64.dmg)
+<sub>Mac-сборка подписана ad-hoc, без Developer ID и заверения Apple: при первом открытии macOS может её заблокировать. Подробности — в инструкции установки. Python, uv и исходники пользователю не нужны.</sub>
 
-**Apple Silicon · macOS 26+.** Предварительный выпуск с ad-hoc подписью, без Developer ID и заверения Apple. macOS может блокировать открытие; публичный Gatekeeper-запуск не подтверждён. [Файлы и SHA256](https://github.com/gorodtx/selection_translator_anki/releases/tag/v0.3.1-rc.1).
+## 🛠 Технологии
 
-[**Версия для Linux — GNOME / Arch**](https://github.com/gorodtx/selection_translator_anki/tree/gnome#русский) · [Стабильный Linux-релиз](https://github.com/gorodtx/selection_translator_anki/releases/tag/v0.2.8)
+[SwiftUI](https://developer.apple.com/documentation/swiftui) · [AppKit](https://developer.apple.com/documentation/appkit) · [Apple Translation](https://developer.apple.com/documentation/translation) · [Python](https://www.python.org/) · [aiohttp](https://docs.aiohttp.org/) · [spaCy](https://spacy.io/) · [SQLite / FTS5](https://sqlite.org/fts5.html) · [AnkiConnect](https://github.com/amikey/anki-connect)
 
-[Установка и macOS](docs/macos.md) · [Разработка и Linux/GNOME](docs/development.md) · [Лендинг](site/README.md) · [Состояние проверок](docs/release/EPIC-02-APPLICATION.md) · [Обратная связь](https://github.com/gorodtx/selection_translator_anki/issues)
+Нативное приложение macOS, встроенный Python backend, локальный поиск и карточки Anki. [Код и разработка](docs/development.md).
 
-Python, uv и исходники на пользовательском Mac не нужны.
+## 📚 Офлайн-базы
+
+| База | Содержимое |
+| --- | --- |
+| [`primary.sqlite3`](https://github.com/gorodtx/selection_translator_anki/releases/download/db-a6f07d1e1c28/primary.sqlite3) | Основные англо-русские примеры и лексикон |
+| [`fallback.sqlite3`](https://github.com/gorodtx/selection_translator_anki/releases/download/db-a6f07d1e1c28/fallback.sqlite3) | Дополнительные англо-русские примеры |
+| [`definitions_pack.sqlite3`](https://github.com/gorodtx/selection_translator_anki/releases/download/db-a6f07d1e1c28/definitions_pack.sqlite3) | Английские определения |
+
+Базы скачиваются из настроек приложения и хранятся локально; с каждым обновлением приложения повторная загрузка не нужна. [Готовый комплект и SHA256](https://github.com/gorodtx/selection_translator_anki/releases/tag/db-a6f07d1e1c28).
+
+Источники данных: [OPUS](https://opus.nlpl.eu/) — параллельные корпуса, включая [Tatoeba](https://tatoeba.org/); [Kaikki / Wiktionary](https://kaikki.org/dictionary/English/index.html) — лексикон. Apple English/Russian language pair загружается отдельно через штатный интерфейс macOS.
