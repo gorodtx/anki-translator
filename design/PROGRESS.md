@@ -454,3 +454,25 @@ Installer full session01a10c36-041c-73d3-b4a5-b96090075d82 завершила re
 P08.6 research/handoff PASS, DISCUSSION_PENDING_USER. Рекомендация peer A: отдельный native installer в DMG; альтернативы B PKG+cleanup helper/C self-install. Требование checkboxON, delete only exact installer via Trash after successful copy/verification/detach сохранено в14futurecriteria. Implementation NOT_STARTED_BY_USER_SCOPE; app/DB/History/grants/public artifacts не менялись. Сессия отображается в Orca как Translator-Installer-Research и готова обсуждать выбор; новый native process/child не создан.
 
 Этот checkpoint и замороженные research docs доставляются отдельным логическим documentation commit. Final HEAD/remote SHA/actual CI observation, remaining work и exact native resume command сохраняются в внешнем `/Users/den/Documents/dev/translator-evidence/2026-10-08/readme/FINAL.md` и DELIVERY.json после доставки: commit не может содержать собственный SHA. Журнал не переписывается. Дальнейшая работа — пользовательский выбор установщика/настоящее видео/hosting/DeveloperID и отдельно разрешённая actual acceptance; это не выполненные результаты текущей правки.
+
+## B045 — 08.10.2026, B выбран; implementation отложена; отдельная docs-доставка
+
+Пользователь прямо выбрал **B — DMG + PKG + отдельный завершающий шаг с «Удалить установщик» ON** и указал «пока к реализации не переходим». A/B/C discussion закрыта этим ответом; initial recommendation A сохранена как история. Новый installer не реализован, checkbox/cleanup runtime не проверены. Настоящая подпись/DeveloperID, public site и пользовательское видео остаются pending.
+
+Та же полная Orca-сессия `Translator-Installer-Research-macOS`, Codex native **`01a10c36-041c-73d3-b4a5-b96090075d82`**, cwd `/Users/den/Documents/dev/selection_translator_anki`, branch `mac`, base исследования `f7db5653ed7c503f554d4fadfc9e531bcda068b1`, measured HEAD/base доставки **`ecd1da38406593f3b972433c95b177fc25fbc8d3`**. Root передал exclusive Git lease только для `docs/installer/EPIC-04-INSTALLER.md`, `RESEARCH.md`, `PROGRESS.md` и этой append-only записи. README/site/прочие journals не меняются; чужие design drafts/deletion не staged. Новых сессий/children/дублей native ID не запускалось.
+
+Перепроверенный входящий READY manifest совпал с Root: EPIC `959aac2fa344a80dad7c87b2ef3e1d1e8499da1e34c1a59be5455da7fe297771`, RESEARCH `9ec45c11ec46c94f606f9f1f9a4770097d580bb3f645b30aaf67857f98d52823`, PROGRESS `b8e299c09974e1b3830f62a7774d7430199af65cbf74fa78c0ad1cf455565c4e`. После добавления lease/current-delivery записей final docs SHA-256:
+
+| Owned document | SHA-256 |
+|---|---|
+| `docs/installer/EPIC-04-INSTALLER.md` | `822ab3a7365ac949e1f1b4161777c51a2d93f16a235542300d36b1200fcb3c94` |
+| `docs/installer/RESEARCH.md` | `e6c6ceba37981137f621da690a11bf183e6607aeda00cf7ca88fc54e569583d5` |
+| `docs/installer/PROGRESS.md` | `0487be71a86659a747e22c818fee387950331134fcfa03dd344fdb8d75e0af17` |
+
+Current first-run/minimum/full-feature сценарий описан по source/document review: drag DMG, ad-hoc first-open limitation, embedded backend, Services без AX либо hotkey с grant, fresh default **Option + Command + T** и сохранённый shortcut для старого профиля, online source или Apple language pair, отдельные DB около1,90ГБ, Dictionary, AnkiConnect/deck/note type/fields, images/history и opt-in login item. Checklist сейчас считает три DB, AX и shortcut required; это UX-находка для discussion, не выполненная правка gates и не доказанный первый lookup на чистом Mac.
+
+Normal gates/ASCII-English logical commit, explicit forge token `HEAD:refs/heads/mac` dry-run/execute, exact remote/public docs и actual final CI — **PENDING на момент pre-commit записи**. `forge-access` remote/auth preflight PASS13:52UTC: HTTPS, gorodtx/API200; API auth не выдан за push. Shared gates doctor PASS, effective hooksPath без override, index изначально пуст. Root сообщил полный success CI37785524067 для ffbd50b; текущая сессия проверит actual CI metadata отдельно. Финальные commit/delivery/CI/results не приписываются этому pre-commit тексту задним числом.
+
+Final HEAD/remote SHA/public exact bytes/four-path manifest/actual CI и timestamps после доставки сохраняются **отдельно**, без self-reference commits: `/Users/den/Documents/dev/translator-evidence/2026-10-08/readme/INSTALLER-B-DELIVERY.json` и `.md`. Root `DELIVERY.json` не редактируется. Summary — `docs/installer/RESEARCH.md` + новый внешний receipt. Runtime/build/reinstall/DB/History/grants/UI/release actions не выполняются; только обязательные Git gates.
+
+Native resume после остановки, без одновременного дубля: `cd /Users/den/Documents/dev/selection_translator_anki && codex resume 01a10c36-041c-73d3-b4a5-b96090075d82`. После delivery остаётся ждать отдельного разрешения implementation B и согласовать destination/admin/finish-helper/signing; desktop/public acceptance не разрешены этой документационной передачей.
