@@ -1,16 +1,16 @@
-[![Translator — перевод под курсором, из английского в русский](docs/assets/translator-banner.png)](https://github.com/gorodtx/selection_translator_anki/releases/download/v0.3.1-rc.1/Translator-0.3.1-macos-arm64.dmg)
+[![Translator — перевод под курсором, из английского в русский](docs/assets/translator-banner.png)](https://github.com/gorodtx/selection_translator_anki/releases/download/v0.3.1-rc.2/Translator-0.3.1-macos-arm64.dmg)
 
 <p align="center">
-  <a href="https://github.com/gorodtx/selection_translator_anki/releases/download/v0.3.1-rc.1/Translator-0.3.1-macos-arm64.dmg"><strong>🍎 Скачать для Mac</strong></a> ·
+  <a href="https://github.com/gorodtx/selection_translator_anki/releases/download/v0.3.1-rc.2/Translator-0.3.1-macos-arm64.dmg"><strong>🍎 Скачать для Mac</strong></a> ·
   <a href="https://github.com/gorodtx/selection_translator_anki/tree/gnome#русский"><strong>🐧 GNOME / Arch Linux</strong></a> ·
   <a href="https://github.com/gorodtx/selection_translator_anki/issues">💬 Обратная связь</a>
 </p>
 
-<p align="center">Apple Silicon · macOS 26+ · DMG 27,39 МБ</p>
+<p align="center">Apple Silicon · macOS 26+ · DMG 27,40 МБ</p>
 
 Выделите английский текст и вызовите Translator сочетанием клавиш или через macOS «Службы». Русский перевод появится под курсором; история и добавление в Anki — рядом.
 
-[Установка на Mac](docs/macos.md#установка) · [Linux-релиз](https://github.com/gorodtx/selection_translator_anki/releases/tag/v0.2.8) · [Версия и контрольные суммы](https://github.com/gorodtx/selection_translator_anki/releases/tag/v0.3.1-rc.1)
+[Установка на Mac](docs/macos.md#установка) · [Linux-релиз](https://github.com/gorodtx/selection_translator_anki/releases/tag/v0.2.8) · [Версия и контрольные суммы](https://github.com/gorodtx/selection_translator_anki/releases/tag/v0.3.1-rc.2)
 
 <sub>Mac-сборка подписана ad-hoc, без Developer ID и заверения Apple: при первом открытии macOS может её заблокировать. Подробности — в инструкции установки. Python, uv и исходники пользователю не нужны.</sub>
 
