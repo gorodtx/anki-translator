@@ -353,3 +353,10 @@ Working /Applications/Translator.app304 не заменяется при это�
 Пользователь снова показал белый текст над светлым Liquid Glass и разрешил исправление выпуска. Сборка/commit/push теперь должны связываться с **actual installed PID, bundle build-info/source digest и public DMG**, иначе source fix не считается доставленной пользователю. Root проверил: текущий /Applications/Translator.app и PID54745 — 0.3.0 (306), revision bfac4d1, старый source c3231b8; исправление 221eb8e в них отсутствует. Прежний читаемый кадр — только evidence своего положения, связь с новой сборкой UNKNOWN.
 
 Новые критерии: отдельный immutable v0.3.1-rc.2; точная source/build332 фиксация; подпись и real embedded runtime bundle/DMG; metadata-only reuse DB без повторной загрузки; восстановимая замена единственной установки с сохранением истории/settings/Anki/grants; новый PID и backend health; реальные public bytes/checksums и актуальные ссылки. CUA остановлена пользователем, поэтому pixel contrast/native interaction не выдавать за PASS по скрытому probe. Developer ID/notarization и installer B остаются отдельными зависимостями.
+
+
+### 09.10.2026 — actual popup build 332 принят пользователем
+
+На вопрос о повторении Layoffs на той же светлой странице в новой Translator 0.3.1 (332) пользователь ответил **«Да, текст читается»**. Root независимо повторно проверил PID64574, /Applications/Translator.app, build332/revisionb5254f5/nativeSHAa10817de. Это **PASS_USER_REPORT** для исходного сценария, связанный с измеренной установкой. Новый screenshot не приложен; собственная CUA/pixelcontrast-матрица Root не выполнялась. Исходный user FAIL и прежний неподтверждённый readable кадр сохраняются; их статус не переписан. Evidence: [user-acceptance.json](/Users/den/Documents/dev/translator-evidence/2026-10-09/release031rc2/user-acceptance.json).
+
+RC2 public5files и tagCI37902627541 PASS; actualinstalled/backend/history31/DB3ready PASS. Этот acceptance закрывает повторный пользовательский contrast defect в указанном сценарии. Developer ID/notarization, прочая hardware/accessibility матрица и отложенный installer B не объявляются выполненными.
