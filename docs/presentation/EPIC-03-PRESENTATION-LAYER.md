@@ -99,3 +99,20 @@ P08.1–P08.4 source PASS, P08.5 static/HTTP/GFM PASS; source commit1310b5f. Del
 ### P08 delivery checkpoint — 08.10.2026
 
 P08.1–P08.5 source/static/public README delivery **PASS**: remoteffbd50b, firstbanner/public exact bytes, root/subpath HTTP, all download/data/technology links. Browser/CUA acceptance исключена текущим steering и не объявлена PASS. P08.6 standalone assignment и полный research **PASS**; обсуждение **PENDING USER**. Установщик не реализован по прямому условию пользователя «сначала research, потом обсуждение»; новый EPIC-04 сохраняет будущие14criteria. Новые CI/public site/video/Gatekeeper acceptance остаются отдельными уровнями.
+
+## Дополнение 10.10.2026 — настоящее демо и компактный публичный текст
+
+Новое прямое поручение: удалить публичные длинные блоки «Службы», ad-hoc/первое открытие, источники данных и дополнительную строку установки/версии; технологии оформить логотипами как на пользовательском референсе; добавить MIT footer и переданный `translator_demo.mp4` в README/site; строку архитектуры ужать и обозначить платформы. Прежние требования и RED остаются историей. Native/runtime/release/DB не меняются.
+
+- P10.1 source **PASS**: перечисленные строки удалены, полезные инструкции сохранены в linked docs.
+- P10.2 source **PASS**: 9локальных SVG technology badges с реальными встроенными paths, provenance/SHA/licenses и ссылками; внешний runtime fetch отсутствует.
+- P10.3 source **PASS**: MIT footer в README/site; строка «macOS и Linux · Python backend · SQLite · Anki». Windows не заявлен при отсутствии реализации.
+- P10.4 source/AVFoundation **PASS**: реальный пользовательский MP4 byte-match,43,535с/H.264/1120×1080; poster реальный лично просмотренный кадр, плеер сайта с native controls; README poster→MP4. GitHub inline-player **NOT_DONE_NO_ATTACHMENT_URL**, никакая issue/comment публикация не выполнена.
+- P10.5 local **PASS**:2node syntax, named whitespace/base checks,40HTTP root/subpath resources exact bytes; own кратковременный server/fixture остановлены. Browser/CUA/Safari playback/новые responsive screenshots **NOT_DONE_USER_STOPPED**. Public deploy/Git/CI pending Root.
+
+Root подтвердил ownership без пересечения, `msg_15658b87bf64`; attachment boundary, `msg_c92b5aa071ae`. Отчёт/сохранённая сессия/точные evidence: [DELIVERY-2026-10-10.md](DELIVERY-2026-10-10.md). Полный EPIC не объявлен завершённым из-за отдельной редакции README/site.
+
+
+### 10.10.2026 — уточнение приёмки P10 после независимого review
+
+Источник и локальная HTTP-раздача реального MP4/poster/9logos приняты Root по named23paths. Приёмка доставки требует отдельно commit/remoteSHA/CI; localhost и AVFoundation decode не являются публичным hosting или browser playback. Текущий target mac; вопрос о master не разрешает отдельный merge. Архив и прежние NOT_DONE сохраняются. Запись первой диагностической ошибки и исправленной проверки находится в Progress и root-review.json.

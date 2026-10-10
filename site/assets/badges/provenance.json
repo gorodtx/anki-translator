@@ -1,0 +1,97 @@
+{
+  "date": "2026-10-10",
+  "generator": "Shields.io static badges",
+  "icons": "Simple Icons",
+  "badges": [
+    {
+      "file": "site/assets/badges/swiftui.svg",
+      "label": "SwiftUI",
+      "logo": "swift",
+      "width": 69,
+      "height": 20,
+      "sha256": "0d2ed9feeb60c85910100e2a528c589d3162c1239835189582cdbc8ab1e98239",
+      "documentation": "https://developer.apple.com/documentation/swiftui",
+      "source": "https://img.shields.io/badge/SwiftUI-F05138?style=flat&logo=swift&logoColor=white"
+    },
+    {
+      "file": "site/assets/badges/appkit.svg",
+      "label": "AppKit",
+      "logo": "swift",
+      "width": 65,
+      "height": 20,
+      "sha256": "3a2e731e1a7ad805ea1483e37813689df79fc47b81968c86947257e6b4595d5a",
+      "documentation": "https://developer.apple.com/documentation/appkit",
+      "source": "https://img.shields.io/badge/AppKit-50545C?style=flat&logo=swift&logoColor=white"
+    },
+    {
+      "file": "site/assets/badges/translation.svg",
+      "label": "Apple Translation",
+      "logo": "apple",
+      "width": 125,
+      "height": 20,
+      "sha256": "78864e88df6348b2ef7ec29764be551648139013c0b6569ed12b68486dd92e52",
+      "documentation": "https://developer.apple.com/documentation/translation",
+      "source": "https://img.shields.io/badge/Apple%20Translation-1677D2?style=flat&logo=apple&logoColor=white"
+    },
+    {
+      "file": "site/assets/badges/gtk.svg",
+      "label": "GTK4",
+      "logo": "gtk",
+      "width": 57,
+      "height": 20,
+      "sha256": "85c2b428e3b800813e4603a756c942390833c9ffb06550691998e84f1f432007",
+      "documentation": "https://www.gtk.org/",
+      "source": "https://img.shields.io/badge/GTK4-4A86CF?style=flat&logo=gtk&logoColor=white"
+    },
+    {
+      "file": "site/assets/badges/python.svg",
+      "label": "Python",
+      "logo": "python",
+      "width": 67,
+      "height": 20,
+      "sha256": "f5094bc5f8d6016ef25bc8527cb082356890e69a8b9d9fb08a41734669055272",
+      "documentation": "https://www.python.org/",
+      "source": "https://img.shields.io/badge/Python-3776AB?style=flat&logo=python&logoColor=white"
+    },
+    {
+      "file": "site/assets/badges/aiohttp.svg",
+      "label": "aiohttp",
+      "logo": "aiohttp",
+      "width": 67,
+      "height": 20,
+      "sha256": "d983bb4a6c466b4287bcaa658fbaf62bb910b3817597aa846bac120cb02260ff",
+      "documentation": "https://docs.aiohttp.org/",
+      "source": "https://img.shields.io/badge/aiohttp-2C5BB4?style=flat&logo=aiohttp&logoColor=white"
+    },
+    {
+      "file": "site/assets/badges/spacy.svg",
+      "label": "spaCy",
+      "logo": "spacy",
+      "width": 61,
+      "height": 20,
+      "sha256": "771449dca3b4cd54e98a6ce2b53f079d909a9cf8e7b954fc0ee3c1d0dce1577b",
+      "documentation": "https://spacy.io/",
+      "source": "https://img.shields.io/badge/spaCy-09A3D5?style=flat&logo=spacy&logoColor=white"
+    },
+    {
+      "file": "site/assets/badges/sqlite.svg",
+      "label": "SQLite / FTS5",
+      "logo": "sqlite",
+      "width": 105,
+      "height": 20,
+      "sha256": "4d84d63ad9cc12abfd5f8ce8929d40290576ba52b044ac1cc549bfa0af1ff96d",
+      "documentation": "https://sqlite.org/fts5.html",
+      "source": "https://img.shields.io/badge/SQLite%20%2F%20FTS5-003B57?style=flat&logo=sqlite&logoColor=white"
+    },
+    {
+      "file": "site/assets/badges/anki.svg",
+      "label": "AnkiConnect",
+      "logo": "anki",
+      "width": 97,
+      "height": 20,
+      "sha256": "5e248112af4c3123354400a11c146a139dbb301f0c4f784a85f560bc83c73af3",
+      "documentation": "https://github.com/amikey/anki-connect",
+      "source": "https://img.shields.io/badge/AnkiConnect-3975B9?style=flat&logo=anki&logoColor=white"
+    }
+  ]
+}

@@ -32,8 +32,8 @@ p, h1, figure { margin: 0; }
 h1 { font-size: clamp(2.8rem, 6vw, 4.3rem); line-height: 1.06; letter-spacing: -.045em; font-weight: 620; }
 h1 span { color: var(--secondary); }
 .intro { margin-top: 21px; color: var(--secondary); font-size: .95rem; line-height: 1.6; }
-.demo { margin: 0 auto; width: min(880px, 100%); }
-.video-frame { display: grid; aspect-ratio: 16/9; background: var(--surface); border: 1px solid var(--line); border-radius: 16px; overflow: hidden; box-shadow: 0 7px 28px #27364a05; }
+.demo { margin: 0 auto; width: min(640px, 100%); }
+.video-frame { display: grid; aspect-ratio: 28/27; background: var(--surface); border: 1px solid var(--line); border-radius: 16px; overflow: hidden; box-shadow: 0 7px 28px #27364a05; }
 .video-frame video { width: 100%; height: 100%; object-fit: contain; background: #111; }
 [hidden] { display: none !important; }
 .video-empty { display: flex; flex-direction: column; justify-content: center; align-items: center; gap: 12px; padding: 28px; text-align: center; text-decoration: none; }
@@ -48,8 +48,6 @@ figcaption a { display: inline-block; }
 .button:active { transform: scale(.98); }
 .button:focus-visible { transition: none; }
 .platform { color: var(--secondary); font-size: .7rem; line-height: 1.6; margin-top: 14px; }
-.release-boundary { max-width: 590px; margin: 12px auto 0; color: var(--secondary); font-size: .7rem; line-height: 1.6; }
-.release-link { display: inline-block; font-size: .7rem; margin-top: 10px; }
 footer { display: flex; align-items: center; justify-content: space-between; gap: 20px; padding-block: 22px; border-top: 1px solid var(--line); font-size: .68rem; color: var(--secondary); }
 footer a { color: var(--secondary); }
 @media (hover:hover) and (pointer:fine) { .button:hover { background: #004da9; text-decoration: none; } }
@@ -71,10 +69,16 @@ footer a { color: var(--secondary); }
   .video-empty p { font-size:.78rem; }
   .video-empty > span:last-child { font-size:.68rem; }
   .download { padding-block:28px; }
-  .release-boundary { max-width:330px; }
   footer { font-size:.65rem; flex-wrap:wrap; }
 }
 @media (prefers-reduced-motion:reduce) { .button { transition:none; } .button:active { transform:none; } }
 @media (prefers-reduced-transparency:reduce) { :root { --surface:#f2f4f7; } }
 @media (prefers-color-scheme:dark) and (prefers-reduced-transparency:reduce) { :root { --surface:#23262c; } }
 @media (prefers-contrast:more) { :root { --secondary:var(--text); --line:var(--secondary); } }
+
+.technologies { padding: 0 0 40px; text-align: center; }
+.technologies h2 { margin: 0 0 18px; font-size: 1.1rem; font-weight: 600; }
+.badges { display: flex; flex-wrap: wrap; justify-content: center; gap: 10px; max-width: 700px; margin: 0 auto; }
+.badges a { display: inline-flex; border-radius: 4px; }
+.badges img { height: 28px; width: auto; display: block; }
+.technologies p { margin-top: 18px; color: var(--secondary); font-size: .75rem; line-height: 1.6; }

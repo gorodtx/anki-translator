@@ -8,17 +8,27 @@
 
 <p align="center">Apple Silicon · macOS 26+ · DMG 27,40 МБ</p>
 
-Выделите английский текст и вызовите Translator сочетанием клавиш или через macOS «Службы». Русский перевод появится под курсором; история и добавление в Anki — рядом.
+Выделите английский текст и вызовите Translator сочетанием клавиш. Русский перевод появится под курсором; история и добавление в Anki — рядом.
 
-[Установка на Mac](docs/macos.md#установка) · [Linux-релиз](https://github.com/gorodtx/selection_translator_anki/releases/tag/v0.2.8) · [Версия и контрольные суммы](https://github.com/gorodtx/selection_translator_anki/releases/tag/v0.3.1-rc.2)
+## ▶ Демонстрация
 
-<sub>Mac-сборка подписана ad-hoc, без Developer ID и заверения Apple: при первом открытии macOS может её заблокировать. Подробности — в инструкции установки. Python, uv и исходники пользователю не нужны.</sub>
+[![Посмотреть видео: перевод выделенного текста в Translator](site/assets/translator-demo-poster.jpg)](site/assets/translator-demo.mp4)
+
+[Смотреть демо · 44 секунды](site/assets/translator-demo.mp4)
 
 ## 🛠 Технологии
 
-[SwiftUI](https://developer.apple.com/documentation/swiftui) · [AppKit](https://developer.apple.com/documentation/appkit) · [Apple Translation](https://developer.apple.com/documentation/translation) · [Python](https://www.python.org/) · [aiohttp](https://docs.aiohttp.org/) · [spaCy](https://spacy.io/) · [SQLite / FTS5](https://sqlite.org/fts5.html) · [AnkiConnect](https://github.com/amikey/anki-connect)
+[![SwiftUI](site/assets/badges/swiftui.svg)](https://developer.apple.com/documentation/swiftui)
+[![AppKit](site/assets/badges/appkit.svg)](https://developer.apple.com/documentation/appkit)
+[![Apple Translation](site/assets/badges/translation.svg)](https://developer.apple.com/documentation/translation)
+[![GTK4](site/assets/badges/gtk.svg)](https://www.gtk.org/)
+[![Python](site/assets/badges/python.svg)](https://www.python.org/)
+[![aiohttp](site/assets/badges/aiohttp.svg)](https://docs.aiohttp.org/)
+[![spaCy](site/assets/badges/spacy.svg)](https://spacy.io/)
+[![SQLite / FTS5](site/assets/badges/sqlite.svg)](https://sqlite.org/fts5.html)
+[![AnkiConnect](site/assets/badges/anki.svg)](https://github.com/amikey/anki-connect)
 
-Нативное приложение macOS, встроенный Python backend, локальный поиск и карточки Anki. [Код и разработка](docs/development.md).
+macOS и Linux · Python backend · SQLite · Anki. [Код и разработка](docs/development.md).
 
 ## 📚 Офлайн-базы
 
@@ -30,4 +40,6 @@
 
 Базы скачиваются из настроек приложения и хранятся локально; с каждым обновлением приложения повторная загрузка не нужна. [Готовый комплект и SHA256](https://github.com/gorodtx/selection_translator_anki/releases/tag/db-a6f07d1e1c28).
 
-Источники данных: [OPUS](https://opus.nlpl.eu/) — параллельные корпуса, включая [Tatoeba](https://tatoeba.org/); [Kaikki / Wiktionary](https://kaikki.org/dictionary/English/index.html) — лексикон. Apple English/Russian language pair загружается отдельно через штатный интерфейс macOS.
+---
+
+© 2026 Translator contributors · [Лицензия MIT](LICENSE)

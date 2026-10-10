@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width,initial-scale=1">
-  <meta name="description" content="Translator для macOS. Выделите английский текст и получите русский перевод рядом. Apple Silicon, macOS 26+.">
+  <meta name="description" content="Translator для macOS и Linux. Выделите английский текст и получите русский перевод рядом. Apple Silicon, macOS 26+.">
   <meta name="color-scheme" content="light dark">
   <title>Translator — перевод под курсором</title>
   <link rel="icon" href="assets/favicon.svg" type="image/svg+xml" sizes="any">
@@ -20,16 +20,16 @@
   </header>
   <main class="wrap" id="main" tabindex="-1">
     <div class="hero">
-      <p class="eyebrow">АНГЛИЙСКИЙ → РУССКИЙ · ДЛЯ MACOS</p>
+      <p class="eyebrow">АНГЛИЙСКИЙ → РУССКИЙ · MACOS И LINUX</p>
       <h1>Перевод под курсором.</h1>
       <p class="intro">Выделите английский текст. Получите русский перевод.</p>
     </div>
     <figure class="demo" aria-label="Демонстрация Translator">
       <div class="video-frame">
         <video id="demo-video" controls playsinline preload="metadata" hidden aria-label="Настоящая демонстрация Translator"></video>
-        <a id="video-empty" class="video-empty" href="https://github.com/gorodtx/selection_translator_anki/releases/download/v0.3.1-rc.2/Translator-0.3.1-macos-arm64.dmg" aria-label="Скачать Translator для Mac; настоящее видео ещё готовится">
+        <a id="video-empty" class="video-empty" href="https://github.com/gorodtx/selection_translator_anki/releases/download/v0.3.1-rc.2/Translator-0.3.1-macos-arm64.dmg" aria-label="Скачать Translator для Mac; видео недоступно">
           <p id="video-message">Демонстрация приложения</p>
-          <span id="video-detail">Настоящее видео готовится. Нажмите, чтобы скачать Translator.</span>
+          <span id="video-detail">Если запись недоступна, скачайте Translator ниже.</span>
         </a>
       </div>
       <figcaption><span id="demo-caption"></span> <a href="https://github.com/gorodtx/selection_translator_anki/releases/download/v0.3.1-rc.2/Translator-0.3.1-macos-arm64.dmg">Установить Translator <span aria-hidden="true">↗</span></a></figcaption>
@@ -37,10 +37,23 @@
     <section class="download" aria-label="Скачать Translator">
       <a class="button" href="https://github.com/gorodtx/selection_translator_anki/releases/download/v0.3.1-rc.2/Translator-0.3.1-macos-arm64.dmg">🍎 Скачать для Mac <span aria-hidden="true">↓</span></a>
       <p class="platform">Apple Silicon · macOS 26+ · 0.3.1-rc.2 (332) · 27,40 МБ</p>
-      <p class="release-boundary">Подпись ad-hoc, без Developer ID и заверения Apple. При первом открытии macOS может заблокировать приложение. <a href="https://github.com/gorodtx/selection_translator_anki/blob/mac/docs/macos.md#установка">Условия установки</a>.</p>
-      <a class="release-link" href="https://github.com/gorodtx/selection_translator_anki/releases/tag/v0.3.1-rc.2">Выпуск и контрольные суммы ↗</a>
+    </section>
+    <section class="technologies" aria-labelledby="technologies-title">
+      <h2 id="technologies-title">Технологии</h2>
+      <div class="badges">
+        <a href="https://developer.apple.com/documentation/swiftui"><img src="assets/badges/swiftui.svg" alt="SwiftUI" width="69" height="20" loading="lazy"></a>
+        <a href="https://developer.apple.com/documentation/appkit"><img src="assets/badges/appkit.svg" alt="AppKit" width="65" height="20" loading="lazy"></a>
+        <a href="https://developer.apple.com/documentation/translation"><img src="assets/badges/translation.svg" alt="Apple Translation" width="125" height="20" loading="lazy"></a>
+        <a href="https://www.gtk.org/"><img src="assets/badges/gtk.svg" alt="GTK4" width="57" height="20" loading="lazy"></a>
+        <a href="https://www.python.org/"><img src="assets/badges/python.svg" alt="Python" width="67" height="20" loading="lazy"></a>
+        <a href="https://docs.aiohttp.org/"><img src="assets/badges/aiohttp.svg" alt="aiohttp" width="67" height="20" loading="lazy"></a>
+        <a href="https://spacy.io/"><img src="assets/badges/spacy.svg" alt="spaCy" width="61" height="20" loading="lazy"></a>
+        <a href="https://sqlite.org/fts5.html"><img src="assets/badges/sqlite.svg" alt="SQLite / FTS5" width="105" height="20" loading="lazy"></a>
+        <a href="https://github.com/amikey/anki-connect"><img src="assets/badges/anki.svg" alt="AnkiConnect" width="97" height="20" loading="lazy"></a>
+      </div>
+      <p>macOS и Linux · Python backend · SQLite · Anki. <a href="https://github.com/gorodtx/selection_translator_anki/blob/mac/docs/development.md">Код и разработка</a>.</p>
     </section>
   </main>
-  <footer class="wrap"><span>Translator</span><a href="https://github.com/gorodtx/selection_translator_anki/tree/gnome#русский">🐧 GNOME / Arch Linux</a><a href="https://github.com/gorodtx/selection_translator_anki/issues">💬 Обратная связь</a></footer>
+  <footer class="wrap"><span>© 2026 Translator contributors · <a href="https://github.com/gorodtx/selection_translator_anki/blob/mac/LICENSE">MIT</a></span><a href="https://github.com/gorodtx/selection_translator_anki/tree/gnome#русский">🐧 GNOME / Arch Linux</a><a href="https://github.com/gorodtx/selection_translator_anki/issues">💬 Обратная связь</a></footer>
 </body>
 </html>

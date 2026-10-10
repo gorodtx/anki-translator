@@ -1,0 +1,5 @@
+# Логотипы технологий
+
+Локальные статические SVG получены 10.10.2026 из [Shields.io](https://shields.io/docs/static-badges); точные запросы и SHA256 каждого файла находятся в [provenance.json](provenance.json). Логотипы встроены как SVG data URI из Simple Icons, внешние изображения, scripts и web fonts не подключаются. AppKit и SwiftUI используют знак Swift; Apple Translation — знак Apple. Это указание фактической технологии, не самостоятельный логотип фреймворка и не утверждение об одобрении продукта правообладателем.
+
+Shields.io использует [MIT](https://github.com/badges/shields/blob/master/LICENSE-MIT) и [Apache-2.0](https://github.com/badges/shields/blob/master/LICENSE-APACHE); копия MIT уведомления сохранена в [SHIELDS-LICENSE-MIT.txt](SHIELDS-LICENSE-MIT.txt). Simple Icons распространяется по [CC0-1.0](https://github.com/simple-icons/simple-icons/blob/develop/LICENSE.md), копия — [SIMPLE-ICONS-CC0.txt](SIMPLE-ICONS-CC0.txt). Торговые марки принадлежат своим владельцам; CC0 не предоставляет права на торговые марки. Лицензия проекта Translator не заменяет лицензии внешних компонентов или данных.
