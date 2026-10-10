@@ -24,7 +24,7 @@
 
 ## ▶ Демонстрация
 
-https://github.com/user-attachments/assets/66b1a240-f803-4fa0-a61d-5c8d1cae69bd
+<picture><img src="docs/assets/translator-demo.gif" width="100%" alt="Демонстрация Translator: перевод выделенного текста и примеры"></picture>
 
 macOS и Linux · Python backend · SQLite · Anki. [Код и разработка](docs/development.md).
 

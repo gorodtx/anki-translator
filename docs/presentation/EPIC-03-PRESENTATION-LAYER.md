@@ -128,3 +128,53 @@ Root подтвердил ownership без пересечения, `msg_15658b87
 - P10.6.4 **NOT_DONE_USER_STOPPED**: новые browser/CUA, физический размер плеера в браузере и ручной Play не объявляются проверенными. Native render/HTTP/decode не подменяют их.
 
 Root выполняет коррекцию самостоятельно. Ownership/Git lease подтверждены Web-сессией, `msg_bf2c156a7a2c`; site и приложение не меняются. [Отчёт](DELIVERY-2026-10-10.md), [журнал исполнения](/Users/den/Documents/dev/translator-evidence/2026-10-10/readme-inline/ROOT-PROGRESS.md).
+
+
+### 2026-10-10T18:34:27.782788+00:00 — P10.7 — служебная панель GitHub и центровка демо
+
+Пользователь прислал screenshot опубликованного2d71bff: нативный GitHub плеер воспроизводится внутри README, но его служебная строка `translator-demo-compact.mp4` нежелательна; полноширинная рамка оставляет пустое место справа. Новый критерий — центрированный компактный блок без этой строки и лишней внутренней ширины. Уменьшение intrinsic видео в P10.6 не ограничило родительский GitHub wrapper, поэтому визуальная приёмка P10.6 **FAIL_USER_SCREENSHOT**; прежние source/HTTP/CI PASS сохраняются отдельно. CI38075173886 completed success:5jobs success, notarize skipped.
+
+![Пользовательский screenshot: служебная строка и пустое место справа](/Users/den/Documents/dev/translator-evidence/2026-10-10/readme-centered/user-feedback-wide-wrapper.png)
+
+Screenshot предоставлен пользователем, не получен нашим browser/CUA. Запись `feedback.json` содержит точные origin/SHA. GitHub renderer проверен в11вариантах: обычный внешний `<video>` и `<source>` удаляются; все работоспособные attachment варианты превращаются в `details/summary` с filename. [Официальный pipeline](https://github.com/github/markup#github-markup) подтверждает удаление custom styles/classes. Нативная служебная строка не имеет разрешённого README CSS переключателя.
+
+Центровка **PASS_SOURCE_RENDER_HTTP, NOT_PUBLISHED**: подготовлен ограниченный448px контейнер `table align=center`, реальный video/controls сохранён внутри, media200/Range206 exact bytes, badges9/порядок сохранены. Заголовок **NOT_DONE_GITHUB_COMPONENT**: у native MP4 служебная панель остаётся. Пользователю задан выбор настоящего центрированного видео с native controls или GIF из той же записи без панели/звука/перемотки; ответ ещё не получен, формат не подменён молча. До выбора второй push не выполнен.
+
+Root сохраняет ownership README и трёх presentation журналов, sourcebase2d71bffb4c2a14f6e102fe24c166d96f6356e977; Web frozen, пересечения нет, site/app/release/DB не меняются. [Source receipt](/Users/den/Documents/dev/translator-evidence/2026-10-10/readme-centered/source-checks.json); [журнал и resume](/Users/den/Documents/dev/translator-evidence/2026-10-10/readme-centered/ROOT-PROGRESS.md). Новый критерий не объявляется PASS по старому CI.
+
+
+### 2026-10-10T18:41:34.211344+00:00 — P10.8 — пользователь выбрал настоящий центрированный плеер
+
+Пользователь явно подтвердил вариант «настоящий видеоплеер по центру — со звуком, Play и перемоткой, но со служебной строкой GitHub». Требование удаления filename из P10.7 уточнено этим решением: native header теперь **ACCEPTED_USER_NATIVE_PLAYER**, GIF не нужен. Прежние записи и отклонённая визуальная приёмка сохраняются как история.
+
+README содержит центрированный компактный контейнер `table align="center"` / `td width="448"`, один настоящий MP4-плеер с controls; ссылка не уводит пользователя с README. Видео 448×432,43,535с,H.264/audio1 остаётся прежним attachment, новая загрузка не выполнялась. Хеш текущего README совпадает с проверенным P10.7 renderer/anonymous media200/Range206. [Уточнённый receipt](/Users/den/Documents/dev/translator-evidence/2026-10-10/readme-centered/source-checks-native-approved.json). Девять badges остаются непосредственно под platform line, заголовок «Технологии» отсутствует. Browser/CUA **NOT_DONE_USER_STOPPED**; HTML/HTTP не объявляются визуальным browser acceptance.
+
+Root Git lease и owned4paths подтверждены; соседняя сохранённая Web session уведомлена `msg_51964f941966`, source frozen. Base `2d71bffb4c2a14f6e102fe24c166d96f6356e977`, branch `mac`, index был пуст; foreign design drafts сохранены. Commit/push/actual public README/CI **PENDING** на момент записи. Окончательные результаты и exact resume сохраняются в [ROOT-PROGRESS.md](/Users/den/Documents/dev/translator-evidence/2026-10-10/readme-centered/ROOT-PROGRESS.md). Эта итерация меняет README и журналы; приложение, сайт, release/DB assets не меняются.
+
+
+### 2026-10-10T18:47:09.395111+00:00 — P10.9 — новый steering: GIF во всю ширину
+
+До commit/push пользователь уточнил: «не пусть будет как гиф только по всей области вот этого экрана». Решение P10.8 о native player отменено текущим steering; прежняя история сохранена. Итоговый контракт этой итерации: GIF из всей настоящей записи, полная ширина README, исходные пропорции без обрезки, без filename-панели GitHub и пустой области справа. GIF автоматически повторяется, звук и controls отсутствуют по выбранному формату.
+
+![Пользовательский screenshot: область для полного заполнения GIF](/Users/den/Documents/dev/translator-evidence/2026-10-10/readme-gif/user-feedback-full-width.png)
+
+Это screenshot пользователя, не новая computer-use проверка. SHA256 4a955eb2dac4db87dea9b47424bb8d43f643e91df77bcd411fdca0c8e8cc2031. GitHub renderer проверен для plain img, пустого anchor и picture: первые два автоматически получают ссылку на файл, `picture` сохраняет img без ссылки. В README выбран `picture` с `width="100%"`; контейнер448px и native attachment удалены. Полный source MP4 не меняется. Для конверсии используются временные uv-tools, зависимости проекта не добавляются; крупные промежуточные GIF заменяются, в repo остаётся один окончательный файл.
+
+Root owns5paths: README.md, docs/assets/translator-demo.gif и три presentation journals. Сосед Web уведомлён msg_0cb7b1ab3823; site/app/release/DB untouched. Source/decoder/HTTP acceptance и доставка **PENDING** на момент этой записи; browser/CUA остаются NOT_DONE_USER_STOPPED. Следующий шаг — оптимизированный GIF, scoped acceptance, normal named commit/helper push/actual public README/CI. Exact resume: `cd '/Users/den/Documents/dev/selection_translator_anki' && codex resume '01a1030e-0fcc-7430-8c9d-070c3f569b23'`.
+
+
+### 2026-10-10T18:50:18.359112+00:00 — P10.10 — GIF source/renderer/HTTP acceptance
+
+Окончательный GIF `docs/assets/translator-demo.gif`: 672×648,6fps,261frames,43,5с,15 531 836bytes,SHA256 `21041668284ebde97097bc2c95306a15c9ba12d802ace43bc19917088b74e14a`. Вся исходная визуальная запись сохранена без обрезки; пропорции точно совпадают с1120×1080 исходника. GIF loop0, каждый frame декодирован, composite полностью opaque во всех кадрах. MP4 source SHA256 `2f9df652afa0668c9a4cb3eb6d7860d2407a46657206171f9c94bd9858a8cbb2` неизменён. Более крупные промежуточные GIF85/84/38МБ не коммитились и заменены единственным окончательным файлом; trials сохранены как small metadata/log receipts вне repo.
+
+Лично просмотрены три кадра GIF — начало, середина и конец: содержимое настоящей записи и текст читаются. Это derived frames из записи пользователя, **не screenshots новой runtime/browser проверки**:
+
+![Начало настоящей записи](/Users/den/Documents/dev/translator-evidence/2026-10-10/readme-gif/gif-preview-0.png)
+
+![Середина настоящей записи](/Users/den/Documents/dev/translator-evidence/2026-10-10/readme-gif/gif-preview-130.png)
+
+![Конец настоящей записи](/Users/den/Documents/dev/translator-evidence/2026-10-10/readme-gif/gif-preview-260.png)
+
+`uv run --no-project python .../readme-gif/check_readme.py` exit0: actual GitHub renderer содержит один GIF в picture с width100%, без anchor/video/details/filename;9badges прямо под platform line, «Технологии» отсутствует. Два local HTTP GET root/subpath дали200,image/gif,точные bytes/SHA; временный сервер остановлен. Scoped diff-check/base ancestry PASS. [Source checks](/Users/den/Documents/dev/translator-evidence/2026-10-10/readme-gif/source-checks.json), [GIF metadata](/Users/den/Documents/dev/translator-evidence/2026-10-10/readme-gif/gif-metadata.json). Dependencies проекта не менялись.
+
+Source/renderer/HTTP **PASS**; browser/CUA **NOT_DONE_USER_STOPPED**. Five owned paths staged/commit/push/public/CI ещё **PENDING**; результаты фиксируются после выполнения в [ROOT-PROGRESS.md](/Users/den/Documents/dev/translator-evidence/2026-10-10/readme-gif/ROOT-PROGRESS.md). Чужие design drafts и source сайта/приложения/release/DB сохранены.
