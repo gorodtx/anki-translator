@@ -342,3 +342,23 @@ README использует `table align="center"`, `td width="664"`: эти а�
 ```sh
 cd '/Users/den/Documents/dev/selection_translator_anki' && codex resume '01a1030e-0fcc-7430-8c9d-070c3f569b23'
 ```
+
+
+### 2026-10-10T21:25:35.497266+00:00 — P10.12 — inline animation по образцу Mockingbird
+
+Новое прямое поручение: повторить демонстрацию [Mockingbird](https://github.com/Mockingbird-go-on/mockingbird) с нашей записью; убрать строку «macOS и Linux · Python backend · SQLite · Anki. Код и разработка.». Пользовательский screenshot показал чёрный native player0:00/0:00, рамки и пустое место. Визуальная приёмка P10.11 **FAIL_USER_SCREENSHOT**; прежние integrity/HTTP/CI PASS сохраняются, но не подменяют визуальную приёмку. Причина screenshot-ошибки browser playback отдельно не установлена.
+
+Reference source проверен: [README](https://github.com/Mockingbird-go-on/mockingbird/blob/main/README.md) содержит Markdown image `docs/demo/mockingbird-demo.gif?v=3`, не MP4/таблицу. Reference GIF2 192 875bytes/1726×1080/79frames/9,2с/loop0. Наш вариант повторяет inline animated-image поведение через `picture/img width=100%` без ссылки вокруг изображения; native player, controls и filename panel отсутствуют. Encoding — animated WebP, его [официальная спецификация](https://developers.google.com/speed/webp/docs/riff_container) поддерживает frames/timing/loop; это не GIF и не неизменённый MP4.
+
+P10.12.1 **PASS_SOURCE_RENDER**: нежелательная строка и ссылка удалены; badges9, platform line/download/DB links сохранены. P10.12.2 **PASS_SOURCE_DECODE_REVIEW**: из точного `/Users/den/Documents/obs/translator_demo_gif.mp4` получен `docs/assets/translator-demo.webp`,784×756, sampling30fps,1301storedframes,43,499с,loop0;33 988 512bytes,SHA256 `1d6b00792f3c72de609b04b85e3d50a3506c5dea75bbd13211b69bceeb21703a`. Время и весь кадр сохранены, sourceSHA c81e56cc5402910aa58c813c526346ff32ca64fc50a660e5c3dc5ce1e4d4c8d1 неизменён; scale0,7/q80/reencode объявлены. Декодированы все frames, все composite opaque; min frame interval33ms, одинаковые frames объединены в holds. Лично просмотрены начало/середина/конец. Это derived source frames, не runtime/browser screenshots.
+
+Trials54,6/38,4/23,4МБ не опубликованы и удалены/заменены; small receipts сохранены. CR trial **FAIL_OPACITY**, после mux-fix opacityPASS, но frame review **FAIL_VISUAL_SOURCE_REVIEW** из-за trails. Итог использует штатный libwebp_anim **без CR/custom frame flags**, новые кадры после него лично просмотрены. Проверка full decode/opacity дополнена этой находкой; прежние ошибки сохранены в external ROOT-PROGRESS.
+
+P10.12.3 **PASS_RENDER_HTTP**: authenticated и anonymous GitHub renderer создают inline image width100% без anchor/video/details; local HTTP root/subpath200/image/webp/точные bytes/SHA, временный сервер остановлен. [Source receipt](/Users/den/Documents/dev/translator-evidence/2026-10-11/readme-mockingbird/source-checks.json), [animation metadata](/Users/den/Documents/dev/translator-evidence/2026-10-11/readme-mockingbird/animation-metadata.json). P10.12.4 **PENDING_DELIVERY** на момент source-записи: named commit/helper push mac/remote/public asset/CI фиксируются в [ROOT-PROGRESS.md](/Users/den/Documents/dev/translator-evidence/2026-10-11/readme-mockingbird/ROOT-PROGRESS.md). P10.12.5 **NOT_DONE_USER_STOPPED**: browser/CUA, фактические размеры и плавность в браузере.
+
+Root owns5paths: README.md, docs/assets/translator-demo.webp, эти три presentation journals. Cwd `/Users/den/Documents/dev/selection_translator_anki`, branch mac, base769d0eb9ea3dddc9677aff0a99b5d1097c1863a7; исходный index пуст, чужие design drafts сохранены; Web frozen, сообщения peer-scope-notification.json/peer-asset-path-notification.json. Site/app/release/DB не меняются. Полный EPIC не объявлен завершённым по этой редакции.
+
+Provider Codex; role Translator-Brand-GitHub / coordinator; native01a1030e-0fcc-7430-8c9d-070c3f569b23; terminal term_d2396908-a619-4d51-8870-c7db61de6df1. Проверенные source/renderer/HTTP результаты выше; финальные Git/public/CI/remaining — в linked ROOT-PROGRESS. Resume:
+```sh
+cd '/Users/den/Documents/dev/selection_translator_anki' && codex resume '01a1030e-0fcc-7430-8c9d-070c3f569b23'
+```
