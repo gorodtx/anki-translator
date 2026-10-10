@@ -8,25 +8,23 @@
 
 <p align="center">Apple Silicon · macOS 26+ · DMG 27,40 МБ</p>
 
+<p align="center">
+  <a href="https://developer.apple.com/documentation/swiftui"><img src="site/assets/badges/swiftui.svg" alt="SwiftUI"></a>
+  <a href="https://developer.apple.com/documentation/appkit"><img src="site/assets/badges/appkit.svg" alt="AppKit"></a>
+  <a href="https://developer.apple.com/documentation/translation"><img src="site/assets/badges/translation.svg" alt="Apple Translation"></a>
+  <a href="https://www.gtk.org/"><img src="site/assets/badges/gtk.svg" alt="GTK4"></a>
+  <a href="https://www.python.org/"><img src="site/assets/badges/python.svg" alt="Python"></a>
+  <a href="https://docs.aiohttp.org/"><img src="site/assets/badges/aiohttp.svg" alt="aiohttp"></a>
+  <a href="https://spacy.io/"><img src="site/assets/badges/spacy.svg" alt="spaCy"></a>
+  <a href="https://sqlite.org/fts5.html"><img src="site/assets/badges/sqlite.svg" alt="SQLite / FTS5"></a>
+  <a href="https://github.com/amikey/anki-connect"><img src="site/assets/badges/anki.svg" alt="AnkiConnect"></a>
+</p>
+
 Выделите английский текст и вызовите Translator сочетанием клавиш. Русский перевод появится под курсором; история и добавление в Anki — рядом.
 
 ## ▶ Демонстрация
 
-[![Посмотреть видео: перевод выделенного текста в Translator](site/assets/translator-demo-poster.jpg)](site/assets/translator-demo.mp4)
-
-[Смотреть демо · 44 секунды](site/assets/translator-demo.mp4)
-
-## 🛠 Технологии
-
-[![SwiftUI](site/assets/badges/swiftui.svg)](https://developer.apple.com/documentation/swiftui)
-[![AppKit](site/assets/badges/appkit.svg)](https://developer.apple.com/documentation/appkit)
-[![Apple Translation](site/assets/badges/translation.svg)](https://developer.apple.com/documentation/translation)
-[![GTK4](site/assets/badges/gtk.svg)](https://www.gtk.org/)
-[![Python](site/assets/badges/python.svg)](https://www.python.org/)
-[![aiohttp](site/assets/badges/aiohttp.svg)](https://docs.aiohttp.org/)
-[![spaCy](site/assets/badges/spacy.svg)](https://spacy.io/)
-[![SQLite / FTS5](site/assets/badges/sqlite.svg)](https://sqlite.org/fts5.html)
-[![AnkiConnect](site/assets/badges/anki.svg)](https://github.com/amikey/anki-connect)
+https://github.com/user-attachments/assets/66b1a240-f803-4fa0-a61d-5c8d1cae69bd
 
 macOS и Linux · Python backend · SQLite · Anki. [Код и разработка](docs/development.md).
 

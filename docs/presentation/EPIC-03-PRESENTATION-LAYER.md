@@ -116,3 +116,15 @@ Root подтвердил ownership без пересечения, `msg_15658b87
 ### 10.10.2026 — уточнение приёмки P10 после независимого review
 
 Источник и локальная HTTP-раздача реального MP4/poster/9logos приняты Root по named23paths. Приёмка доставки требует отдельно commit/remoteSHA/CI; localhost и AVFoundation decode не являются публичным hosting или browser playback. Текущий target mac; вопрос о master не разрешает отдельный merge. Архив и прежние NOT_DONE сохраняются. Запись первой диагностической ошибки и исправленной проверки находится в Progress и root-review.json.
+
+
+### 2026-10-10T18:07:36.847429+00:00 — P10.6 — компактный inline-плеер в README
+
+Новый пользовательский screenshot выявил недостаток прежней реализации: огромный poster являлся ссылкой на MP4, поэтому видео не воспроизводилось внутри README. Прежний P10.4 сохраняется как история; новое требование заменяет poster→link на встроенный плеер. Заголовок «Технологии» убрать, девять действующих badges перенести непосредственно под строку Apple Silicon / macOS / DMG.
+
+- P10.6.1 **PASS_SOURCE**: девять badges перенесены с сохранением логотипов, alt и ссылок; заголовок удалён.
+- P10.6.2 **PASS_SOURCE_RENDER_HTTP**: анонимный GitHub renderer создаёт одно настоящее `<video controls>` из attachment, без ссылки вокруг плеера, autoplay и loop. Компактная версия пользовательской записи — 448×432, H.264, 60fps, 43,535с; звук и длительность сохранены, исходник не изменён. Media из анонимного renderer отдаёт точные bytes, HTTP200 и Range206.
+- P10.6.3 **PENDING_DELIVERY**: поимённый commit/push в default `mac`, remote SHA и CI проверяются отдельно. Окончательные receipts сохраняются в журнале исполнения ниже.
+- P10.6.4 **NOT_DONE_USER_STOPPED**: новые browser/CUA, физический размер плеера в браузере и ручной Play не объявляются проверенными. Native render/HTTP/decode не подменяют их.
+
+Root выполняет коррекцию самостоятельно. Ownership/Git lease подтверждены Web-сессией, `msg_bf2c156a7a2c`; site и приложение не меняются. [Отчёт](DELIVERY-2026-10-10.md), [журнал исполнения](/Users/den/Documents/dev/translator-evidence/2026-10-10/readme-inline/ROOT-PROGRESS.md).
