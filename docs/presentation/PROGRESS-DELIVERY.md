@@ -362,3 +362,45 @@ Provider Codex; role Translator-Brand-GitHub / coordinator; native01a1030e-0fcc-
 ```sh
 cd '/Users/den/Documents/dev/selection_translator_anki' && codex resume '01a1030e-0fcc-7430-8c9d-070c3f569b23'
 ```
+
+
+### 2026-10-12T19:27:49.063659+00:00 — P10.13: единственная сессия и ограничение памяти
+
+Пользователь12.10.2026 поручил оставить только Root, закрыть остальные Translator sessions, снизить footprint проекта до1GB, исправить дёрганное demo и добавить короткое описание перевода после hero/download. Новые сессии не создаются. Перед закрытием сохранены provider/native IDs/cwd/branch/base/summary/resume. Root Codex native01a1030e-0fcc-7430-8c9d-070c3f569b23/current term_77594ddc-e808-46a1-820b-fc1dd5094c0f/PID81755 остаётся.
+
+Закрываются macOS native01a10c36-041c-73d3-b4a5-b96090075d82/PID81756/term_8aecfdd7-53d6-4af7-9bd1-6261751e6dda и Web native01a10317-15e0-7c12-a4ac-dcfddc86ce9d/PID81757/term_9b7f4a9b-8c19-4bfb-ac08-661af13ee96c. Cwd общий `/Users/den/Documents/dev/selection_translator_anki`, branch mac, base/current HEAD e97f2ca6b152346792e75455c84f2dad15214b21; owned historical macOS/site paths и их journals сохранены. Состояние вкладок/trees: [shutdown plan](/Users/den/Documents/dev/translator-evidence/2026-10-12/memory-demo/session-shutdown-plan.json). Чужие незакоммиченные design drafts и deletion site MP4 не стираются закрытием вкладок.
+
+Exact native resume, только по новому поручению пользователя, один ID не запускать одновременно:
+```sh
+cd /Users/den/Documents/dev/selection_translator_anki && codex resume 01a10c36-041c-73d3-b4a5-b96090075d82
+cd /Users/den/Documents/dev/selection_translator_anki && codex resume 01a10317-15e0-7c12-a4ac-dcfddc86ce9d
+```
+
+Измерено до остановки: три Codex process trees1718.7+1398.4+1469.3MiB RSS, включая duplicated eager MCP. Установленные Translator/Engine/Lookup около80MiB RSS суммарно; это отдельная process group. RSS — измерение resident pages, не жёсткий будущий memory limit. Дальше exact close→exit/process-tree proof, trim unused Root MCP, persistent project-only overrides, повторное измерение.
+
+
+### 2026-10-12T22:10:00+00:00 — P10.13 — плавное демо AVIF 60 fps и раздел «Как работает перевод»
+
+Работу Root продолжила Claude-сессия этого worktree (Root-Codex остановился на невалидном `.codex/config.toml`; локальный файл исправлен, в репозиторий не входит). Память проекта: дерево единственной сессии 1656 → 463 MiB после отключения 11 eager stdio MCP для проекта и завершения 17 точных PID; Translator ≈80 MiB отдельно. Подробности — в [журнале задачи](/Users/den/Documents/dev/translator-evidence/2026-10-12/memory-demo/ROOT-PROGRESS.md).
+
+**Причина рывков найдена замером, а не догадкой.** В тестовые копии вшит номер кадра (8-битная полоса 128×16 в углу); настоящий Firefox 157 (браузер пользователя по умолчанию) снимался по WebDriver BiDi снимками только этой полосы. `drawImage` для прибора не годится: Firefox, Chromium и WebKit по спецификации отдают в canvas первый кадр анимации. Сервер отдавал файлы как raw.githubusercontent.com: `application/octet-stream` и `nosniff`.
+
+| Вариант | Условия | Смен кадра/с | Скорость | Пауза p95 / max | Пауз > 150 мс |
+| --- | --- | --- | --- | --- | --- |
+| WebP 30 fps, 784×756, q80 — параметры e97f2ca | без ограничения сети | 29,9 | 1,00 | 50 / 56 мс | 0 |
+| тот же WebP | 1,4 МБ/с | 24,6 | 0,82 | 70 / 99 мс | 0 |
+| тот же WebP | 0,7 МБ/с | 17,5 | 0,58 | 118 / 185 мс | 11 |
+| AVIF 60 fps (итог, 840 с меткой) | без ограничения, 49 с через шов петли | 59,9 | 1,04 | 19 / 45 мс | 0 |
+| тот же AVIF | 1,4 МБ/с | 59,8 | 1,04 | 19 / 52 мс | 0 |
+
+GitHub отдал опубликованный WebP на этом Mac за 24,4 с (1,4 МБ/с), а ролик длится 43,5 с: первый круг Firefox проигрывает по мере скачивания — это и есть «дёрганое и лагающее» демо. AVIF в 7 раз меньше; Firefox показывает его только после последнего байта ([Bugzilla 2072679](https://bugzilla.mozilla.org/show_bug.cgi?id=2072679)) и затем играет ровно. Первый кадр итогового файла при 1,4 МБ/с — через 3,5 с.
+
+Скорость 1,04 в Firefox — его округление длительности 1/60 с до 16 мс. Проверенная альтернатива — метки 17/17/16 мс — дала точную скорость, но только 43 смены кадра/с: тики экрана 16,67 мс пропускают концы кадров на 17, 33, 50 мс. Отклонена. Chromium: 60,1 к/с, скорость 1,001. Safari: WebKit `ImageDecoderCG` читает `{AVIS}` → `UnclampedDelayTime` (кадры < 11 мс растягивает до 100 мс) и `LoopCount`; macOS ImageIO для итогового файла даёт 2609 кадров, 1/60 с у каждого, включая последний, `LoopCount = 0`. Headless WebKit Playwright показывал 4–8 смен/с одинаково для WebP и AVIF при любой частоте опроса — свойство этой сборки, Safari по нему не оценивался.
+
+Итог `docs/assets/translator-demo.avif`: AV1 (libaom, crf 40, cpu-used 6), 1120×1080 — исходное разрешение без обрезки, 60 fps, 2609 кадров, 43,48 с, бесконечная петля, без звука; 4 792 942 байта, SHA256 `dd1e9a7fd5a04ea54110af58e9e4a89b2d08d641adac4c8324fdfc8529deed89`. Источник — тот же `/Users/den/Documents/obs/translator_demo_gif.mp4` (SHA256 `c81e56cc…d4c8d1`), не изменён. Лично просмотрены кадры 0, 300, 700, 1300, 1900, 2608 и увеличенный фрагмент текста попапа: текст резкий, блочных артефактов нет. `docs/assets/translator-demo.webp` удалён.
+
+Подсказка пользователя про `<video autoplay loop muted playsinline>` проверена официальным рендерером `POST /markdown`: GitHub вырезает `<video>` целиком во всех трёх формах, автоповтор в README даёт только анимированное изображение. Применены её остальные пункты: ровно 60 fps, без звука, малый вес.
+
+README: после hero, скачиваний и badges — раздел «✨ Как работает перевод» из четырёх абзацев с эмодзи; факты сверены с кодом (`SelectionCapture.swift`: Accessibility, затем синтетический ⌘C с восстановлением буфера; `translate.py`: частичный ответ Apple до сети, Cambridge 1,2–1,6 с и Google 1,4 с, офлайн-примеры и определения; `AnkiUpsertSheet.swift`: колода, переводы, примеры, объединение дубликатов). Прежняя строка-описание заменена этим разделом. Рендер `POST /markdown`: раздел на месте, AVIF в `<picture>` без ссылки-обёртки, `<video>` и `.webp` нет.
+
+Чужие незакоммиченные удаления `site/assets/translator-demo.mp4`, `design/.../repository-open-graph-template.png` и черновики в `design/` не тронуты и в коммит не входят.

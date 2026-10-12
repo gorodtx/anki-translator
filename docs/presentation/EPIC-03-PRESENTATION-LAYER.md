@@ -204,3 +204,30 @@ Trials54,6/38,4/23,4МБ не опубликованы и удалены/зам�
 P10.12.3 **PASS_RENDER_HTTP**: authenticated и anonymous GitHub renderer создают inline image width100% без anchor/video/details; local HTTP root/subpath200/image/webp/точные bytes/SHA, временный сервер остановлен. [Source receipt](/Users/den/Documents/dev/translator-evidence/2026-10-11/readme-mockingbird/source-checks.json), [animation metadata](/Users/den/Documents/dev/translator-evidence/2026-10-11/readme-mockingbird/animation-metadata.json). P10.12.4 **PENDING_DELIVERY** на момент source-записи: named commit/helper push mac/remote/public asset/CI фиксируются в [ROOT-PROGRESS.md](/Users/den/Documents/dev/translator-evidence/2026-10-11/readme-mockingbird/ROOT-PROGRESS.md). P10.12.5 **NOT_DONE_USER_STOPPED**: browser/CUA, фактические размеры и плавность в браузере.
 
 Root owns5paths: README.md, docs/assets/translator-demo.webp, эти три presentation journals. Cwd `/Users/den/Documents/dev/selection_translator_anki`, branch mac, base769d0eb9ea3dddc9677aff0a99b5d1097c1863a7; исходный index пуст, чужие design drafts сохранены; Web frozen, сообщения peer-scope-notification.json/peer-asset-path-notification.json. Site/app/release/DB не меняются. Полный EPIC не объявлен завершённым по этой редакции.
+
+
+### 2026-10-12T22:10:00+00:00 — P10.13 — плавное демо AVIF 60 fps и раздел «Как работает перевод»
+
+Работу Root продолжила Claude-сессия этого worktree (Root-Codex остановился на невалидном `.codex/config.toml`; локальный файл исправлен, в репозиторий не входит). Память проекта: дерево единственной сессии 1656 → 463 MiB после отключения 11 eager stdio MCP для проекта и завершения 17 точных PID; Translator ≈80 MiB отдельно. Подробности — в [журнале задачи](/Users/den/Documents/dev/translator-evidence/2026-10-12/memory-demo/ROOT-PROGRESS.md).
+
+**Причина рывков найдена замером, а не догадкой.** В тестовые копии вшит номер кадра (8-битная полоса 128×16 в углу); настоящий Firefox 157 (браузер пользователя по умолчанию) снимался по WebDriver BiDi снимками только этой полосы. `drawImage` для прибора не годится: Firefox, Chromium и WebKit по спецификации отдают в canvas первый кадр анимации. Сервер отдавал файлы как raw.githubusercontent.com: `application/octet-stream` и `nosniff`.
+
+| Вариант | Условия | Смен кадра/с | Скорость | Пауза p95 / max | Пауз > 150 мс |
+| --- | --- | --- | --- | --- | --- |
+| WebP 30 fps, 784×756, q80 — параметры e97f2ca | без ограничения сети | 29,9 | 1,00 | 50 / 56 мс | 0 |
+| тот же WebP | 1,4 МБ/с | 24,6 | 0,82 | 70 / 99 мс | 0 |
+| тот же WebP | 0,7 МБ/с | 17,5 | 0,58 | 118 / 185 мс | 11 |
+| AVIF 60 fps (итог, 840 с меткой) | без ограничения, 49 с через шов петли | 59,9 | 1,04 | 19 / 45 мс | 0 |
+| тот же AVIF | 1,4 МБ/с | 59,8 | 1,04 | 19 / 52 мс | 0 |
+
+GitHub отдал опубликованный WebP на этом Mac за 24,4 с (1,4 МБ/с), а ролик длится 43,5 с: первый круг Firefox проигрывает по мере скачивания — это и есть «дёрганое и лагающее» демо. AVIF в 7 раз меньше; Firefox показывает его только после последнего байта ([Bugzilla 2072679](https://bugzilla.mozilla.org/show_bug.cgi?id=2072679)) и затем играет ровно. Первый кадр итогового файла при 1,4 МБ/с — через 3,5 с.
+
+Скорость 1,04 в Firefox — его округление длительности 1/60 с до 16 мс. Проверенная альтернатива — метки 17/17/16 мс — дала точную скорость, но только 43 смены кадра/с: тики экрана 16,67 мс пропускают концы кадров на 17, 33, 50 мс. Отклонена. Chromium: 60,1 к/с, скорость 1,001. Safari: WebKit `ImageDecoderCG` читает `{AVIS}` → `UnclampedDelayTime` (кадры < 11 мс растягивает до 100 мс) и `LoopCount`; macOS ImageIO для итогового файла даёт 2609 кадров, 1/60 с у каждого, включая последний, `LoopCount = 0`. Headless WebKit Playwright показывал 4–8 смен/с одинаково для WebP и AVIF при любой частоте опроса — свойство этой сборки, Safari по нему не оценивался.
+
+Итог `docs/assets/translator-demo.avif`: AV1 (libaom, crf 40, cpu-used 6), 1120×1080 — исходное разрешение без обрезки, 60 fps, 2609 кадров, 43,48 с, бесконечная петля, без звука; 4 792 942 байта, SHA256 `dd1e9a7fd5a04ea54110af58e9e4a89b2d08d641adac4c8324fdfc8529deed89`. Источник — тот же `/Users/den/Documents/obs/translator_demo_gif.mp4` (SHA256 `c81e56cc…d4c8d1`), не изменён. Лично просмотрены кадры 0, 300, 700, 1300, 1900, 2608 и увеличенный фрагмент текста попапа: текст резкий, блочных артефактов нет. `docs/assets/translator-demo.webp` удалён.
+
+Подсказка пользователя про `<video autoplay loop muted playsinline>` проверена официальным рендерером `POST /markdown`: GitHub вырезает `<video>` целиком во всех трёх формах, автоповтор в README даёт только анимированное изображение. Применены её остальные пункты: ровно 60 fps, без звука, малый вес.
+
+README: после hero, скачиваний и badges — раздел «✨ Как работает перевод» из четырёх абзацев с эмодзи; факты сверены с кодом (`SelectionCapture.swift`: Accessibility, затем синтетический ⌘C с восстановлением буфера; `translate.py`: частичный ответ Apple до сети, Cambridge 1,2–1,6 с и Google 1,4 с, офлайн-примеры и определения; `AnkiUpsertSheet.swift`: колода, переводы, примеры, объединение дубликатов). Прежняя строка-описание заменена этим разделом. Рендер `POST /markdown`: раздел на месте, AVIF в `<picture>` без ссылки-обёртки, `<video>` и `.webp` нет.
+
+Чужие незакоммиченные удаления `site/assets/translator-demo.mp4`, `design/.../repository-open-graph-template.png` и черновики в `design/` не тронуты и в коммит не входят.
