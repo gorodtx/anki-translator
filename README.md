@@ -22,7 +22,7 @@
 
 <h2 align="center">Как это работает</h2>
 
-<p align="center">
+<p>
   <b>Где угодно.</b> Любой копируемый текст: выделение читается через Accessibility, иначе через ⌘C.<br>
   <b>Мгновенно.</b> ⌥⌘T — и под курсором перевод словаря и переводчика Apple прямо на Mac.<br>
   <b>Бесплатно.</b> Следом Google Translate и Cambridge — без ключей и подписок, своя LLM не нужна.<br>
@@ -32,7 +32,9 @@
 
 <picture><img src="docs/assets/translator-demo.avif" width="100%" alt="Демонстрация Translator: перевод выделенного текста и примеры"></picture>
 
-## Офлайн-базы
+<h2 align="center">Офлайн-базы</h2>
+
+<div align="center">
 
 | База | Содержимое |
 | --- | --- |
@@ -40,8 +42,10 @@
 | [`fallback.sqlite3`](https://github.com/gorodtx/selection_translator_anki/releases/download/db-a6f07d1e1c28/fallback.sqlite3) | Дополнительные англо-русские примеры |
 | [`definitions_pack.sqlite3`](https://github.com/gorodtx/selection_translator_anki/releases/download/db-a6f07d1e1c28/definitions_pack.sqlite3) | Английские определения |
 
+</div>
+
 Базы скачиваются из настроек приложения и хранятся локально; с каждым обновлением приложения повторная загрузка не нужна. [Готовый комплект и SHA256](https://github.com/gorodtx/selection_translator_anki/releases/tag/db-a6f07d1e1c28).
 
 ---
 
-© 2026 Translator contributors · [Лицензия MIT](LICENSE)
+<p align="center">© 2026 Translator contributors · <a href="LICENSE">Лицензия MIT</a></p>
