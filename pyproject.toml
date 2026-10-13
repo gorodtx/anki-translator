@@ -19,6 +19,11 @@ dev = [
     "pyyaml>=6.0.2",
     "types-pyyaml>=6.0.12",
 ]
+web = [
+    "fastapi>=0.115",
+    "httpx>=0.28",
+    "uvicorn>=0.30",
+]
 
 [tool.pyright]
 pythonVersion = "3.13"

@@ -58,10 +58,10 @@ jobs:
           echo "${files}" | tr '\n' '\0' | xargs -0 uv run --frozen ruff format --check
 
       - name: mypy
-        run: uv run --frozen python -m mypy
+        run: uv run --frozen --group web python -m mypy
 
       - name: pytest
-        run: uv run --frozen python -m pytest -q
+        run: uv run --frozen --group web python -m pytest -q
 
   linux-parity:
     name: linux engine parity
@@ -78,10 +78,10 @@ jobs:
         run: uv sync --frozen --dev
 
       - name: Tests must pass without any Apple engine
-        run: uv run --frozen python -m pytest -q
+        run: uv run --frozen --group web python -m pytest -q
 
       - name: Types must check on Linux too
-        run: uv run --frozen python -m mypy
+        run: uv run --frozen --group web python -m mypy
 
       - name: The GNOME paths must not have moved
         run: |
@@ -262,9 +262,9 @@ jobs:
           # landed inside Resources/ and the code seal broke. The gate job
           # runs the suite with no bundle present, so only here can it be
           # caught. Run everything that touches the tree, then re-verify.
-          uv run --frozen python -m pytest -q
+          uv run --frozen --group web python -m pytest -q
           uv run --frozen ruff check .
-          uv run --frozen python -m mypy
+          uv run --frozen --group web python -m mypy
           codesign --verify --deep --strict dist/Translator.app
           if find dist/Translator.app -name '*.pyc' -newer dist/Translator.app/Contents/Info.plist | grep -q .; then
             echo "bytecode was written into the bundle after signing"; exit 1
