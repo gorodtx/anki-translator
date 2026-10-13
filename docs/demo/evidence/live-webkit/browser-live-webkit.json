@@ -1,0 +1,84 @@
+{
+  "base": "https://translator.94.156.237.179.nip.io/",
+  "live": true,
+  "browser": "webkit",
+  "version": "27.2",
+  "results": [
+    {
+      "name": "native desktop drag selection",
+      "pass": true,
+      "detail": "all Greek to me,"
+    },
+    {
+      "name": "translation button enabled",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "name": "real selected-fragment translation",
+      "pass": true,
+      "detail": "{\"status\":200,\"source\":\"local-opus-mt\",\"translation\":\"Для меня все греческие,\"}"
+    },
+    {
+      "name": "real desktop word translation after editing",
+      "pass": true,
+      "detail": "{\"original\":\"bank\",\"translation\":\"банк; берег; накреняться; занос, нанос; держать деньги в банке\"}"
+    },
+    {
+      "name": "history contains actual translated word",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "name": "FAQ control accepts keyboard focus",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "name": "keyboard Enter opens FAQ",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "name": "FAQ opens",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "name": "mobile tap selection",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "name": "390px no horizontal overflow",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "name": "real successful en-ru API response",
+      "pass": true,
+      "detail": "{\"status\":\"success\",\"translation\":\"банк; берег; накреняться; занос, нанос; держать деньги в банке\"}"
+    },
+    {
+      "name": "real mobile word translation",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "name": "200-character mobile text has no horizontal overflow",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "name": "long text reduces font size",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "name": "no page errors",
+      "pass": true,
+      "detail": ""
+    }
+  ],
+  "errors": []
+}

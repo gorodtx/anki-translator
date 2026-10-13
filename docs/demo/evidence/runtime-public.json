@@ -1,0 +1,98 @@
+{
+  "observedAt": "2026-10-13T01:32:33.109Z",
+  "source": "47ca9d084dc74e6bf93a79a12b3940e2f1cc197d",
+  "base": "https://translator.94.156.237.179.nip.io/",
+  "checks": [
+    {
+      "endpoint": "api/health",
+      "status": 200,
+      "body": {
+        "status": "ok",
+        "service": "translator",
+        "engine": "shared-pipeline"
+      }
+    },
+    {
+      "endpoint": "api/capabilities",
+      "status": 200,
+      "body": {
+        "language_pair": "en-ru",
+        "max_text_chars": 200,
+        "apple_engines": false,
+        "primary_db": true,
+        "fallback_db": true,
+        "definitions_db": true,
+        "history": "browser-session",
+        "anki": false,
+        "local_translation": true
+      }
+    },
+    {
+      "endpoint": "api/translate",
+      "status": 200,
+      "body": {
+        "original": "bank",
+        "translation": "банк; берег; накреняться; занос, нанос; держать деньги в банке",
+        "status": "success",
+        "definitions": [
+          "In gambling, the bank is money that belongs to the owner and can be won by the players.",
+          "an organization that holds money belonging to others, investing and lending it to get more money, or the building in which the organization is situated",
+          "In a casino, the bank is money that is used to pay the players who win.",
+          "A bank of clouds is a group of clouds that look as if they are piled together.",
+          "A branch office of such an institution."
+        ],
+        "examples": [
+          "Most banks are reluctant to lend money to new businesses.",
+          "I must remember to go to the bank on my way home.",
+          "We found a shady spot on the river bank.",
+          "to bank a cheque"
+        ],
+        "lexical": null,
+        "source": "shared-pipeline"
+      }
+    },
+    {
+      "endpoint": "api/translate",
+      "status": 200,
+      "body": {
+        "original": "It’s all Greek to me, but I’ll cross that bridge when I come to it.",
+        "translation": "Это все греческое для меня, но я пересечу этот мост, когда приду к нему.",
+        "status": "success",
+        "definitions": [],
+        "examples": [],
+        "lexical": null,
+        "source": "local-opus-mt"
+      }
+    },
+    {
+      "asset": "./assets/favicon.svg",
+      "status": 200,
+      "mime": "image/svg+xml"
+    },
+    {
+      "asset": "./assets/apple-touch-icon.png",
+      "status": 200,
+      "mime": "image/png"
+    },
+    {
+      "asset": "./assets/index-Bx8f-Enu.js",
+      "status": 200,
+      "mime": "text/javascript; charset=utf-8"
+    },
+    {
+      "asset": "./assets/index-BpfbouOu.css",
+      "status": 200,
+      "mime": "text/css; charset=utf-8"
+    },
+    {
+      "asset": "assets/montserrat-variable.woff2",
+      "status": 200,
+      "mime": "font/woff2"
+    },
+    {
+      "asset": "assets/icon.png",
+      "status": 200,
+      "mime": "image/png"
+    }
+  ]
+}

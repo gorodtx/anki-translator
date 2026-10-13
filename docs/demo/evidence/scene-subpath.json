@@ -1,0 +1,12 @@
+{
+  "base": "http://127.0.0.1:8768/preview/",
+  "browser": "156.0.8078.4",
+  "normalMotion": true,
+  "staticText": true,
+  "linux": "https://github.com/gorodtx/selection-translator/tree/gnome#русский",
+  "details": {
+    "pixels": 898531,
+    "fontLoaded": true
+  },
+  "errors": []
+}

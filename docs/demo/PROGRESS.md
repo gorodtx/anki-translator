@@ -68,3 +68,52 @@ Git checks выполняются в отдельном clean checkout `/Users/d
 README session подтвердила отсутствие overlap, canonical repository `gorodtx/selection-translator` и завершила свой Claude PID87530; её native resume сохранён внешним owner journal. Дополнительные агенты не создавались. Собственный localhost preview после проверки остановлен; браузер закрыт.
 
 Остаётся: guarded Caddy change, final Git delivery, real deployed HTTP/DB checks, live browser screenshots, resource measurement и повторная проверка kt/app.
+
+## 13.10.2026 — public runtime и server-only исправление
+
+Production code: `524a7919bca2370a0c166027bea8b99959d7840b`; Docker `translator-demo:524a791`, image ID `sha256:6a7a7cdb6af861f5d4407092fc2698d4e8c008bdb5665f452029f91cbf4dba83`. Source snapshot в `/opt/translator/releases/524a791`. Публичный адрес: https://translator.94.156.237.179.nip.io/ — HTTPS200, certificate verification0. Health — healthy; UID10001, read-only root, DB/model mounts read-only, memory limit536870912bytes. Current cgroup289054720bytes; измеренный peak410075136bytes (~391.1MiB), ниже512MiB.
+
+Google из server container возвращает429. Пользователь уточнил: исправлять только на сервере, не ломая установленное приложение. Добавлен отдельный резерв OPUS-MT int8 в `web_backend/offline.py`; общий pipeline и весь `translate_logic/`, `desktop_app/`, `macos/` относительно базы не изменены. `bank` приходит из shared pipeline со словарными определениями/примерами; фразы — из local model при недоступности Google. Источник есть в API и popup. Качество локальной модели для идиом более буквальное; оно не объявляется идентичным Apple/Google.
+
+Проверка сохранности installed app: `/Applications/Translator.app`, версия0.3.1/build332; `codesign --verify --deep --strict` PASS. Приложение не заменялось, пользовательские grants/история/Anki не менялись. Новый native GUI тест не проводился по просьбе пользователя.
+
+Caddy change выполнен после ACK соседней Collective session, hash guard и backup. Original prefix сохранён байт-в-байт; validate + graceful reload PASS. Before SHA `b196a6471adc8ee38261841df8dd7764b3d0726f3b7924a24355250a1393ba02`; after `52e6b8445082331834ba5c1390946107f34a97c8f48829647bba33b76639e558`. Backup `/opt/translator/backups/Caddyfile.before-translator-790f07c`. Повторные проверки kt/app — HTTPS200, certificate verification0. Ни сеть, ни чужие контейнеры/volumes/SSH/firewall не пересоздавались. Коллеге отправлен outcome; его ACK получен, независимую проверку он не заявлял.
+
+Повторные `prepare-model.sh` и `prepare-db.sh` — REUSE. В проверке ошибочно вызван Bash script через `sh`: началась загрузка собственного `.part`; остановлен только точный curl, partial удалён, существующие pinned DB сохранены. Исправлен executable bit `prepare-db.sh`, затем правильный запуск через shebang подтвердил REUSE всех трёх DB. Source archives и runtime не содержат приватных данных или credentials.
+
+Новые проверки и исправления:
+
+- Initial Docker build FAIL: root `lib/` ignore исключал `web/src/lib`. Scoped exception добавлен; Git archive содержит все четыре модуля; real Linux build PASS.
+- Adapter8 tests PASS, включая priority исходного dictionary result и bounded worker после cancellation; ruff/format/mypy111 sources PASS.
+- Navigation acceptance выявила перекрытие меню пустой областью SVG. Исправлены z-index и pointer-events; реальная History открывается и содержит bank.
+- WOFF2 ранее возвращал octet-stream; теперь actual HTTP200 `font/woff2`. SVG `image/svg+xml`, PNG `image/png`; scripts/styles возвращаются без404.
+- Firefox157 и Chromium156.0.8078.4: public phrase/word translation, edit, History, 390px tap,200chars/no overflow, FAQ, light/dark, console/page errors0 — PASS.
+- WebKit27.2: тот же public runtime PASS. macOS default Tab policy отличается; отдельно проверены focus/Enter у FAQ. Это headless WebKit, **не physical Safari acceptance**.
+- Screenshots лично просмотрены: real local-model result, dark dictionary popup и phone result. Evidence: `evidence/live-firefox/`, `evidence/live-chromium/`, `evidence/live-webkit/`.
+- Штатные Git gates сохранены. Swift checks работают последовательно без batch/WMO в проверочном checkout; shipping native code/configuration не менялись. Предыдущая parallel compilation превышала бюджет, поэтому эта concurrency исправлена без пропуска build/tests.
+- Собственные browser contexts закрываются finally; localhost preview/backend не остаются работать. Root RSS226464KiB + host25152KiB в последнем измерении; native Translator продолжает работать отдельно. Другие проекты/чужие процессы не останавливали.
+
+Git source delivery dry-run524a791 — PASS; actual push/remote SHA и CI пока ожидаются. Отдельный последующий commit72b09d9 меняет только executable bit deployment script; runtime JS/Python совпадают с production524a791. Финальная приёмка и native resume добавляются после доставки.
+
+## 13.10.2026 — source delivery принят; заключительный checkpoint
+
+Штатный `forge-access` token dry-run + execute завершились PASS: remote `mac` подтвердил `524a7919bca2370a0c166027bea8b99959d7840b`. Реальные CI этой source delivery:
+
+- [Browser demo](https://github.com/gorodtx/selection-translator/actions/runs/38331946133) — SUCCESS: strict frontend build,2 platform tests; backend ruff/mypy и8 adapter tests.
+- [macos](https://github.com/gorodtx/selection-translator/actions/runs/38331946162) — SUCCESS: общий pytest307 PASS/3 SKIP; mypy111 sources, native shell/sidecar/Linux parity и app-bundle job. Native/public release tag не публиковался и не заменялся.
+
+Заключительный source snapshot `47ca9d084dc74e6bf93a79a12b3940e2f1cc197d` добавляет executable bit preparation script, расширенные acceptance scripts и округление WebGL размеров вниз. Production image `translator-demo:47ca9d0`, ID `sha256:d1ca9faab275e9f3c5f9a1947cd99be4bd8cb6f9447745f5538313605b881695`; container healthy, UID10001/read-only/512MiB. После новых запросов и real queries во всех DB current429613056bytes, peak429690880bytes (~409.8MiB). Бюджет512MiB соблюдён; это cgroup сервиса, не обещание общего расхода всей операционной системы.
+
+Actual normal-motion browser check впервые показал900432pixels из-за округления. Исправлен floor; local subpath `/preview/` и public URL измерили898531pixels, Montserratloaded=true, staticText=true, Linux link правильный, errors0. В local preview assets доступны и в root, и в subpath; реальный API проверяется на опубликованном root hostname. Own temporary server/browser закрыты. Финальный публичный JSON с actual assets/MIME и successful word/whole-phrase response: `evidence/runtime-public.json`. Backend/native код относительно source524a791 не менялся; source delta47ca9d0 не устанавливает новую Mac-версию.
+
+Роль Root, native ID `01a1030e-0fcc-7430-8c9d-070c3f569b23`; original cwd `/Users/den/Documents/dev/selection_translator_anki`, branch `mac`, base `9ccf0ad0c3536e18a77f53fe488341d55dc4b08d`. Проверочный checkout `/Users/den/Documents/dev/translator-browser-checkout`, branch `translator/browser-demo`; собственные changes/commits переносятся в original через fast-forward, чужие dirty design/video/.codex сохраняются. Не запускать native ID вторым процессом. Точный final documentation HEAD, окончательная remote verification/CI и reconciliation receipt сохраняются после завершения commit в `/Users/den/Documents/dev/translator-evidence/2026-10-12/memory-demo/ROOT-PROGRESS.md`; это внешний checkpoint, чтобы не создавать self-referential commit SHA в документе.
+
+Owned delivery paths: `web/`, `web_backend/`, `deploy/translator/`, `docs/demo/`, `tests/test_web_backend.py`, dependency group/lock, setup.cfg, `.orca-gates.json`, `.github/workflows/{web-demo,macos}.yml`; только собственные dated notes в presentation epic. Root README, design drafts, old site video и peer `.codex/` этой задачей не исправлялись.
+
+Остающиеся отдельные возможности: real donation URL — NOT_DONE (нет адреса, placeholder disabled); хоткеи — отложены пользователем; physical Safari/iPhone и native computer-use — NOT_DONE по выбранному способу приёмки. Они не выдаются за выполненные. Качество fallback для идиом ограничено моделью. Предыдущие README/video/memory tasks не возобновлялись.
+
+Resume после остановки, только когда этот ID больше не работает:
+
+```sh
+cd /Users/den/Documents/dev/selection_translator_anki && codex resume 01a1030e-0fcc-7430-8c9d-070c3f569b23
+```

@@ -1,6 +1,6 @@
 # Эпик 5 — Онлайн-демо Translator
 
-Создан: 13.10.2026. Владелец: текущая самостоятельная Root-сессия. Статус: **RESEARCH_COMPLETE; DELIVERY_NOT_DONE; FORMAT_AND_HOST_PENDING**.
+Создан: 13.10.2026. Владелец: текущая самостоятельная Root-сессия. Статус: **DELIVERED; CORE_ACCEPTED; FINAL_RECEIPT_IN_PROGRESS**.
 
 ## Цель и текущий steering
 
@@ -14,14 +14,14 @@
 
 - [x] **D01. Восстановить контекст и проверить код.** Подтвердить текущую branch/HEAD, static site, локальный IPC, Apple helper и общий translation pipeline. Результат: [исследование](RESEARCH.md).
 - [x] **D02. Найти готовые основы.** Сверить структуру и реальные лицензии AstroWind/Astroship/Cruip; проверить noVNC/Guacamole и границы Appetize/BrowserStack. Не считать наличие шаблона готовым native hosting.
-- [ ] **D03. Зафиксировать вид демо.** Native UI либо web pipeline; перечень доступных features, источников, данных и честно отсутствующих возможностей. Вопрос отправлен пользователю.
-- [ ] **D04. Подтвердить размещение.** Конкретный host, macOS/Apple Silicon при native, условия публичного использования, домен/HTTPS и ресурсы. Рабочий desktop пользователя не включать в публичный сервис.
-- [ ] **D05. Создать страницу в текущем стиле.** Mono assets, system typography, blue/neutral tokens, одна колонка; одна область реального demo, короткий FAQ, GitHub/feedback/download links. Никаких fabricated translations/screens.
-- [ ] **D06. Реализовать выбранный runtime.** Native: session broker + viewer + worker readiness + expiry/reset. Web: ограниченный async adapter к общему движку с правдивой индикацией источников. Авторизацию не помещать в static assets.
-- [ ] **D07. Проверить успешные и ошибочные сценарии.** Запуск, загрузка, выделение/запрос, реальный результат, no-match, отказ provider, disconnect/reconnect, лимит сеансов, expiry, idempotent stop, отсутствие смешивания данных двух посетителей.
-- [ ] **D08. Проверить страницу.** 390 px/desktop, light/dark, клавиатура/focus, reduced motion, root/subpath, Chromium и Safari отдельно. Для native также измерить stream latency/плавность на реальном Mac, не номинальный FPS в конфиге.
-- [ ] **D09. Проверить бюджет.** Idle не запускает stream/worker. Конкурентность и память ограничены server-side; RSS browser/worker измеряются отдельно. Старый пользовательский ориентир 1 ГБ не распространять молча на всю macOS VM; бюджет выбранного runtime согласовать по измерениям.
-- [ ] **D10. Доставить.** Логические English ASCII commits с named staging и штатными gates; authorized branch push, remote SHA, реальный CI, затем разрешённый deployment. Подтвердить public HTTPS URL и реальный сценарий извне.
+- [x] **D03. Зафиксировать вид демо.** Native UI либо web pipeline; перечень доступных features, источников, данных и честно отсутствующих возможностей. Вопрос отправлен пользователю.
+- [x] **D04. Подтвердить размещение.** Конкретный host, macOS/Apple Silicon при native, условия публичного использования, домен/HTTPS и ресурсы. Рабочий desktop пользователя не включать в публичный сервис.
+- [x] **D05. Создать страницу в текущем стиле.** Mono assets, system typography, blue/neutral tokens, одна колонка; одна область реального demo, короткий FAQ, GitHub/feedback/download links. Никаких fabricated translations/screens.
+- [x] **D06. Реализовать выбранный runtime.** Native: session broker + viewer + worker readiness + expiry/reset. Web: ограниченный async adapter к общему движку с правдивой индикацией источников. Авторизацию не помещать в static assets.
+- [x] **D07. Проверить успешные и ошибочные сценарии.** Запуск, загрузка, выделение/запрос, реальный результат, no-match, отказ provider, disconnect/reconnect, лимит сеансов, expiry, idempotent stop, отсутствие смешивания данных двух посетителей.
+- [x] **D08. Проверить страницу.** 390 px/desktop, light/dark, клавиатура/focus, reduced motion, root/subpath, Chromium и Safari отдельно. Для native также измерить stream latency/плавность на реальном Mac, не номинальный FPS в конфиге.
+- [x] **D09. Проверить бюджет.** Idle не запускает stream/worker. Конкурентность и память ограничены server-side; RSS browser/worker измеряются отдельно. Старый пользовательский ориентир 1 ГБ не распространять молча на всю macOS VM; бюджет выбранного runtime согласовать по измерениям.
+- [x] **D10. Доставить.** Логические English ASCII commits с named staging и штатными gates; authorized branch push, remote SHA, реальный CI, затем разрешённый deployment. Подтвердить public HTTPS URL и реальный сценарий извне.
 
 ## Условия завершения
 
@@ -62,3 +62,13 @@ OS detection выбирает предлагаемый download, при этом
 D03 и выбор Linux host из D04 подтверждены. D05/D06 source готовы; D07 unit/local checks прошли. Полный исходный D04/D08/D10 требует HTTPS, deployed runtime, публичной browser acceptance и доставки, которые на этом checkpoint ещё не завершены.
 
 Новые критерии: неизменная центральная область при изменении текста, геометрическое уменьшение шрифта при overflow без вращения, корректное сохранение touch selection после native compatibility click, отсутствие чёрного WebGL кадра при смене темы, client/server timeouts и защита от поздних ответов. Базы загружаются на сервер один раз и повторно используются при code-only deployments.
+
+## 13.10.2026 — публичная приёмка
+
+D03–D09 приняты в актуальном web-contract, который пользователь утвердил позднее initial native-stream brief. HTTPS demo реально развернуто; desktop drag, touch tap, edit, fixed-centre popup, server translation и ephemeral History проверены в Firefox/Chromium/WebKit. На Linux включён отдельный server-only OPUS-MT fallback при Google429; source подписан. Native app/shared engine не менялись, codesign installed332 PASS. Service peak~391MiB при cap512MiB.
+
+Ошибка packaging (ignored lib source), SVG/menu hit testing и font MIME исправлены и проверены в actual Linux image/public browser. Full static/native commit gates PASS; public endpoint и оба Collective endpoints HTTPS200. Полные evidence/границы — в PROGRESS.md. Physical Safari/native stream не выполнялись: user изменил runtime contract и отменил native computer-use tests. Хоткеи и real donation URL отложены по принятому brief, placeholder не является работающим платежом. D10 остаётся открытым до verified push/CI.
+
+## 13.10.2026 — core delivery принят
+
+Source524a791 опубликован в mac с verified remote SHA; Browser demo и полный macos CI завершились SUCCESS. Общий suite307 PASS/3 SKIP, adapter8 PASS, frontend2 PASS. D10 принят для core delivery; финальный perf/acceptance snapshot47ca9d0 уже реально развёрнут и проверен. Финальная documentation delivery/HEAD/CI receipt сохраняется внешним checkpoint после commit, как указано в PROGRESS.md. История прежних pending-состояний выше остаётся журналом, а не текущим blocker.

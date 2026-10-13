@@ -1,0 +1,12 @@
+{
+  "base": "https://translator.94.156.237.179.nip.io/",
+  "browser": "156.0.8078.4",
+  "normalMotion": true,
+  "staticText": true,
+  "linux": "https://github.com/gorodtx/selection-translator/tree/gnome#русский",
+  "details": {
+    "pixels": 898531,
+    "fontLoaded": true
+  },
+  "errors": []
+}
