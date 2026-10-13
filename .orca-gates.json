@@ -57,12 +57,22 @@
           "swift",
           "build",
           "-c",
-          "release"
+          "release",
+          "--jobs",
+          "1",
+          "-Xswiftc",
+          "-disable-batch-mode",
+          "-Xswiftc",
+          "-no-whole-module-optimization"
         ]
       ],
       "push": [
         [
-          "scripts/swift-test.sh"
+          "scripts/swift-test.sh",
+          "--jobs",
+          "1",
+          "-Xswiftc",
+          "-disable-batch-mode"
         ]
       ]
     },
@@ -77,12 +87,22 @@
           "swift",
           "build",
           "-c",
-          "release"
+          "release",
+          "--jobs",
+          "1",
+          "-Xswiftc",
+          "-disable-batch-mode",
+          "-Xswiftc",
+          "-no-whole-module-optimization"
         ]
       ],
       "push": [
         [
-          "scripts/swift-test.sh"
+          "scripts/swift-test.sh",
+          "--jobs",
+          "1",
+          "-Xswiftc",
+          "-disable-batch-mode"
         ]
       ]
     },
