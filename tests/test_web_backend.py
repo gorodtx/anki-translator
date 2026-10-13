@@ -166,3 +166,84 @@ def test_rate_limit_is_bounded(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) 
             assert limited.headers["retry-after"] == "60"
 
     asyncio.run(scenario())
+
+
+def test_local_fallback_is_explicit_and_preserves_dictionary_priority(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    from web_backend.offline import OfflineTranslator
+
+    for name in ("model.bin", "config.json", "source.spm", "target.spm"):
+        (tmp_path / name).write_text("")
+
+    async def fallback(_self: OfflineTranslator, _text: str) -> str:
+        return "Это для меня китайская грамота."
+
+    async def unavailable(_text: str) -> TranslationResult:
+        raise FetchError("provider outage")
+
+    async def dictionary(_text: str) -> TranslationResult:
+        return TranslationResult(translation_ru=FieldValue.present("банк"))
+
+    monkeypatch.setattr(OfflineTranslator, "translate", fallback)
+
+    async def scenario() -> None:
+        for engine, expected_source, expected_text in (
+            (unavailable, "local-opus-mt", "Это для меня китайская грамота."),
+            (dictionary, "shared-pipeline", "банк"),
+        ):
+            transport = httpx.ASGITransport(
+                app=create_app(db_dir=tmp_path, model_dir=tmp_path, engine=engine)
+            )
+            async with httpx.AsyncClient(
+                transport=transport, base_url="http://test"
+            ) as client:
+                response = await client.post(
+                    "/api/translate", json={"text": "all Greek to me"}
+                )
+                assert response.status_code == 200
+                assert response.json()["source"] == expected_source
+                assert response.json()["translation"] == expected_text
+                assert (await client.get("/api/capabilities")).json()[
+                    "local_translation"
+                ] is True
+
+    asyncio.run(scenario())
+
+
+def test_cancelled_local_request_cannot_enqueue_another_worker(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    import threading
+    from web_backend.offline import ModelBusyError, OfflineTranslator
+
+    worker = OfflineTranslator(tmp_path)
+    release = threading.Event()
+    started = threading.Event()
+
+    def infer(_text: str) -> str:
+        started.set()
+        release.wait(2)
+        return "перевод"
+
+    monkeypatch.setattr(worker, "_infer", infer)
+
+    async def scenario() -> None:
+        task = asyncio.create_task(worker.translate("first"))
+        while not started.is_set():
+            await asyncio.sleep(0.001)
+        task.cancel()
+        with pytest.raises(asyncio.CancelledError):
+            await task
+        with pytest.raises(ModelBusyError):
+            await worker.translate("second")
+        release.set()
+        while worker._pending is not None and not worker._pending.done():
+            await asyncio.sleep(0.001)
+        assert await worker.translate("third") == "перевод"
+
+    try:
+        asyncio.run(scenario())
+    finally:
+        release.set()
+        worker.close()

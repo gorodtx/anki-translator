@@ -85,3 +85,13 @@ System/SF typography, прежние blue/neutral tokens, одна колонк�
 Пользователю отправлены два вопроса: нужен ли настоящий удалённый macOS UI или перевод на странице; имеется ли отдельный Mac-хост либо пока нужен проект страницы и размещения. Ответы ещё не получены. Literal macOS-запрос сохранён приоритетным; web-альтернатива не принята вместо него.
 
 Исследование исходников и шаблонов выполнено. Фронтенд live-demo, session broker, Mac provisioning, фактическая изоляция, browser/native acceptance и публичная публикация ещё не выполнены. Установщик, новые релизы, README-видео и предыдущие задачи не изменялись.
+
+## 13.10.2026 — серверный HTTP429 и локальный резерв
+
+Actual request из production container к `translate.googleapis.com` возвращает HTTP429. Cambridge продолжает переводить `bank`; для произвольной фразы общий pipeline возвращает FetchError. Рабочее native-приложение и `translate_logic/` не изменяются.
+
+Резерв ограничен `web_backend/`: [Helsinki-NLP OPUS-MT en-ru](https://huggingface.co/Helsinki-NLP/opus-mt-en-ru), Apache-2.0 по model card, исходные weights `opus-2020-02-11.zip`. URL original weights предоставлен самой model card. SHA256 `798027c7e4ae7ddf89fea13ce80de517b6726d7e710fa5a9b5a376316dbf1677`. Конверсия — официальный [OPUS-MT converter CTranslate2](https://opennmt.net/CTranslate2/guides/opus_mt.html), версия4.8.2, int8, SentencePiece0.2.1. Modelweights не входят в Git/image; отдельный read-only mount и проверяемый manifest. Исследованный Argos1.9 archive не используется: provenance/лицензия пакета менее однозначны; его случайные draft files не входят в runtime.
+
+Native extensions закрыты узкими typed Protocol; inference выполняется в одном собственном thread. HTTP cancellation не освобождает очередь, пока native computation не завершилось; новый запрос получает503, а не создаёт неограниченную очередь. Shared pipeline остаётся первым, источник fallback явно возвращается в JSON и подписан в popup. Локальная модель переводит фразы буквально; совпадение качества/ответа с Apple/Google не обещается.
+
+Изолированный real CPU check: `all Greek to me`0.090s, исходная полная фраза0.291s, `The quick brown fox jumps over the lazy dog.`0.252s. Peak cgroup213049344bytes (203.2MiB). Это model-only check; combined production memory проверяется отдельно. Существующие DB/runtime/native settings не изменены.

@@ -7,6 +7,7 @@ export interface LexicalInfo {
 }
 export interface Translation {
   original: string;
+  source: 'shared-pipeline' | 'local-opus-mt';
   translation: string;
   status: 'success' | 'empty';
   definitions: string[];
@@ -32,6 +33,6 @@ export async function translate(text: string, signal: AbortSignal): Promise<Tran
     const detail = record(value) && typeof value.detail === 'string' ? value.detail : 'Не удалось получить перевод. Попробуйте ещё раз.';
     throw new Error(detail);
   }
-  if (!record(value) || typeof value.original !== 'string' || typeof value.translation !== 'string' || !['success', 'empty'].includes(String(value.status)) || !strings(value.definitions) || !strings(value.examples) || !(value.lexical === null || lexical(value.lexical))) throw new Error('Не удалось прочитать ответ переводчика.');
+  if (!record(value) || typeof value.original !== 'string' || !['shared-pipeline', 'local-opus-mt'].includes(String(value.source)) || typeof value.translation !== 'string' || !['success', 'empty'].includes(String(value.status)) || !strings(value.definitions) || !strings(value.examples) || !(value.lexical === null || lexical(value.lexical))) throw new Error('Не удалось прочитать ответ переводчика.');
   return value as unknown as Translation;
 }

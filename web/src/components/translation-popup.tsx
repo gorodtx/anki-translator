@@ -20,6 +20,7 @@ export function TranslationPopup({ query, result, loading, error, onClose, onRef
         {loading && <p role="status" className="popup-status">Переводим…</p>}
         {error && <p role="alert" className="popup-error">{error}</p>}
         {!loading && result && <>
+          <p className="ipa">{result.source === 'local-opus-mt' ? 'Локальный перевод · OPUS-MT' : 'Словарные и сетевые источники'}</p>
           <p className="translation">{result.translation || 'Перевод не найден.'}</p>
           {result.lexical && <div className="dictionary"><p className="ipa">{[result.lexical.ipa_uk, result.lexical.ipa_us].filter(Boolean).join(' · ')}</p>
             {result.lexical.entries.map((entry, i) => <div key={i}><p className="part-of-speech">{entry.pos}</p>{entry.senses.map(sense => <p key={sense.index}>{sense.index}. {sense.translation} {sense.label && <span className="secondary">({sense.label})</span>}</p>)}</div>)}

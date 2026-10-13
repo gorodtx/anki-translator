@@ -12,8 +12,10 @@ services:
     pids_limit: 96
     environment:
       TRANSLATOR_DB_DIR: /data/db
+      TRANSLATOR_MODEL_DIR: /data/model
     volumes:
       - /opt/translator/db:/data/db:ro
+      - /opt/translator/models/en-ru:/data/model:ro
     tmpfs:
       - /tmp:size=32m,mode=1777
     cap_drop: [ALL]

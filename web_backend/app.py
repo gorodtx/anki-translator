@@ -4,6 +4,9 @@ import asyncio
 from collections import deque
 from collections.abc import Awaitable, Callable
 from dataclasses import asdict, dataclass
+from contextlib import asynccontextmanager
+from collections.abc import AsyncIterator
+import os
 from pathlib import Path
 import time
 
@@ -14,7 +17,12 @@ from pydantic import BaseModel, ConfigDict, Field, field_validator
 from starlette.types import ASGIApp, Message, Receive, Scope, Send
 
 from translate_logic.engine import translate_async
-from translate_logic.domain.models import LexicalInfo, SourceToggles, TranslationResult
+from translate_logic.domain.models import (
+    LexicalInfo,
+    SourceToggles,
+    TranslationResult,
+    FieldValue,
+)
 from translate_logic.infrastructure.http.transport import FetchError
 from translate_logic.infrastructure.language_base.definitions_provider import (
     DefinitionsBaseProvider,
@@ -27,6 +35,7 @@ from translate_logic.infrastructure.language_base.locations import (
     default_offline_base_dir,
 )
 
+from web_backend.offline import ModelBusyError, OfflineTranslator
 
 MAX_TEXT_CHARS = 200
 MAX_BODY_BYTES = 4096
@@ -119,6 +128,7 @@ class TranslateResponse(BaseModel):
     definitions: list[str]
     examples: list[str]
     lexical: LexicalResponse | None
+    source: str = "shared-pipeline"
 
 
 class Capabilities(BaseModel):
@@ -130,6 +140,7 @@ class Capabilities(BaseModel):
     definitions_db: bool
     history: str = "browser-session"
     anki: bool = False
+    local_translation: bool = False
 
 
 Engine = Callable[[str], Awaitable[TranslationResult]]
@@ -145,6 +156,7 @@ def create_app(
     db_dir: Path | None = None,
     static_dir: Path | None = None,
     engine: Engine | None = None,
+    model_dir: Path | None = None,
 ) -> FastAPI:
     db_root = db_dir or default_offline_base_dir()
     language_base = MultiLanguageBaseProvider(
@@ -167,7 +179,23 @@ def create_app(
         )
 
     run_engine = engine or real_engine
-    app = FastAPI(title="Translator browser demo", docs_url=None, redoc_url=None)
+    offline = OfflineTranslator(
+        model_dir or Path(os.getenv("TRANSLATOR_MODEL_DIR", "/data/model"))
+    )
+
+    @asynccontextmanager
+    async def lifespan(_app: FastAPI) -> AsyncIterator[None]:
+        try:
+            yield
+        finally:
+            offline.close()
+
+    app = FastAPI(
+        title="Translator browser demo",
+        docs_url=None,
+        redoc_url=None,
+        lifespan=lifespan,
+    )
     app.add_middleware(BodyLimitMiddleware)
 
     @app.get("/api/health")
@@ -180,6 +208,7 @@ def create_app(
             primary_db=(db_root / "primary.sqlite3").is_file(),
             fallback_db=(db_root / "fallback.sqlite3").is_file(),
             definitions_db=(db_root / "definitions_pack.sqlite3").is_file(),
+            local_translation=offline.available,
         )
 
     @app.post("/api/translate")
@@ -202,10 +231,34 @@ def create_app(
         recent_requests.append(now)
         budget.active += 1
         try:
+            source = "shared-pipeline"
             async with asyncio.timeout(REQUEST_TIMEOUT):
-                result = await run_engine(request.text)
+                try:
+                    result = await run_engine(request.text)
+                except FetchError:
+                    if not offline.available:
+                        raise
+                    translation = await offline.translate(request.text)
+                    result = TranslationResult(
+                        translation_ru=FieldValue.from_optional(translation)
+                    )
+                    source = "local-opus-mt"
+                if (
+                    not result.translation_ru.is_present
+                    and offline.available
+                    and source == "shared-pipeline"
+                ):
+                    translation = await offline.translate(request.text)
+                    result = TranslationResult(
+                        translation_ru=FieldValue.from_optional(translation),
+                        definitions_en=result.definitions_en,
+                        examples=result.examples,
+                        lexical=result.lexical,
+                    )
+                    source = "local-opus-mt"
             return TranslateResponse(
                 original=request.text,
+                source=source,
                 translation=result.translation_ru.text,
                 status=result.status.value,
                 definitions=list(result.definitions_en[:5]),
@@ -218,7 +271,13 @@ def create_app(
             raise HTTPException(
                 504, "Перевод занял слишком много времени. Попробуйте ещё раз."
             ) from exc
-        except FetchError as exc:
+        except ModelBusyError as exc:
+            raise HTTPException(
+                503,
+                "Переводчик занят. Попробуйте ещё раз.",
+                headers={"Retry-After": "2"},
+            ) from exc
+        except (FetchError, RuntimeError, OSError, ValueError) as exc:
             raise HTTPException(
                 502, "Источник перевода временно недоступен. Попробуйте позже."
             ) from exc

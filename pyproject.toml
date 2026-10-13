@@ -20,8 +20,10 @@ dev = [
     "types-pyyaml>=6.0.12",
 ]
 web = [
+    "ctranslate2==4.8.2",
     "fastapi>=0.115",
     "httpx>=0.28",
+    "sentencepiece==0.2.1",
     "uvicorn>=0.30",
 ]
 
