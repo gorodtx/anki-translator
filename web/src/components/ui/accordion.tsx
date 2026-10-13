@@ -1,0 +1,11 @@
+import * as React from 'react';
+import * as Primitive from '@radix-ui/react-accordion';
+import { ChevronDown } from 'lucide-react';
+import { cn } from '@/lib/utils';
+export const Accordion = Primitive.Root;
+export const AccordionItem = React.forwardRef<React.ComponentRef<typeof Primitive.Item>, React.ComponentPropsWithoutRef<typeof Primitive.Item>>(({ className, ...props }, ref) => <Primitive.Item ref={ref} className={cn('faq-item', className)} {...props} />);
+AccordionItem.displayName = 'AccordionItem';
+export const AccordionTrigger = React.forwardRef<React.ComponentRef<typeof Primitive.Trigger>, React.ComponentPropsWithoutRef<typeof Primitive.Trigger>>(({ className, children, ...props }, ref) => <Primitive.Header><Primitive.Trigger ref={ref} className={cn('faq-trigger', className)} {...props}>{children}<ChevronDown aria-hidden="true" /></Primitive.Trigger></Primitive.Header>);
+AccordionTrigger.displayName = 'AccordionTrigger';
+export const AccordionContent = React.forwardRef<React.ComponentRef<typeof Primitive.Content>, React.ComponentPropsWithoutRef<typeof Primitive.Content>>(({ className, children, ...props }, ref) => <Primitive.Content ref={ref} className={cn('faq-content', className)} {...props}><div>{children}</div></Primitive.Content>);
+AccordionContent.displayName = 'AccordionContent';

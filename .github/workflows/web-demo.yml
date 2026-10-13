@@ -1,0 +1,32 @@
+name: Browser demo
+on:
+  push:
+    branches: [mac]
+    paths: [web/**, web_backend/**, deploy/translator/**, tests/test_web_backend.py, pyproject.toml, uv.lock, .github/workflows/web-demo.yml]
+  pull_request:
+    paths: [web/**, web_backend/**, deploy/translator/**, tests/test_web_backend.py, pyproject.toml, uv.lock, .github/workflows/web-demo.yml]
+permissions:
+  contents: read
+jobs:
+  frontend:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+          cache: npm
+          cache-dependency-path: web/package-lock.json
+      - run: npm ci
+        working-directory: web
+      - run: npm run check && npm test -- --maxWorkers=1 && npm run build
+        working-directory: web
+  backend:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: astral-sh/setup-uv@v6
+      - run: uv sync --frozen --dev --group web
+      - run: uv run --no-sync ruff check web_backend tests/test_web_backend.py
+      - run: uv run --no-sync python -m mypy --strict web_backend
+      - run: uv run --no-sync python -m pytest tests/test_web_backend.py -q
