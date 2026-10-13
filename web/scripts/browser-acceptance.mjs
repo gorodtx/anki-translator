@@ -22,6 +22,7 @@ try {
   const context = await browser.newContext({ viewport: { width: 1440, height: 1000 }, colorScheme: 'light', reducedMotion: 'reduce' });
   const page = await context.newPage();
   page.on('pageerror', error => facts.errors.push(error.message));
+  page.on('console', message => { if (message.type() === 'error') facts.errors.push(message.text()); });
   await page.goto(base); await page.evaluate(() => document.fonts.ready); await page.waitForTimeout(150);
   const initial = await page.locator('.curved-text text').textContent();
   for (let index = 3; index <= 20; index++) {
@@ -34,24 +35,45 @@ try {
   check(await page.getByRole('button', { name: 'Перевести', exact: false }).isEnabled(), 'translation button enabled');
   await page.screenshot({ path: `${evidence}/desktop-light.png`, fullPage: true });
   if (live) {
+    const phraseResponse = page.waitForResponse(response => response.url().endsWith('/api/translate') && response.request().method() === 'POST');
     await page.getByRole('button', { name: 'Перевести', exact: false }).click();
+    const response = await phraseResponse;
+    const answer = await response.json();
+    check(response.ok() && answer.status === 'success' && /[а-яё]/i.test(answer.translation), 'real selected-fragment translation', JSON.stringify({ status: response.status(), source: answer.source, translation: answer.translation }));
     await page.locator('.translation').waitFor({ timeout: 20_000 });
-    check(Boolean(await page.locator('.translation').textContent()), 'real selected-fragment translation');
     await page.screenshot({ path: `${evidence}/desktop-result.png`, fullPage: true });
     await page.getByRole('button', { name: 'Закрыть перевод' }).click();
   }
   await page.getByRole('button', { name: 'Свой текст' }).click();
   await page.getByLabel('Ваша фраза на английском').fill('bank');
   await page.getByRole('button', { name: 'Готово' }).click();
+  if (live) {
+    const start = await point(page, 0), end = await point(page, 3);
+    await page.mouse.move(start.x - 4, start.y); await page.mouse.down(); await page.mouse.move(end.x + 4, end.y, { steps: 15 }); await page.mouse.up();
+    const pending = page.waitForResponse(response => response.url().endsWith('/api/translate') && response.request().method() === 'POST');
+    await page.getByRole('button', { name: 'Перевести', exact: false }).click();
+    const response = await pending, result = await response.json();
+    check(response.ok() && result.status === 'success' && /[а-яё]/i.test(result.translation), 'real desktop word translation after editing', JSON.stringify({ original: result.original, translation: result.translation }));
+    await page.locator('.translation').waitFor();
+  }
   await page.emulateMedia({ colorScheme: 'dark' });
   await page.waitForTimeout(150);
   await page.screenshot({ path: `${evidence}/desktop-dark.png`, fullPage: true });
+  if (live) {
+    await page.getByRole('button', { name: 'Закрыть перевод' }).click();
+    await page.getByRole('button', { name: 'История переводов' }).click();
+    check(await page.getByRole('button', { name: /bank.*банк/ }).isVisible(), 'history contains actual translated word');
+    await page.getByRole('button', { name: 'Закрыть историю' }).click();
+  }
+  await page.keyboard.press('Tab');
+  check(await page.evaluate(() => ['A', 'BUTTON', 'TEXTAREA'].includes(document.activeElement?.tagName)), 'keyboard focus reaches controls');
   await page.getByRole('button', { name: 'Как попробовать перевод?' }).click();
   check(await page.getByText('Выделите мышью слово', { exact: false }).isVisible(), 'FAQ opens');
   await context.close();
 
   const mobile = await browser.newContext({ viewport: { width: 390, height: 844 }, hasTouch: true, userAgent: 'Mozilla/5.0 (iPhone; CPU iPhone OS 18_0 like Mac OS X) AppleWebKit/605.1.15 Mobile', colorScheme: 'light', reducedMotion: 'reduce' });
   const phone = await mobile.newPage(); phone.on('pageerror', error => facts.errors.push(error.message));
+  phone.on('console', message => { if (message.type() === 'error') facts.errors.push(message.text()); });
   await phone.goto(base); await phone.evaluate(() => document.fonts.ready);
   const p = await point(phone, 18); await phone.touchscreen.tap(p.x, p.y);
   await phone.waitForTimeout(100);
@@ -69,6 +91,12 @@ try {
     check((await phone.locator('.translation').textContent()).length > 0, 'real mobile word translation');
   }
   await phone.screenshot({ path: `${evidence}/mobile-light.png`, fullPage: true });
+  if (live) await phone.getByRole('button', { name: 'Закрыть перевод' }).click();
+  await phone.getByRole('button', { name: 'Свой текст' }).click();
+  await phone.getByLabel('Ваша фраза на английском').fill('The quick brown fox jumps over the lazy dog. '.repeat(5).slice(0, 200));
+  await phone.getByRole('button', { name: 'Готово' }).click();
+  check(await phone.evaluate(() => document.documentElement.scrollWidth <= innerWidth), '200-character mobile text has no horizontal overflow');
+  check(await phone.locator('.curved-text text').evaluate(node => Number.parseFloat(getComputedStyle(node).fontSize) < 24), 'long text reduces font size');
   await phone.emulateMedia({ colorScheme: 'dark' });
   await phone.waitForTimeout(150);
   await phone.screenshot({ path: `${evidence}/mobile-dark.png`, fullPage: true });

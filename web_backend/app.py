@@ -7,6 +7,7 @@ from dataclasses import asdict, dataclass
 from contextlib import asynccontextmanager
 from collections.abc import AsyncIterator
 import os
+import mimetypes
 from pathlib import Path
 import time
 
@@ -286,6 +287,7 @@ def create_app(
 
     dist = static_dir or Path(__file__).resolve().parents[1] / "web" / "dist"
     if dist.is_dir():
+        mimetypes.add_type("font/woff2", ".woff2")
         app.mount("/", StaticFiles(directory=dist, html=True), name="web")
     return app
 

@@ -24,7 +24,7 @@ button:focus-visible, a:focus-visible, textarea:focus-visible, [tabindex]:focus-
 .skip-link:focus { top: 16px; }
 .cloudscape { position: relative; isolation: isolate; min-height: 100svh; overflow: clip; background: linear-gradient(150deg,#fff 8%,#edf2f5 48%,#96cce8 100%); }
 .cloud-canvas { position: absolute; inset: 0; width: 100%; height: 100%; pointer-events: none; z-index: -1; }
-.menu-bar { position: relative; padding: 16px 24px 0; }
+.menu-bar { position: relative; z-index: 10; padding: 16px 24px 0; }
 .menu-inner { width: min(1040px,100%); margin: auto; min-height: 46px; display: flex; gap: 20px; align-items: center; justify-content: space-between; padding: 7px 14px; border: 1px solid var(--edge); border-radius: 14px; background: var(--surface); backdrop-filter: blur(20px) saturate(145%); box-shadow: 0 3px 16px #27364a09, inset 0 1px 0 var(--edge); font-size: .76rem; }
 .brand { display: inline-flex; align-items: center; gap: 8px; font-weight: 650; text-decoration: none; }
 .brand img { border-radius: 6px; }
@@ -35,8 +35,8 @@ button:focus-visible, a:focus-visible, textarea:focus-visible, [tabindex]:focus-
 .menu-download { padding: 6px; }
 .demo-scene { position: relative; width: min(820px,calc(100% - 40px)); aspect-ratio: 1; margin: -36px auto -160px; }
 .demo-scene[data-long=true] { margin-bottom: 10px; }
-.curved-text { width: 100%; height: 100%; overflow: visible; }
-.curved-text text { font-family: Montserrat, sans-serif; font-weight: 650; fill: var(--foreground); user-select: text; -webkit-user-select: text; cursor: text; }
+.curved-text { pointer-events: none; width: 100%; height: 100%; overflow: visible; }
+.curved-text text { pointer-events: auto; font-family: Montserrat, sans-serif; font-weight: 650; fill: var(--foreground); user-select: text; -webkit-user-select: text; cursor: text; }
 .hero-center { position: absolute; top: 50%; left: 50%; transform: translate(-50%,-50%); width: 55%; text-align: center; pointer-events: none; }
 .hero-center img { display: block; margin: 0 auto 18px; border-radius: 14px; }
 .hero-center h1 { font-size: clamp(2rem,5vw,3.8rem); font-weight: 620; letter-spacing: -.055em; line-height: 1.05; margin: 0; }
