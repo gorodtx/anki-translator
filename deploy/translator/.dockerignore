@@ -1,0 +1,20 @@
+# Copied to the deployment source root before building.
+**
+!pyproject.toml
+!uv.lock
+!translate_logic/
+!translate_logic/**
+!web_backend/
+!web_backend/**
+!web/
+!web/**
+!deploy/
+!deploy/translator/
+!deploy/translator/Dockerfile
+web/node_modules/
+web/dist/
+web/test-results/
+web/playwright-report/
+**/__pycache__/
+**/*.sqlite3
+**/.env*

@@ -1,0 +1,33 @@
+services:
+  translator-api:
+    image: translator-demo:${TRANSLATOR_REVISION:-local}
+    build:
+      context: ../..
+      dockerfile: deploy/translator/Dockerfile
+    restart: unless-stopped
+    init: true
+    read_only: true
+    mem_limit: 512m
+    cpus: 1.5
+    pids_limit: 96
+    environment:
+      TRANSLATOR_DB_DIR: /data/db
+    volumes:
+      - /opt/translator/db:/data/db:ro
+    tmpfs:
+      - /tmp:size=32m,mode=1777
+    cap_drop: [ALL]
+    security_opt: [no-new-privileges:true]
+    healthcheck:
+      test: [CMD, uv, run, --no-sync, python, -c, "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8000/api/health', timeout=3)"]
+      interval: 30s
+      timeout: 5s
+      start_period: 30s
+    networks:
+      default: {}
+      ingress:
+        aliases: [translator-api]
+networks:
+  ingress:
+    external: true
+    name: collective-front-migration_default

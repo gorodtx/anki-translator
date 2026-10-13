@@ -85,6 +85,35 @@
           "scripts/swift-test.sh"
         ]
       ]
+    },
+    {
+      "path": "web",
+      "prefixes": [
+        "web/"
+      ],
+      "dependencies": [
+        "node_modules"
+      ],
+      "commit": [
+        [
+          "npm",
+          "run",
+          "check"
+        ],
+        [
+          "npm",
+          "run",
+          "build"
+        ]
+      ],
+      "push": [
+        [
+          "npm",
+          "test",
+          "--",
+          "--maxWorkers=1"
+        ]
+      ]
     }
   ]
 }

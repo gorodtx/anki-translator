@@ -1,0 +1,39 @@
+{
+  "base": "http://127.0.0.1:8768/",
+  "live": false,
+  "browser": "Firefox",
+  "version": "157.0",
+  "results": [
+    {
+      "name": "native desktop drag selection",
+      "pass": true,
+      "detail": "all Greek to me"
+    },
+    {
+      "name": "translation button enabled",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "name": "FAQ opens",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "name": "mobile tap selection",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "name": "390px no horizontal overflow",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "name": "no page errors",
+      "pass": true,
+      "detail": ""
+    }
+  ],
+  "errors": []
+}
