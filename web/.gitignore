@@ -2,3 +2,6 @@ node_modules
 dist/
 test-results/
 playwright-report/
+# Python's root lib/ exclusion must not hide frontend source utilities.
+!src/lib/
+!src/lib/**

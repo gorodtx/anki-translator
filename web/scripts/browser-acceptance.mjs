@@ -1,13 +1,15 @@
-import { firefox } from '@playwright/test';
+import { firefox, chromium, webkit } from '@playwright/test';
 import { mkdir, writeFile } from 'node:fs/promises';
 import { resolve } from 'node:path';
 
 const base = process.argv[2] ?? 'http://127.0.0.1:8768/';
 const live = process.argv.includes('--live');
-const evidence = resolve('../docs/demo/evidence');
+const evidence = resolve(`../docs/demo/evidence/${live ? 'live' : 'local'}-${process.argv.find(arg => arg.startsWith('--browser='))?.split('=')[1] ?? 'firefox'}`);
 await mkdir(evidence, { recursive: true });
-const browser = await firefox.launch({ headless: true });
-const facts = { base, live, browser: 'Firefox', version: browser.version(), results: [], errors: [] };
+const engine = process.argv.find(arg => arg.startsWith('--browser='))?.split('=')[1] ?? 'firefox';
+if (!['firefox', 'chromium', 'webkit'].includes(engine)) throw new Error('Unknown browser engine');
+const browser = await ({ firefox, chromium, webkit })[engine].launch({ headless: true });
+const facts = { base, live, browser: engine, version: browser.version(), results: [], errors: [] };
 function check(condition, name, detail = '') { facts.results.push({ name, pass: Boolean(condition), detail }); if (!condition) throw new Error(`${name}: ${detail}`); }
 async function point(page, index) {
   return page.locator('.curved-text text').evaluate((node, index) => {
@@ -58,7 +60,11 @@ try {
   if (live) {
     await phone.getByRole('button', { name: 'Свой текст' }).click(); await phone.getByLabel('Ваша фраза на английском').fill('bank'); await phone.getByRole('button', { name: 'Готово' }).click();
     const word = await point(phone, 1); await phone.touchscreen.tap(word.x, word.y);
+    const responsePromise = phone.waitForResponse(response => response.url().endsWith('/api/translate') && response.request().method() === 'POST');
     await phone.getByRole('button', { name: 'Перевести', exact: false }).click();
+    const response = await responsePromise;
+    const result = await response.json();
+    check(response.ok() && result.status === 'success' && /[а-яё]/i.test(result.translation), 'real successful en-ru API response', JSON.stringify({ status: result.status, translation: result.translation }));
     await phone.locator('.translation').waitFor({ timeout: 20_000 });
     check((await phone.locator('.translation').textContent()).length > 0, 'real mobile word translation');
   }
@@ -69,6 +75,6 @@ try {
   await mobile.close();
   check(facts.errors.length === 0, 'no page errors', facts.errors.join('; '));
 } finally {
-  await browser.close(); await writeFile(`${evidence}/browser-${live ? 'live' : 'local'}.json`, JSON.stringify(facts, null, 2));
+  await browser.close(); await writeFile(`${evidence}/browser-${live ? 'live' : 'local'}-${engine}.json`, JSON.stringify(facts, null, 2));
 }
 console.log(JSON.stringify(facts));
