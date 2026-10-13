@@ -65,8 +65,11 @@ try {
     check(await page.getByRole('button', { name: /bank.*банк/ }).isVisible(), 'history contains actual translated word');
     await page.getByRole('button', { name: 'Закрыть историю' }).click();
   }
-  await page.keyboard.press('Tab');
-  check(await page.evaluate(() => ['A', 'BUTTON', 'TEXTAREA'].includes(document.activeElement?.tagName)), 'keyboard focus reaches controls');
+  await page.getByRole('button', { name: 'Как попробовать перевод?' }).focus();
+  check(await page.getByRole('button', { name: 'Как попробовать перевод?' }).evaluate(node => node === document.activeElement), 'FAQ control accepts keyboard focus');
+  await page.keyboard.press('Enter');
+  check(await page.getByText('Выделите мышью слово', { exact: false }).isVisible(), 'keyboard Enter opens FAQ');
+  await page.keyboard.press('Enter');
   await page.getByRole('button', { name: 'Как попробовать перевод?' }).click();
   check(await page.getByText('Выделите мышью слово', { exact: false }).isVisible(), 'FAQ opens');
   await context.close();

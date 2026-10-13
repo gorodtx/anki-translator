@@ -80,7 +80,7 @@ export default function Cloudscape({ children, className, speed = 0.18, colorBot
     const resize = () => {
       const { width, height } = host.getBoundingClientRect();
       const ratio = Math.min(devicePixelRatio || 1, 1.25, Math.sqrt(900_000 / Math.max(1, width * height)));
-      canvas.width = Math.max(1, Math.round(width * ratio)); canvas.height = Math.max(1, Math.round(height * ratio));
+      canvas.width = Math.max(1, Math.floor(width * ratio)); canvas.height = Math.max(1, Math.floor(height * ratio));
       gl.viewport(0, 0, canvas.width, canvas.height); gl.uniform2f(resolution, canvas.width, canvas.height);
       gl.uniform1f(time, 0); gl.drawArrays(gl.TRIANGLE_STRIP, 0, 4); resume();
     };
