@@ -30,7 +30,7 @@
   <b>Anki — по желанию.</b> Без него есть перевод, примеры и история; Anki — только для карточек.
 </p>
 
-https://github.com/user-attachments/assets/693a14f1-ddce-4a65-8788-b64d0c5006db
+<picture><img src="docs/assets/translator-film.avif" width="100%" alt="Ролик о Translator: выделенное слово переводится прямо под курсором"></picture>
 
 <h2 align="center">Офлайн-базы</h2>
 
